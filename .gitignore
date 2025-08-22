@@ -1,0 +1,6 @@
+# Ignorar las carpetas de compilación y archivos temporales dentro del directorio "Raspberry".
+Raspberry/__pycache__/
+Raspberry/build/
+Raspberry/dist/
+Raspberry/viejo/
+Raspberry/.env
