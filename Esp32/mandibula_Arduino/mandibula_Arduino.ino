@@ -1,25 +1,35 @@
 #include "ESP32Servo.h"
 
-int ServoMandibulaPin = 25;
-int ServoOjoEjeXPin = 21;
-int ServoOjoEjeYPin = 23;
-int ServoCuelloEjeXPin = 26;
-int ServoCuelloEjeYPin = 24;
+int ServoMandibulaPin = 21;
+int ServoOjoEjeXPin = 23;
+int ServoOjoEjeYPin = 22;
+int ServoCuelloEjeXPin = 19;
+int ServoCuelloEjeYPin = 18;
+int ServoPulgarPin = 14;
+int ServoIndicePin = 13;
+int ServoMedioPin = 4;
+int ServoAnularPin = 17;
+int ServoMeniquePin = 16;
 
 Servo ServoMandibula;
 Servo ServoOjoEjeX;
 Servo ServoOjoEjeY;
 Servo ServoCuelloEjeX;
 Servo ServoCuelloEjeY;
+Servo ServoPulgar;
+Servo ServoIndice;
+Servo ServoMedio;
+Servo ServoAnular;
+Servo ServoMenique;
 
 int OjoEjeX_Pos = 90;
 int CuelloEjeX_Pos = 90;
 int CuelloEjeY_Pos = 90;
-int OjoEjeY_Pos = 90;
+int OjoEjeY_Pos = 140;
 
 int codigo=0;
-int min_Y_ojo = 50;
-int max_Y_ojo = 130;
+int min_Y_ojo = 100;
+int max_Y_ojo = 180;
 int min_X_ojo = 60;
 int max_X_ojo = 130;
 int min_X_cuello = 10;
@@ -48,7 +58,7 @@ void setup() {
   delay(100);
 
   ServoCuelloEjeX.write(90);
-  ServoOjoEjeY.write(120);
+  ServoOjoEjeY.write(140);
   ServoOjoEjeX.write(90);
   delay(100);
 }
@@ -118,12 +128,12 @@ void loop() {
     if (codigo == 1005) { //izquierda
       OjoEjeX_Pos = min_X_ojo;
     } else if (codigo == 2015) {
-      CuelloEjeX_Pos -= 3;
+      CuelloEjeX_Pos += 3;
     }
     if (codigo == 1010) { //derecha
       OjoEjeX_Pos = max_X_ojo;
     } else if (codigo == 2010) {
-      CuelloEjeX_Pos += 3;
+      CuelloEjeX_Pos -= 3;
     }
 
     if (codigo == 1000){
@@ -131,11 +141,11 @@ void loop() {
     }
 
     if (codigo == 1020) { //arriba
-      OjoEjeY_Pos = 90;
+      OjoEjeY_Pos = 100;
     } else if (codigo == 1025) { //abajo
-      OjoEjeY_Pos = 150;
+      OjoEjeY_Pos = 180;
     } else if (codigo == 1030){
-      OjoEjeY_Pos = 120;
+      OjoEjeY_Pos = 140;
     }
     // Rectificador X
     if (CuelloEjeX_Pos >= max_X_cuello){
@@ -174,7 +184,7 @@ void loop() {
     ServoCuelloEjeX.write(CuelloEjeX_Pos);
   }
 
-}
+
 
 // vertical
   if (Mover_cuello_lento_vertical != CuelloEjeY_Pos && Mover_cuello_lento_vertical != 0){
@@ -197,6 +207,29 @@ void loop() {
       CuelloEjeY_Pos = min_Y_cuello;
     }
     ServoCuelloEjeY.write(CuelloEjeY_Pos);
+  }
+
+  //DEDOS DE LA MANO
+  if (codigo == 5510) { //  Numeros par cierra 
+    ServoMedio.write(0);
+  } else if (codigo == 5511) { //  Numeros impar abre
+    ServoMedio.write(90);
+  } else if (codigo == 5512) {
+    ServoAnular.write(0);
+  } else if (codigo == 5513) {
+    ServoAnular.write(90);
+  } else if (codigo == 5514) {
+    ServoMenique.write(90);
+  } else if (codigo == 5515) {
+    ServoMenique.write(180);
+  } else if (codigo == 5516) {
+    ServoIndice.write(0);
+  } else if (codigo == 5517) {
+    ServoIndice.write(90);
+  } else if (codigo == 5518) {
+    ServoPulgar.write(90);
+  } else if (codigo == 5519) {
+    ServoPulgar.write(180);
   }
 
 }
@@ -225,3 +258,5 @@ void mover_mandibula() {
     }
   }
 }
+
+

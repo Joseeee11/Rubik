@@ -17,6 +17,9 @@ from tkinter import ttk
 import queue
 import math
 
+## pyinstaller --icon=icono.ico --add-data "icono.ico;." main.py
+## al compilar recordar que se deben incluir los archivos de modelo y los recursos necesarios
+
 ## importar modulos personalizados
 from Clavicula import Calcular_distancia_Punto_a_RectaAB, punto_medio_segmento
 from esp32 import iniciar_conexion_serial, enviar_esp32, cerrar_serial, listar_seriales
@@ -83,10 +86,14 @@ EjeX = "Centro"
 # Función para visualizar la cámara y procesar la imagen
 seguir_vision = None  # Variable para seguir la visión de la cámara
 punto_seguir = None  # Variable para almacenar el punto a seguir
-imitar_vision = "Cara"  # Variable para imitar la visión de la cámara
+imitar_vision = None  # Variable para imitar la visión de la cámara
 media_imitar_rostro = None  # Variable para almacenar la media del rostro imitado
 media_imitar_boca = None  # Variable para almacenar la media de la boca imitada
 media_imitar_cara_vertical = None  # Variable para almacenar la media de la boca imitada
+palma_puntos = [0,1,2,5,9,13,17]
+pulgar_puntos = [1,2,4]
+punta_puntos = [8,12,16,20]
+base_puntos = [6,10,14,18]
 def visualizar():
     global cap
     global pintar
@@ -442,6 +449,61 @@ def visualizar():
                 
                 else:
                     media_imitar_cara_vertical = []
+            if imitar_vision in ["Mano"] and ((result.left_hand_landmarks is not None) or (result.right_hand_landmarks is not None)) :
+                # Obtener las coordenadas de la palma de la mano
+
+                if result.right_hand_landmarks is not None:
+                    palma_derecha = [result.right_hand_landmarks.landmark[i] for i in range(21)]
+                    palma_coordenadas = []
+                    pulgar_coordenadas = []
+                    punta_coordenadas = []
+                    base_coordenadas = []
+
+                    for i in pulgar_puntos:
+                        x = int(palma_derecha[i].x * width)
+                        y = int(palma_derecha[i].y * height)
+                        pulgar_coordenadas.append([x, y])
+
+                    for i in punta_puntos:
+                        x = int(palma_derecha[i].x * width)
+                        y = int(palma_derecha[i].y * height)
+                        punta_coordenadas.append([x, y])
+
+                    for i in base_puntos:
+                        x = int(palma_derecha[i].x * width)
+                        y = int(palma_derecha[i].y * height)
+                        base_coordenadas.append([x, y])
+                    
+                    for i in palma_puntos:
+                        x = int(palma_derecha[i].x * width)
+                        y = int(palma_derecha[i].y * height)
+                        palma_coordenadas.append([x, y])
+                    
+                    p1 = np.array(pulgar_coordenadas[0])
+                    p2 = np.array(pulgar_coordenadas[1])
+                    p3 = np.array(pulgar_coordenadas[2])
+
+                    l1 = np.linalg.norm(p2-p3)
+                    l2 = np.linalg.norm(p1-p3)
+                    l3 = np.linalg.norm(p1-p2)
+                    centro_palma = palma_centroCoordenadas(palma_coordenadas)
+                    cv2.circle(frame, centro_palma, 5, (0, 255, 0), -1)
+
+                    try:
+                        cos_value = (l1**2 + l3**2 - l2**2) / (2 * l1 * l3)
+                        cos_value = max(-1, min(1, cos_value))  # Ensure value is within [-1, 1]
+                        angulo = math.degrees(math.acos(cos_value))
+                    except ValueError as e:
+                        print(f"Error calculating angle: {e}")
+                        angulo = 0  # Default value in case of error
+                    dedo_pulgar = np.array(False)
+                    if angulo > 150: 
+                        dedo_pulgar = np.array(True)
+                        print("pulgar abierto")
+                if result.left_hand_landmarks is not None and result.right_hand_landmarks is None:
+                    palma_izquierda = [result.left_hand_landmarks.landmark[i] for i in range(21)]
+
+
 
             if pintar:
                 # drawing.draw_landmarks(
