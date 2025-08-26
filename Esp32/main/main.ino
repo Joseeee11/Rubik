@@ -235,35 +235,24 @@ void loop() {
 }
 
 void mover_mandibula() {
-  static unsigned long tiempo_espera = 250; // tiempo entre movimientos
+  static unsigned long tiempo_espera = 200; // tiempo entre movimientos
   if (mandibula_activa) {
     unsigned long ahora = millis();
     if (!mandibula_cerrar) {
       if (mandibula_estado == 0) {
-        ServoMandibula.write(119); // abrir
+        ServoMandibula.write(150); // abrir
         mandibula_last_update = ahora;
         mandibula_estado = 1;
       } else if (mandibula_estado == 1 && (ahora - mandibula_last_update >= tiempo_espera)) {
-        ServoMandibula.write(100); // semi-cerrar
+        ServoMandibula.write(110); // semi-cerrar
         mandibula_last_update = ahora;
         mandibula_estado = 2;
       } else if (mandibula_estado == 2 && (ahora - mandibula_last_update >= tiempo_espera)) {
-        ServoMandibula.write(85); // cerrar-hablando
-        mandibula_last_update = ahora;
-        mandibula_estado = 3;
-
-      } else if (mandibula_estado == 3 && (ahora - mandibula_last_update >= tiempo_espera)) {
         mandibula_estado = 0; // listo para el siguiente ciclo
       }
     }
     if (mandibula_cerrar) {
-      ServoMandibula.write(75); // cerrar completamente
-      // una espera en millis() de medio segundo para devolver un grado y evitar que el motor se sobrecaliente
-      
-      // mandibula_last_update = ahora;
-      // if (ahora - mandibula_last_update >= 500) {
-      //   ServoMandibula.write(95);
-      // }
+      ServoMandibula.write(90); // cerrar completamente
       mandibula_activa = false;
       mandibula_estado = 0;
     }

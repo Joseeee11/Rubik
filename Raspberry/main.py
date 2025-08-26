@@ -78,6 +78,11 @@ palma_puntos=[0,1,2,5,9,13,17]
 pulgar_puntos=[1,2,4]
 punta_puntos=[8,12,16,20]
 base_puntos=[6,10,14,18]
+memoria0 = 0
+memoria1 = 0
+memoria2 = 0
+memoria3 = 0
+memoria4 = 0
 
 EjeY = "Centro"
 EjeX = "Centro"
@@ -500,6 +505,23 @@ def visualizar():
                     if angulo > 150: 
                         dedo_pulgar = np.array(True)
                         print("pulgar abierto")
+                    
+                    dis_centro_punta = np.linalg.norm(centro_coordenadas - punta_coordenadas, axis=1)
+                    dis_centro_base = np.linalg.norm(centro_coordenadas - base_coordenadas, axis=1)
+                    diferencia = dis_centro_base - dis_centro_punta 
+                    dedosAbiertos = diferencia < 0
+                    dedosAbiertos = np.append(dedo_pulgar, dedosAbiertos)
+                    print("Dedos abiertos: ", dedosAbiertos)
+
+                    if dedosAbiertos[0] and memoria0 == False:
+                        # send_message("I")
+                        memoria0 = True
+                    elif dedosAbiertos[0] == False and memoria0 == True:
+                        # send_message("J")
+                        memoria0 = False
+                        
+
+
                 if result.left_hand_landmarks is not None and result.right_hand_landmarks is None:
                     palma_izquierda = [result.left_hand_landmarks.landmark[i] for i in range(21)]
 
