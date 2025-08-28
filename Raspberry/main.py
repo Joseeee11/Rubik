@@ -78,15 +78,10 @@ palma_puntos=[0,1,2,5,9,13,17]
 pulgar_puntos=[1,2,4]
 punta_puntos=[8,12,16,20]
 base_puntos=[6,10,14,18]
-memoria0 = 0
-memoria1 = 0
-memoria2 = 0
-memoria3 = 0
-memoria4 = 0
+ultimo_dedo = ["None", "None", "None", "None", "None"]
 
 EjeY = "Centro"
 EjeX = "Centro"
-
 
 # Función para visualizar la cámara y procesar la imagen
 seguir_vision = None  # Variable para seguir la visión de la cámara
@@ -123,9 +118,6 @@ def visualizar():
                 if seguir_vision == "Mano" or seguir_vision == "Mano izquierda" or seguir_vision == "Mano derecha":
                     if (result.left_hand_landmarks is not None or result.right_hand_landmarks is not None):
                         palma_coordenadas = []
-                        # pulgar_coordenadas = []
-                        # punta_coordenadas = []
-                        # base_coordenadas = []
                         if seguir_vision == "Mano izquierda":
                             if result.left_hand_landmarks is not None:
                                 Mano = result.left_hand_landmarks
@@ -146,22 +138,6 @@ def visualizar():
                             else:
                                 Mano = None
                        
-                    
-                    
-                        # for i in pulgar_puntos:
-                        #     x = int(Mano.landmark[i].x * width)
-                        #     y = int(Mano.landmark[i].y * height)
-                        #     pulgar_coordenadas.append([x, y])
-
-                        # for i in punta_puntos:
-                        #     x = int(Mano.landmark[i].x * width)
-                        #     y = int(Mano.landmark[i].y * height)
-                        #     punta_coordenadas.append([x, y])
-
-                        # for i in base_puntos:
-                        #     x = int(Mano.landmark[i].x * width)
-                        #     y = int(Mano.landmark[i].y * height)
-                        #     base_coordenadas.append([x, y])
                         if Mano is not None:
                             for i in palma_puntos:
                                 x = int(Mano.landmark[i].x * width)
@@ -454,76 +430,136 @@ def visualizar():
                 
                 else:
                     media_imitar_cara_vertical = []
-            if imitar_vision in ["Mano"] and ((result.left_hand_landmarks is not None) or (result.right_hand_landmarks is not None)) :
-                # Obtener las coordenadas de la palma de la mano
+            if imitar_vision in ["Mano"] or imitar_vision in ["Mano izquierda"] or imitar_vision in ["Mano derecha"]:
 
-                if result.right_hand_landmarks is not None:
-                    palma_derecha = [result.right_hand_landmarks.landmark[i] for i in range(21)]
+                if (result.left_hand_landmarks is not None or result.right_hand_landmarks is not None):
+                    # Obtener las coordenadas de la palma de la mano
                     palma_coordenadas = []
                     pulgar_coordenadas = []
                     punta_coordenadas = []
                     base_coordenadas = []
+                    if imitar_vision in ["Mano derecha"]:
+                        if result.right_hand_landmarks is not None:
+                            ManoImitar = [result.right_hand_landmarks.landmark[i] for i in range(21)]
+                        else:
+                            ManoImitar = None
+                    elif imitar_vision in ["Mano izquierda"]:
+                        if result.left_hand_landmarks is not None:
+                            ManoImitar = [result.left_hand_landmarks.landmark[i] for i in range(21)]
+                        else:
+                            ManoImitar = None
+                    elif imitar_vision in ["Mano"]:
+                        if result.left_hand_landmarks is not None and result.right_hand_landmarks is not None:
+                            ManoImitar= [result.right_hand_landmarks.landmark[i] for i in range(21)]
+                        elif result.left_hand_landmarks is not None:
+                            ManoImitar = [result.left_hand_landmarks.landmark[i] for i in range(21)]
+                        elif result.right_hand_landmarks is not None:
+                            ManoImitar = [result.right_hand_landmarks.landmark[i] for i in range(21)]
+                        else:
+                            ManoImitar = None
 
-                    for i in pulgar_puntos:
-                        x = int(palma_derecha[i].x * width)
-                        y = int(palma_derecha[i].y * height)
-                        pulgar_coordenadas.append([x, y])
+                    if ManoImitar is not None:
+                        for i in pulgar_puntos:
+                            x = int(ManoImitar[i].x * width)
+                            y = int(ManoImitar[i].y * height)
+                            pulgar_coordenadas.append([x, y])
 
-                    for i in punta_puntos:
-                        x = int(palma_derecha[i].x * width)
-                        y = int(palma_derecha[i].y * height)
-                        punta_coordenadas.append([x, y])
+                        for i in punta_puntos:
+                            x = int(ManoImitar[i].x * width)
+                            y = int(ManoImitar[i].y * height)
+                            punta_coordenadas.append([x, y])
 
-                    for i in base_puntos:
-                        x = int(palma_derecha[i].x * width)
-                        y = int(palma_derecha[i].y * height)
-                        base_coordenadas.append([x, y])
-                    
-                    for i in palma_puntos:
-                        x = int(palma_derecha[i].x * width)
-                        y = int(palma_derecha[i].y * height)
-                        palma_coordenadas.append([x, y])
-                    
-                    p1 = np.array(pulgar_coordenadas[0])
-                    p2 = np.array(pulgar_coordenadas[1])
-                    p3 = np.array(pulgar_coordenadas[2])
+                        for i in base_puntos:
+                            x = int(ManoImitar[i].x * width)
+                            y = int(ManoImitar[i].y * height)
+                            base_coordenadas.append([x, y])
+                        
+                        for i in palma_puntos:
+                            x = int(ManoImitar[i].x * width)
+                            y = int(ManoImitar[i].y * height)
+                            palma_coordenadas.append([x, y])
+                        
+                        # Calcular pulgar
+                        p1 = np.array(pulgar_coordenadas[0])
+                        p2 = np.array(pulgar_coordenadas[1])
+                        p3 = np.array(pulgar_coordenadas[2])
+                        l1 = np.linalg.norm(p2-p3)
+                        l2 = np.linalg.norm(p1-p3)
+                        l3 = np.linalg.norm(p1-p2)
 
-                    l1 = np.linalg.norm(p2-p3)
-                    l2 = np.linalg.norm(p1-p3)
-                    l3 = np.linalg.norm(p1-p2)
-                    centro_palma = palma_centroCoordenadas(palma_coordenadas)
-                    cv2.circle(frame, centro_palma, 5, (0, 255, 0), -1)
+                        centro_palma = palma_centroCoordenadas(palma_coordenadas)
+                        cv2.circle(frame, centro_palma, 5, (0, 255, 0), -1)
 
-                    try:
-                        cos_value = (l1**2 + l3**2 - l2**2) / (2 * l1 * l3)
-                        cos_value = max(-1, min(1, cos_value))  # Ensure value is within [-1, 1]
-                        angulo = math.degrees(math.acos(cos_value))
-                    except ValueError as e:
-                        print(f"Error calculating angle: {e}")
-                        angulo = 0  # Default value in case of error
-                    dedo_pulgar = np.array(False)
-                    if angulo > 150: 
-                        dedo_pulgar = np.array(True)
-                        print("pulgar abierto")
-                    
-                    dis_centro_punta = np.linalg.norm(centro_coordenadas - punta_coordenadas, axis=1)
-                    dis_centro_base = np.linalg.norm(centro_coordenadas - base_coordenadas, axis=1)
-                    diferencia = dis_centro_base - dis_centro_punta 
-                    dedosAbiertos = diferencia < 0
-                    dedosAbiertos = np.append(dedo_pulgar, dedosAbiertos)
-                    print("Dedos abiertos: ", dedosAbiertos)
+                        try:
+                            cos_value = (l1**2 + l3**2 - l2**2) / (2 * l1 * l3)
+                            cos_value = max(-1, min(1, cos_value))  # Ensure value is within [-1, 1]
+                            angulo = math.degrees(math.acos(cos_value))
+                        except ValueError as e:
+                            print(f"Error calculando el angulo: {e}")
+                            angulo = 0  # Default value in case of error
+                            
+                        dedo_pulgar = np.array(False)
+                        if angulo > 150: 
+                            dedo_pulgar = np.array(True)
+                            print("pulgar abierto")
 
-                    if dedosAbiertos[0] and memoria0 == False:
-                        # send_message("I")
-                        memoria0 = True
-                    elif dedosAbiertos[0] == False and memoria0 == True:
-                        # send_message("J")
-                        memoria0 = False
+                        # Calcular dedos
+                        xn, yn = palma_centroCoordenadas(palma_coordenadas)
+                        centro_coordenadas = np.array([xn, yn])
+                        punta_coordenadas = np.array(punta_coordenadas)
+                        base_coordenadas = np.array(base_coordenadas)
+
+                        dis_centro_punta = np.linalg.norm(centro_coordenadas - punta_coordenadas, axis=1)
+                        dis_centro_base = np.linalg.norm(centro_coordenadas - base_coordenadas, axis=1)
+                        diferencia = dis_centro_base - dis_centro_punta 
+                        dedosAbiertos = diferencia < 0
+                        dedosAbiertos = np.append(dedo_pulgar, dedosAbiertos)
+                        print("Dedos abiertos: ", dedosAbiertos)
+
+                        #Enviar al ESP32 los dedos abiertos y cerrados 
+                        if dedosAbiertos[0] and ultimo_dedo[0] == "None":  #PULGAR
+                            ultimo_dedo[0] = "Pulgar"
+                            print("Pulgar abierto")
+                            enviar_comando_esp32(5519)
+                        elif dedosAbiertos[0] == False and ultimo_dedo[0] == "Pulgar":
+                            ultimo_dedo[0] = "None"
+                            print("Pulgar cerrado")
+                            enviar_comando_esp32(5518)
+                        if dedosAbiertos[1] and ultimo_dedo[1] == "None": #ÍNDICE
+                            ultimo_dedo[1] = "Indice"
+                            print("Índice abierto")
+                            enviar_comando_esp32(5517)
+                        elif dedosAbiertos[1] == False and ultimo_dedo[1] == "Indice":
+                            ultimo_dedo[1] = "None"
+                            print("Índice cerrado")
+                            enviar_comando_esp32(5516)
+                        if dedosAbiertos[2] and ultimo_dedo[2] == "None": #MEDIO
+                            ultimo_dedo[2] = "Medio"
+                            print("Medio abierto")
+                            enviar_comando_esp32(5511)
+                        elif dedosAbiertos[2] == False and ultimo_dedo[2] == "Medio":
+                            ultimo_dedo[2] = "None"
+                            print("Medio cerrado")
+                            enviar_comando_esp32(5510)
+                        if dedosAbiertos[3] and ultimo_dedo[3] == "None": #ANULAR
+                            ultimo_dedo[3] = "Anular"
+                            print("Anular abierto")
+                            enviar_comando_esp32(5513)
+                        elif dedosAbiertos[3] == False and ultimo_dedo[3] == "Anular":
+                            ultimo_dedo[3] = "None"
+                            print("Anular cerrado")
+                            enviar_comando_esp32(5512)
+                        if dedosAbiertos[4] and ultimo_dedo[4] == "None": #MEÑIQUE
+                            ultimo_dedo[4] = "Pinky"
+                            print("Meñique abierto")
+                            enviar_comando_esp32(5515)
+                        elif dedosAbiertos[4] == False and ultimo_dedo[4] == "Pinky":
+                            ultimo_dedo[4] = "None"
+                            print("Meñique cerrado")
+                            enviar_comando_esp32(5514)
+
                         
 
-
-                if result.left_hand_landmarks is not None and result.right_hand_landmarks is None:
-                    palma_izquierda = [result.left_hand_landmarks.landmark[i] for i in range(21)]
 
 
 
@@ -604,6 +640,7 @@ cap= None
 import os
 
 TOKEN = os.getenv("groqToken")
+# TOKEN = ""
 
 if not TOKEN:
     raise ValueError("El token de la API no se encontró en las variables de entorno.")
@@ -802,7 +839,16 @@ def grabar_audio_hilo():
                     elif (not ("desactivar" in texto.lower() or "desactiva" in texto.lower())) and ("imitar" in texto.lower() or "imitame" in texto.lower() or "imítame" in texto.lower()):
                         if "mano izquierda" in texto.lower() or "izquierda mano" in texto.lower():
                             seguir_vision = None  # Desactiva el seguimiento de visión al activar la imitación
+                            print("imitar mano izquierda")
+                            imitar_vision = "Mano izquierda"
+                        elif "mano derecha" in texto.lower() or "derecha mano" in texto.lower():
+                            seguir_vision = None
+                            print("imitar mano derecha")    
+                            imitar_vision = "Mano derecha"
+                        elif "mano" in texto.lower() or "manos" in texto.lower():
+                            seguir_vision = None
                             print("imitar mano")
+                            imitar_vision = "Mano"
                         elif "cara" in texto.lower() or "rostro" in texto.lower() or "cabeza" in texto.lower():
                             seguir_vision = None  # Desactiva el seguimiento de visión al activar la imitación
                             imitar_vision = "Cara"
