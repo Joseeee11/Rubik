@@ -4,6 +4,9 @@ import numpy as np
 
 import matplotlib.pyplot as plt
 
+## Esto es una prueba para ver el rastreo 3D de mediapipe 
+
+ 
 from hombro_math import calcular_angulos_brazo
 # Inicializar MediaPipe Holistic
 mp_holistic = mp.solutions.holistic

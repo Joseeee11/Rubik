@@ -16,7 +16,9 @@ import pyttsx3
 from tkinter import ttk
 import queue
 import math
-
+import os
+from dotenv import load_dotenv
+import json
 ## pyinstaller --icon=icono.ico --add-data "icono.ico;." main.py
 ## al compilar recordar que se deben incluir los archivos de modelo y los recursos necesarios
 
@@ -25,6 +27,30 @@ from Clavicula import Calcular_distancia_Punto_a_RectaAB, punto_medio_segmento
 from esp32 import iniciar_conexion_serial, enviar_esp32, cerrar_serial, listar_seriales
 # para la hora actual quitar si se hace de otra manera
 from datetime import datetime
+
+
+## importar json de diccionario
+with open('comandos.json', 'r', encoding='utf-8') as f:
+    diccionario = json.load(f)
+
+## funciones de respuesta a voz
+
+def respuestas_comando(comando):
+    for respuesta in diccionario["Respuestas"]:
+        if respuesta["responder"] == comando:
+            if respuesta["pesos"] == True:
+                return random.choices(respuesta["respuesta"], weights=respuesta["pesos"])[0]
+            else:
+                return random.choice(respuesta["respuesta"])
+    return "No tengo una respuesta para eso."
+
+def extraer_comandos(cadena):
+    comandos_obtenidos = []
+    for cmd in diccionario["comandos"]:
+        for palabra in cmd["palabras"]:
+            if palabra in cadena:
+                comandos_obtenidos.append(cmd["comando"])
+    return comandos_obtenidos if comandos_obtenidos else ["desconocido"]
 
 # --- ESP32 Serial ---
 # # Importar la biblioteca de comunicación serial
@@ -60,14 +86,20 @@ holistic = mediaPipe.Holistic(
 )
 pintar = False
 
+camera = False
+
+
+
 def iniciar():
-    global cap
+    global cap, camera
     # Inicializa la cámara
     cap = cv2.VideoCapture(0)
     if not cap.isOpened():
         print("Error: No se pudo abrir la cámara.")
+        camera = False
         mainApp.destroy()
         return
+    camera = True
     visualizar()
     listar_dispositivos_audio()
 
@@ -79,6 +111,7 @@ pulgar_puntos=[1,2,4]
 punta_puntos=[8,12,16,20]
 base_puntos=[6,10,14,18]
 ultimo_dedo = ["None", "None", "None", "None", "None"]
+estado_muneca = None
 
 EjeY = "Centro"
 EjeX = "Centro"
@@ -88,6 +121,7 @@ seguir_vision = None  # Variable para seguir la visión de la cámara
 punto_seguir = None  # Variable para almacenar el punto a seguir
 imitar_vision = None  # Variable para imitar la visión de la cámara
 media_imitar_rostro = None  # Variable para almacenar la media del rostro imitado
+media_estado_muneca = None # Variable para almacenar la media de la muñeca imitada
 media_imitar_boca = None  # Variable para almacenar la media de la boca imitada
 media_imitar_cara_vertical = None  # Variable para almacenar la media de la boca imitada
 palma_puntos = [0,1,2,5,9,13,17]
@@ -99,6 +133,8 @@ def visualizar():
     global pintar
     global EjeY, EjeX
     global seguir_vision, punto_seguir, imitar_vision
+    global palma_puntos, pulgar_puntos, punta_puntos, base_puntos
+    global ultimo_dedo, estado_muneca
     # Lee un fotograma de la cámara
     if cap is not None:
         ret, frame = cap.read()
@@ -243,15 +279,21 @@ def visualizar():
                 # Puntos de referencia
                 x_nariz = int(landmarks[4].x * width)
                 y_nariz = int(landmarks[4].y * height)
+                # Dibujar el punto de la nariz
+                cv2.circle(frame, (x_nariz, y_nariz), 5, (0, 255, 0), -1)
                 # Extremos de la cara (usando landmarks de la mandíbula)
                 x_izquierda = int(landmarks[234].x * width)  # lado izquierdo de la cara
                 y_izquierda = int(landmarks[234].y * height)  # lado izquierdo de la cara
+                cv2.circle(frame, (x_izquierda, y_izquierda), 5, (255, 0, 0), -1)  # Dibujar punto izquierdo
                 x_derecha = int(landmarks[454].x * width)    # lado derecho de la cara
                 y_derecha = int(landmarks[454].y * height)  # lado derecho de la cara
+                cv2.circle(frame, (x_derecha, y_derecha), 5, (255, 0, 0), -1)  # Dibujar punto derecho
 
                 # Calcular la proporción de la nariz entre los extremos
                 d_nariz_derecha= math.sqrt(abs((x_derecha - x_nariz) ** 2 + (y_derecha - y_nariz) ** 2))
+                cv2.line(frame, (x_nariz, y_nariz), (x_derecha, y_derecha), (255, 0, 0), 1)  # Línea a la derecha
                 d_nariz_izquierda = math.sqrt(abs((x_izquierda - x_nariz) ** 2 + (y_izquierda - y_nariz) ** 2))
+                cv2.line(frame, (x_nariz, y_nariz), (x_izquierda, y_izquierda), (255, 0, 0), 1)  # Línea a la izquierda
                 d_total_lados = d_nariz_derecha + d_nariz_izquierda
                 # Calcular el porcentaje de la nariz respecto a los extremos
                 if d_total_lados > 0:
@@ -557,10 +599,47 @@ def visualizar():
                             ultimo_dedo[4] = "None"
                             print("Meñique cerrado")
                             enviar_comando_esp32(5514)
-
                         
+                        # IMITAR MUÑECA DE LA MANO
+                        # para mano derecha invertir el codigo 
+                        punta_pulgar = pulgar_coordenadas[2]
+                        punta_pinky = punta_coordenadas[3]
 
-
+                        if (result.face_landmarks is not None):
+                            punta_nariz = [result.face_landmarks.landmark[4]]
+                            punta_nariz = [punta_nariz[0].x * width, punta_nariz[0].y * height]
+                            print("nariz encontrada", punta_nariz)
+                            print(punta_pulgar," <-> " , punta_pinky)
+                            distancia_pulgar_nariz = np.linalg.norm(np.array(punta_pulgar) - np.array(punta_nariz))
+                            distancia_pinky_nariz = np.linalg.norm(np.array(punta_pinky) - np.array(punta_nariz))
+                            
+                            if distancia_pulgar_nariz < distancia_pinky_nariz and (estado_muneca != "palma" or estado_muneca is None):
+                                # print("Mostrar palma")
+                                estado_muneca = "palma"
+                                # enviar_comando_esp32(5001)
+                            elif distancia_pulgar_nariz > distancia_pinky_nariz and (estado_muneca != "dorso" or estado_muneca is None):
+                                # print("Mostrar dorso")
+                                estado_muneca = "dorso"
+                                # enviar_comando_esp32(5000)
+                            # Suavizado de la muñeca
+                            global media_estado_muneca
+                            if media_estado_muneca is None or not isinstance(media_estado_muneca, list):
+                                media_estado_muneca = []
+                            media_estado_muneca.append(estado_muneca)
+                            if len(media_estado_muneca) > 5:
+                                media_estado_muneca.pop(0)
+                            if len(media_estado_muneca) == 5 and all(m == media_estado_muneca[0] for m in media_estado_muneca):
+                                estado_muneca_oficial = media_estado_muneca[0]
+                                if not hasattr(visualizar, "ultimo_estado_muneca_oficial") or visualizar.ultimo_estado_muneca_oficial != estado_muneca_oficial:
+                                    print("Muñeca oficial:", estado_muneca_oficial)
+                                    if estado_muneca_oficial == "palma":
+                                        enviar_comando_esp32(5001)
+                                    elif estado_muneca_oficial == "dorso":
+                                        enviar_comando_esp32(5000)
+                                    visualizar.ultimo_estado_muneca_oficial = estado_muneca_oficial
+                        else:
+                            punta_nariz = None
+                            print("nariz no encontrada, no se puede mover muñeca")
 
 
             if pintar:
@@ -621,15 +700,17 @@ def palma_centroCoordenadas(palma):
     return centroCoordenadas
 
 def apagar():
-    global cap
+    global cap, camera
     if cap is not None:
         cap.release()
         cap = None
         labelVideo.configure(image=None)
         labelVideo.image = None
         print("Cámara apagada.")
+        camera = False
     else:
         print("La cámara ya está apagada.")
+        camera = False
 cap= None
 
 
@@ -637,9 +718,11 @@ cap= None
 
 # Respuestas con voz 
 
-import os
 
-TOKEN = os.getenv("groqToken")
+# Carga las variables de entorno del archivo .env
+load_dotenv()
+
+TOKEN =os.getenv("groqToken")
 # TOKEN = ""
 
 if not TOKEN:
@@ -647,8 +730,8 @@ if not TOKEN:
 
 client = Groq(api_key=TOKEN)
 microfonoIndex = None
-name = "Rubik" 
-name_activo = False #True si "Rubik" está activo
+name = "Rubik"
+dev_mode = False #True si "Rubik" está activo
 comando_activo = False #True si algún comando está activo está activo
 pregunta = False
 hablando = False
@@ -671,13 +754,13 @@ def seleccionar_microfono(combo_microfonos):
         print("No se ha seleccionado ningún dispositivo de audio.")
 
 # Funciones de comandos
-comandosNoReconocidos = ["No entendí el comando, por favor intenta de nuevo", "Comando no reconocido, por favor intenta de nuevo", "No logré entender el comando. por favor, inténtalo de nuevo", "No pude reconocer el comando, por favor repite lo nuevamente", "Lo siento, no entendí el comando, por favor intenta de nuevo", "No comprendí el comando, o quizas no lo dijiste bien, o quizás hay mucho ruido, o quizás no lo conozco, así que activaré el modo de autodestrucción, es broma, no te preocupes, solo intenta de nuevo con otro comando"]
 comandosNoReconocidos_contador = 0
 MicrofonoCalibrado = False
+name_activo = False
 import random
 def grabar_audio_hilo():
     global pregunta
-    global name, name_activo
+    global name, dev_mode, name_activo
     global microfonoIndex, MicrofonoCalibrado, hablando
     global seguir_vision, imitar_vision
     global comandosNoReconocidos_contador
@@ -703,7 +786,6 @@ def grabar_audio_hilo():
         minutos = ahora.strftime("%M")
         am_pm = ahora.strftime("%p").lower()  # am o pm en minúsculas
         texto_hora = f"Tengo información de que son las {hora}:{minutos} {am_pm}"
-        print("diciendo la hora")
         ejecutar_voz(texto_hora)
 
     def reconocer_audio_google(recognizer, audio):
@@ -756,7 +838,7 @@ def grabar_audio_hilo():
                 elif error == "desconocido":
                     print ("No se pudo entender el audio en modo online")
                 elif error == "otro":
-                    ejecutar_voz("Ocurrió un error inesperado con el reconocimiento de Google.")
+                    ejecutar_voz("Ocurrió un error inesperado con el reconocimiento de voz.")
             if not modo_online:
                 texto, error = reconocer_audio_sphinx(recognizer, audio)
                 if error == "desconocido":
@@ -766,13 +848,15 @@ def grabar_audio_hilo():
             if texto:
                 print("Texto transcrito:", texto)
                 # Comando de voz para asistente
-                if ("rubik" in texto.lower() or "rubi" in texto.lower() or "ruvi" in texto.lower() or "rubí" in texto.lower() or "ruby" in texto.lower()) and name_activo is False:
-                    print("Nombre detectado:", name)
-                    name_activo = True
-                    ejecutar_voz("Hola, soy Rubik, ¿en qué puedo ayudarte?")
-                elif name_activo:
+                comandos_obtenidos = extraer_comandos(texto.lower())
+                print("Comandos detectados:", comandos_obtenidos)
 
-                    if "conectar a internet" in texto.lower():
+                if dev_mode or ("nombre" in comandos_obtenidos) or name_activo:
+                    if ("hola" in comandos_obtenidos and "nombre" in comandos_obtenidos):
+                        print("Nombre detectado:", name)
+                        name_activo = True
+                        ejecutar_voz(respuestas_comando("hola"))
+                    if "conectar" in comandos_obtenidos and "internet" in comandos_obtenidos:
                         ejecutar_voz("Intentando conectar a internet...")
                         if hay_internet():
                             ejecutar_voz("Conexión a internet restablecida. Volveré a usar el reconocimiento en línea.")
@@ -780,9 +864,8 @@ def grabar_audio_hilo():
                             ejecutar_voz("No fue posible conectar a internet. Seguiré en modo sin conexión.")
 
                     elif modo_online and pregunta is True:
-                        ejecutar_voz("Déjame pensar un momento")
                         respuesta = client.chat.completions.create(
-                            model="llama3-8b-8192",
+                            model="llama-3.1-8b-instant", ## consultar obsolecencia del modelo en https://console.groq.com/docs/deprecations
                             messages=[
                                 {"role": "system", "content": "Eres un robot llamado Rubik, eres un robot humanoide, desarrollado en la Universidad Valle del Momboy, en Venezuela, por estudiantes y profesores de ingeniería en computación, estas hecho con una Raspberry pi 5, Programado principalmente en el lenguaje de python, Usas visión artificial de mediapipe holistic para reconocer y imitar algunos movimientos, Usas reconocimiento de voz de Google y usas Llama para la generación de lenguaje (texto), utiliza un microcontrolador ESP32. Tu objetivo es ayudar a los estudiantes a resolver sus dudas y preguntas. Eres un robot en desarrollo, por lo que aún no cuentas con piernas, cuentas con brazos donde usas servomotores, una cabeza donde cuentas con una cámara un micrófono, servomotores y un parlante; y un torso rígido donde almacenas tu componente principal raspberry pi, la cabeza, los brazos y el torso están impresos con una impresora 3D de la universidad, Tus respuestas serán procesadas de texto a voz por pyttsx3, por lo cual también ten en cuenta que no debes dar código o usar anotaciones ya que no suenan bien en voz. Ademas debes limitar o resumir tus respuestas a un máximo de 5 oraciones, si la respuesta es muy larga, debes resumirla. Eres un robot amigable y servicial, pero aún en desarrollo, no tienes opiniones religiosas ni políticas, por lo que no puedes hacer todo lo que un humano puede hacer, pero puedes aprender de tus errores y mejorar con el tiempo."},
                                 {"role": "user", "content": texto}
@@ -797,77 +880,77 @@ def grabar_audio_hilo():
                         ejecutar_voz("No hay conexión a internet, no puedo responder preguntas a la IA. Por favor, conecta a internet para usar esta función.")
                         pregunta = False
 
-                    elif "hora" in texto.lower() or "ora" in texto.lower():
+                    elif "hora" in comandos_obtenidos:
                         comando_hora()
-                    elif "gracias" in texto.lower() or "gracia" in texto.lower():
-                        ejecutar_voz("De nada, humano, estoy aquí para ayudarte")
+                    elif "gracias" in comandos_obtenidos:
+                        ejecutar_voz(respuestas_comando("gracias"))
                         pregunta = False
-                    elif "pregunta" in texto.lower() or "preguntar" in texto.lower():
+                    elif "pregunta" in comandos_obtenidos:
                         if modo_online:
                             pregunta = True
-                            ejecutar_voz("¿Qué deseas saber?")
-                            print("pregunta "+ texto)
+                            ejecutar_voz(respuestas_comando("pregunta"))
                         else:
-                            ejecutar_voz("No hay conexión a internet, no puedo activar el modo de preguntas a la IA.")
-
-                    elif (not ("desactivar" in texto.lower() or "desactiva" in texto.lower())) and ("seguir" in texto.lower() or "sigueme" in texto.lower() or "sigame" in texto.lower() or "sígueme" in texto.lower() or "sígame" in texto.lower() or "sígueme" in texto.lower()or "sigueme" in texto.lower()):
+                            ejecutar_voz("Necesito acceso a internet para responder preguntas complejas, lo siento")
+                    elif (not "desactivar" in comandos_obtenidos) and ("seguir" in comandos_obtenidos):
                         imitar_vision = None  # Desactiva la imitación de visión al activar el seguimiento
-                        if "mano izquierda" in texto.lower() or "izquierda mano" in texto.lower():
+                        if "mano" in comandos_obtenidos and "izquierda" in comandos_obtenidos:
                             seguir_vision = "Mano izquierda"
-                        elif "mano derecha" in texto.lower() or "derecha mano" in texto.lower():
+                        elif "mano" in comandos_obtenidos and "derecha" in comandos_obtenidos:
                             seguir_vision = "Mano derecha"
-                        elif "mano" in texto.lower() or "manos" in texto.lower():
+                        elif "mano" in comandos_obtenidos:
                             seguir_vision = "Mano"
-                        elif "cara" in texto.lower() or "rostro" in texto.lower() or "cabeza" in texto.lower():
+                        elif "cara" in comandos_obtenidos:
                             seguir_vision = "Cara"
-                        elif "cuerpo" in texto.lower() or "torso" in texto.lower():
+                        elif "cuerpo" in comandos_obtenidos:
                             seguir_vision = "Cuerpo"
                         else:
                             seguir_vision = "Cara"  # Valor predeterminado
-                        ejecutar_voz(f"Siguiendo {seguir_vision.lower()}.")
+                        ejecutar_voz(respuestas_comando("seguir") + "la " + seguir_vision.lower() if seguir_vision != "Cuerpo" else respuestas_comando("seguir") + "el "+ seguir_vision.lower())
 
-                    elif "chao" in texto.lower() or "adiós" in texto.lower() or "hasta luego" in texto.lower():
-                        name_activo = False
+                    elif "chao" in comandos_obtenidos:
+                        dev_mode = False
                         seguir_vision = None
+                        name_activo = False
                         imitar_vision = None
-                        ejecutar_voz("Chao, feliz día humano")
+                        ejecutar_voz(respuestas_comando("chao"))
 
-                    elif "calibrar" in texto.lower():
-                        ejecutar_voz("Calibrando el micrófono, guarda silencio")
+                    elif "calibrar" in comandos_obtenidos:
+                        ejecutar_voz(respuestas_comando("calibrar"))
                         MicrofonoCalibrado = False
 
-                    elif (not ("desactivar" in texto.lower() or "desactiva" in texto.lower())) and ("imitar" in texto.lower() or "imitame" in texto.lower() or "imítame" in texto.lower()):
-                        if "mano izquierda" in texto.lower() or "izquierda mano" in texto.lower():
+                    elif (not "desactivar" in comandos_obtenidos) and ("imitar" in comandos_obtenidos):
+                        if "mano" in comandos_obtenidos and "izquierda" in comandos_obtenidos:
                             seguir_vision = None  # Desactiva el seguimiento de visión al activar la imitación
                             print("imitar mano izquierda")
                             imitar_vision = "Mano izquierda"
-                        elif "mano derecha" in texto.lower() or "derecha mano" in texto.lower():
+                        elif "mano" in comandos_obtenidos and "derecha" in comandos_obtenidos:
                             seguir_vision = None
                             print("imitar mano derecha")    
                             imitar_vision = "Mano derecha"
-                        elif "mano" in texto.lower() or "manos" in texto.lower():
+                        elif "mano" in comandos_obtenidos:
                             seguir_vision = None
                             print("imitar mano")
                             imitar_vision = "Mano"
-                        elif "cara" in texto.lower() or "rostro" in texto.lower() or "cabeza" in texto.lower():
+                        elif "cara" in comandos_obtenidos:
                             seguir_vision = None  # Desactiva el seguimiento de visión al activar la imitación
                             imitar_vision = "Cara"
-
-                    elif "desactivar" in texto.lower() or "desactiva" in texto.lower():
-                        if "seguir" in texto.lower() or "seguimiento" in texto.lower():
+                        ejecutar_voz(respuestas_comando("imitar"))
+                    elif "modo" in comandos_obtenidos and "desarrollador" in comandos_obtenidos:
+                        dev_mode = True
+                        ejecutar_voz(respuestas_comando("modo desarrollador activado"))
+                    elif "desactivar" in comandos_obtenidos:
+                        if "seguir" in comandos_obtenidos:
                             seguir_vision = None
-                            ejecutar_voz("Dejando de seguir")
-                        elif "imitar" in texto.lower() or "limitar" in texto.lower():
+                            ejecutar_voz(respuestas_comando("dejando de seguir"))
+                        elif "imitar" in comandos_obtenidos:
                             imitar_vision = None
-                            ejecutar_voz("Dejando de imitar")
-                        elif "comando" in texto.lower() or "rubik" in texto.lower():
-                            name_activo = False
-                            ejecutar_voz("Dejaré de escuchar, puedes volver a activarme diciendo mi nombre")
-                        else:
-                            ejecutar_voz("Desactivando comandos")
-                    else:
+                            ejecutar_voz(respuestas_comando("dejando de imitar"))
+                        elif "modo" in comandos_obtenidos and "desarrollador" in comandos_obtenidos:
+                            dev_mode = False
+                            ejecutar_voz(respuestas_comando("modo desarrollador desactivado"))
+                    elif dev_mode:
                         if comandosNoReconocidos_contador <= 3:
-                            ejecutar_voz(comandosNoReconocidos[random.randint(0, len(comandosNoReconocidos)-1)])
+                            ejecutar_voz(respuestas_comando("desconocido"))
                             comandosNoReconocidos_contador += 1
                         else:
                             ejecutar_voz("No entendí el comando, volveré a calibrar el micrófono, dame un momento")

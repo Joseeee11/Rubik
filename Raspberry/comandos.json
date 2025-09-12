@@ -1,5 +1,121 @@
 {
-    "comandos":{
-        
-    }
+    "comandos":[
+        {
+            "comando":"desactivar",
+            "palabras":["apagar", "desactivar", "cerrar", "terminar", "finalizar", "detener", "dejar", "para","parar","deja","desactiva","desactivado"]
+        },
+        {   "comando": "nombre",
+            "palabras":["rubik", "rubi", "ruvi", "rubí", "ruby","rudi","rudic","rudik","rubick","rubli"]
+        },
+        { "comando": "imitar",
+            "palabras": ["imitar", "imita", "espejo"]
+        },
+        { "comando": "seguir",
+            "palabras": ["seguir", "sigue", "persigue","rastrear","sigame","sigueme","sígueme","sígame","sigma","siga"]
+        },
+        { "comando": "chao",
+            "palabras": ["chao", "adiós", "adios", "hasta luego", "nos vemos", "nos vemos luego", "nos vemos pronto", "hasta pronto"]
+        },
+        { "comando": "calibrar",
+            "palabras": ["calibrar", "calibra", "ajustar", "ajusta", "configurar", "configura"]
+        },
+        {
+            "comando": "hola",
+            "palabras": ["hola", "buenos días", "buenas tardes", "buenas noches", "qué tal", "qué hubo", "qué hay", "saludos"]
+        },
+        {
+            "comando": "conectar",
+            "palabras": ["conectar", "enlazar", "conecta","unir","pégate","pegate","pegarse","conectate","conéctate","únete","unete"]
+        },
+        {
+            "comando":"internet",
+            "palabras": ["internet", "conexión", "red", "wifi", "wi-fi"]
+        },
+        {
+            "comando":"hora",
+            "palabras": ["horario", "hora","ora","horas"]
+        },
+        {
+            "comando":"gracias",
+            "palabras": ["gracias", "gracia", "agradecido", "agradezco","muy bien","perfecto"]
+        },
+        {
+            "comando":"pregunta",
+            "palabras": ["pregunta", "preguntar", "pregúntale a la ia","preguntas"]
+        },{
+            "comando":"mano",
+            "palabras": ["mano", "manos", "puño", "puños","palma","palmas","manita","manota","manitas","manotas"]
+        },{
+            "comando":"izquierda",
+            "palabras": ["izquierda", "izquierdo", "izquierdos","left","siniestra","siniestras","siniestrado","siniestrado","siniestrados","siniestradas","zurda","izquierdas"]
+        },{
+            "comando":"derecha",
+            "palabras": ["derecha", "derecho", "derechos","right","diestra","diestras","diestrado","diestrado","diestrados","diestradas","derechas"]
+        },{
+            "comando":"cuerpo",
+            "palabras": ["cuerpo", "torso", "tronco","pecho","abdomen","espalda","cuerpos","torsos","troncos","pechos","abdomens","espaldas"]
+        },{
+            "comando":"cara",
+            "palabras": ["cara", "rostro", "faz","cabeza","nariz","carita","face","carota","caras","rostros","cabezas"]
+        },{
+            "comando":"modo",
+            "palabras": ["modo", "modos", "configuración", "configurar","configurate", "configura"]
+        },{
+            "comando":"desarrollo",
+            "palabras": ["desarrollo", "desarrollar", "programación", "programar",      "siempre activo","siempre escucha"]
+        }
+    ],
+    "Respuestas":[
+        {
+            "responder":"hola",
+            "respuesta":["Hola, ¿cómo puedo ayudarte?", "¡Hola! ¿Qué necesitas?","Hola, soy Rubik, ¿en qué puedo ayudarte?","Qué tal, ¿cómo puedo asistirte?"],
+            "pesos":false
+        },
+        {
+            "responder":"imitar",
+            "respuesta":["Imitando", "soy tu espejito"],
+            "pesos":[95, 5]
+        },
+        {
+            "responder":"seguir",
+            "respuesta":["Siguiendo ","te sigo "],
+            "pesos":false
+        },{
+            "responder": "desconocido",
+            "respuesta": ["No entendí el comando, por favor intenta de nuevo", "Comando no reconocido, por favor intenta de nuevo", "No logré entender el comando. por favor, inténtalo de nuevo", "No pude reconocer el comando, por favor repite lo nuevamente", "Lo siento, no entendí el comando, por favor intenta de nuevo", "No comprendí el comando, o quizas no lo dijiste bien, o quizás hay mucho ruido, o quizás no lo conozco, así que activaré el modo de autodestrucción, es broma, no te preocupes, solo intenta de nuevo con otro comando"],
+            "pesos": [18,18,18,18,18,10]
+        },{
+            "responder": "chao",
+            "respuesta": ["¡Hasta luego!", "Adiós, feliz día", "Nos vemos pronto", "Chao, hasta pronto humano", "Chao, feliz día humano"],
+            "pesos": [35,30,20,10,5]
+        },{
+            "responder": "calibrar",
+            "respuesta": ["Calibrando el micrófono, guarda silencio por favor", "Por favor, guarda silencio mientras calibro el micrófono", "Se me dificulta escuchar, así que activaré el modo de calibrar, guarda silencio por 10 segundos por favor"],
+            "pesos": [60,30,10]
+        },{
+            "responder": "gracias",
+            "respuesta": ["¡De nada!", "No hay de qué", "Con gusto", "Estoy para ayudarte", "Es un placer ayudarte, humano"],
+            "pesos": [40,30,20,5,5]
+        },{
+            "responder":"pregunta",
+            "respuesta": ["¿Cuál es tu pregunta?", "Estoy aquí para responder tus preguntas, dime", "¿Qué te gustaría saber?", "Pregúntame lo que quieras","¿Cuál es tu pregunta humano?"],
+            "pesos": [40,30,5,20,5]
+        },{
+            "responder": "dejando de seguir",
+            "respuesta": ["Dejando de seguir", "He dejado de seguirte", "Ya no te sigo", "He desactivado el seguimiento","Ya no te sigo, humano"],
+            "pesos": [25,25,25,22,3]
+        },{
+            "responder": "dejando de imitar",
+            "respuesta": ["Dejando de imitar", "He dejado de imitarte", "Ya no te imito", "He desactivado la imitación","Ya no te imito, humano"],
+            "pesos": [25,25,25,22,3]
+        },{
+            "responder": "modo desarrollador desactivado",
+            "respuesta": ["Modo desarrollador desactivado", "Desactivando modo desarrollador", "¡Modo desarrollador fuera!"],
+            "pesos": [40,30,20]
+        },{
+            "responder": "modo desarrollador activado",
+            "respuesta": ["Modo desarrollador activado", "Activando modo desarrollador", "Modo desarrollador en funcionamiento"],
+            "pesos": [40,30,20]
+        }
+    ]
 }
