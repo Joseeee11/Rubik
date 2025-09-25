@@ -193,3 +193,30 @@ def definir_posicion_frontal(angulo, brazo):
         else:
             # print("Posición frontal desconocida")
             return None, None        
+
+def definir_posicion_sagital(angulo, brazo):
+    # brazo_derecho[4] es posición sagital y brazo_derecho[5] es su código para ESP32
+    # rango para brazo derecho eje sagital 4800 a 4999
+    # rango para brazo izquierdo eje sagital 5000 a 5199
+
+
+    if (brazo == "derecho"):
+        angulo_esp = angulo + 4800
+
+
+        if -50 >= angulo:
+            return "izquierda", round(float(angulo_esp))
+        elif -5 >= angulo > -50:
+            return "frente-izquierda", round(float(angulo_esp))
+        elif -5 < angulo <= 45:
+            return "frente", round(float(angulo_esp))
+        elif 45 < angulo <= 75:
+            return "frente-derecha", round(float(angulo_esp))
+        elif 75 < angulo <= 95:
+            return "derecha", round(float(angulo_esp))
+        elif 95 < angulo:
+            return "atras-derecha", round(float(angulo_esp))
+        else:
+            print("Posición sagital desconocida")
+            return None, None
+        

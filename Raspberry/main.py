@@ -141,8 +141,10 @@ media_estado_muneca_izquierda = None # Variable para almacenar la media de la mu
 brazo_derecho = [None, None, None, None, None, None, None, None] # posición flexión, angulo_codigo flexión, posición frontal, angulo_codigo frontal, posición sagital, angulo_codigo sagital, posición rotación, angulo_codigo rotación
 brazo_izquierdo = [None, None, None, None, None, None, None, None] # posición flexión, angulo_codigo flexión, posición frontal, angulo_codigo frontal, posición sagital, angulo_codigo sagital, posición rotación, angulo_codigo rotación
 grupo_angulo_frontal_d = []
+grupo_angulo_sagital_d = []
 grupo_angulo_flexion_d = []
 grupo_angulo_frontal_i = []
+grupo_angulo_sagital_i = []
 grupo_angulo_flexion_i = []
 
 
@@ -155,8 +157,8 @@ def visualizar():
     global palma_puntos, pulgar_puntos, punta_puntos, base_puntos
     global ultimo_dedo_derecha, estado_muneca_derecha, media_estado_muneca_derecha, mano_imitar_derecha
     global ultimo_dedo_izquierda, estado_muneca_izquierda, media_estado_muneca_izquierda, mano_imitar_izquierda
-    global brazo_derecho, grupo_angulo_frontal_d, grupo_angulo_flexion_d
-    global brazo_izquierdo, grupo_angulo_frontal_i, grupo_angulo_flexion_i
+    global brazo_derecho, grupo_angulo_frontal_d, grupo_angulo_flexion_d, grupo_angulo_sagital_d
+    global brazo_izquierdo, grupo_angulo_frontal_i, grupo_angulo_flexion_i, grupo_angulo_sagital_i
     # Lee un fotograma de la cámara
     if cap is not None:
         ret, frame = cap.read()
@@ -905,9 +907,25 @@ def visualizar():
                     grupo_angulo_frontal_d.append(angulo_frontal_d)
                 if len(grupo_angulo_frontal_d) > 5:
                     media_angulo_frontal_d = sum(grupo_angulo_frontal_d) / len(grupo_angulo_frontal_d)
-                    # Segun el angulo defino la posicion
+                        # Segun el angulo defino la posicion
                     brazo_derecho[2], brazo_derecho[3] = definir_posicion_frontal(media_angulo_frontal_d, "derecho")
                     grupo_angulo_frontal_d = []
+
+                #PLANO SAGITAL DE HOMBRO DERECHO
+                    # Calculo de proyecciones escalares en el plano SAGITAL
+                componente_frontal_d_s = np.dot(v_brazo_d, v_frontal_fuera_d)
+                componente_sagital_d_s = np.dot(v_brazo_d, v_sagital_delante_d)
+                    # Calculo el angulo del plano SAGITAL
+                angulo_sagital_d = calcular_angulo_brazos(componente_frontal_d_s, componente_sagital_d_s)
+                if angulo_sagital_d is not None and len(grupo_angulo_sagital_d) <= 5:
+                    grupo_angulo_sagital_d.append(angulo_sagital_d)
+                if len(grupo_angulo_sagital_d) > 5:
+                    media_angulo_sagital_d = sum(grupo_angulo_sagital_d) / len(grupo_angulo_sagital_d)
+                        # Segun el angulo defino la posicion
+                    # brazo_derecho[4], brazo_derecho[5] = definir_posicion_sagital(media_angulo_sagital_d, "derecho")
+                    grupo_angulo_sagital_d = []
+                
+
 
 
                 #FLEXION DEL BRAZO IZQUIERDO
