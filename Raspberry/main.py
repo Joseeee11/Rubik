@@ -23,7 +23,7 @@ import json
 ## al compilar recordar que se deben incluir los archivos de modelo y los recursos necesarios
 
 ## importar modulos personalizados
-from Clavicula import Calcular_distancia_Punto_a_RectaAB, punto_medio_segmento
+from Clavicula import definir_posicion_frontal, calcular_angulo_brazos, definir_flexion, calcular_angulo_flexion, normalizar_vector, calcular_angulo,Calcular_distancia_Punto_a_RectaAB, punto_medio_segmento
 from esp32 import iniciar_conexion_serial, enviar_esp32, cerrar_serial, listar_seriales
 # para la hora actual quitar si se hace de otra manera
 from datetime import datetime
@@ -110,8 +110,7 @@ palma_puntos=[0,1,2,5,9,13,17]
 pulgar_puntos=[1,2,4]
 punta_puntos=[8,12,16,20]
 base_puntos=[6,10,14,18]
-ultimo_dedo = ["None", "None", "None", "None", "None"]
-estado_muneca = None
+
 
 EjeY = "Centro"
 EjeX = "Centro"
@@ -121,20 +120,43 @@ seguir_vision = None  # Variable para seguir la visión de la cámara
 punto_seguir = None  # Variable para almacenar el punto a seguir
 imitar_vision = None  # Variable para imitar la visión de la cámara
 media_imitar_rostro = None  # Variable para almacenar la media del rostro imitado
-media_estado_muneca = None # Variable para almacenar la media de la muñeca imitada
 media_imitar_boca = None  # Variable para almacenar la media de la boca imitada
 media_imitar_cara_vertical = None  # Variable para almacenar la media de la boca imitada
+
+    # mano
 palma_puntos = [0,1,2,5,9,13,17]
 pulgar_puntos = [1,2,4]
 punta_puntos = [8,12,16,20]
 base_puntos = [6,10,14,18]
+ultimo_dedo_derecha = ["None", "None", "None", "None", "None"]
+mano_imitar_derecha = None
+estado_muneca_derecha = None
+media_estado_muneca_derecha = None # Variable para almacenar la media de la muñeca imitada
+ultimo_dedo_izquierda = ["None", "None", "None", "None", "None"]
+mano_imitar_izquierda = None
+estado_muneca_izquierda = None
+media_estado_muneca_izquierda = None # Variable para almacenar la media de la muñeca imitada
+
+# imitar cuerpo
+brazo_derecho = ["None", "None", "None", "None", "None", "None", "None", "None"] # posición flexión, angulo_codigo flexión, posición frontal, angulo_codigo frontal, posición sagital, angulo_codigo sagital, posición rotación, angulo_codigo rotación
+brazo_izquierdo = ["None", "None", "None", "None", "None", "None", "None", "None"] # posición flexión, angulo_codigo flexión, posición frontal, angulo_codigo frontal, posición sagital, angulo_codigo sagital, posición rotación, angulo_codigo rotación
+grupo_angulo_frontal_d = []
+grupo_angulo_flexion_d = []
+grupo_angulo_frontal_i = []
+grupo_angulo_flexion_i = []
+
+
+
 def visualizar():
     global cap
     global pintar
     global EjeY, EjeX
     global seguir_vision, punto_seguir, imitar_vision
     global palma_puntos, pulgar_puntos, punta_puntos, base_puntos
-    global ultimo_dedo, estado_muneca
+    global ultimo_dedo_derecha, estado_muneca_derecha, media_estado_muneca_derecha, mano_imitar_derecha
+    global ultimo_dedo_izquierda, estado_muneca_izquierda, media_estado_muneca_izquierda, mano_imitar_izquierda
+    global brazo_derecho, grupo_angulo_frontal_d, grupo_angulo_flexion_d
+    global brazo_izquierdo, grupo_angulo_frontal_i, grupo_angulo_flexion_i
     # Lee un fotograma de la cámara
     if cap is not None:
         ret, frame = cap.read()
@@ -476,49 +498,59 @@ def visualizar():
 
                 if (result.left_hand_landmarks is not None or result.right_hand_landmarks is not None):
                     # Obtener las coordenadas de la palma de la mano
-                    palma_coordenadas = []
-                    pulgar_coordenadas = []
-                    punta_coordenadas = []
-                    base_coordenadas = []
+
                     if imitar_vision in ["Mano derecha"]:
                         if result.right_hand_landmarks is not None:
-                            ManoImitar = [result.right_hand_landmarks.landmark[i] for i in range(21)]
+                            mano_imitar_derecha = [result.right_hand_landmarks.landmark[i] for i in range(21)]
+                            mano_imitar_izquierda = None
                         else:
-                            ManoImitar = None
+                            mano_imitar_derecha = None
+                            mano_imitar_izquierda = None
                     elif imitar_vision in ["Mano izquierda"]:
                         if result.left_hand_landmarks is not None:
-                            ManoImitar = [result.left_hand_landmarks.landmark[i] for i in range(21)]
+                            mano_imitar_izquierda = [result.left_hand_landmarks.landmark[i] for i in range(21)]
+                            mano_imitar_derecha = None
                         else:
-                            ManoImitar = None
+                            mano_imitar_izquierda = None
+                            mano_imitar_derecha = None
                     elif imitar_vision in ["Mano"]:
                         if result.left_hand_landmarks is not None and result.right_hand_landmarks is not None:
-                            ManoImitar= [result.right_hand_landmarks.landmark[i] for i in range(21)]
+                            mano_imitar_derecha = [result.right_hand_landmarks.landmark[i] for i in range(21)]
+                            mano_imitar_izquierda = [result.left_hand_landmarks.landmark[i] for i in range(21)]
                         elif result.left_hand_landmarks is not None:
-                            ManoImitar = [result.left_hand_landmarks.landmark[i] for i in range(21)]
+                            mano_imitar_izquierda = [result.left_hand_landmarks.landmark[i] for i in range(21)]
+                            mano_imitar_derecha = None
                         elif result.right_hand_landmarks is not None:
-                            ManoImitar = [result.right_hand_landmarks.landmark[i] for i in range(21)]
+                            mano_imitar_derecha = [result.right_hand_landmarks.landmark[i] for i in range(21)]
+                            mano_imitar_izquierda = None
                         else:
-                            ManoImitar = None
+                            mano_imitar_derecha = None
+                            mano_imitar_izquierda = None
 
-                    if ManoImitar is not None:
+                    if mano_imitar_derecha is not None:
+                        palma_coordenadas = []
+                        pulgar_coordenadas = []
+                        punta_coordenadas = []
+                        base_coordenadas = []
+
                         for i in pulgar_puntos:
-                            x = int(ManoImitar[i].x * width)
-                            y = int(ManoImitar[i].y * height)
+                            x = int(mano_imitar_derecha[i].x * width)
+                            y = int(mano_imitar_derecha[i].y * height)
                             pulgar_coordenadas.append([x, y])
 
                         for i in punta_puntos:
-                            x = int(ManoImitar[i].x * width)
-                            y = int(ManoImitar[i].y * height)
+                            x = int(mano_imitar_derecha[i].x * width)
+                            y = int(mano_imitar_derecha[i].y * height)
                             punta_coordenadas.append([x, y])
 
                         for i in base_puntos:
-                            x = int(ManoImitar[i].x * width)
-                            y = int(ManoImitar[i].y * height)
+                            x = int(mano_imitar_derecha[i].x * width)
+                            y = int(mano_imitar_derecha[i].y * height)
                             base_coordenadas.append([x, y])
                         
                         for i in palma_puntos:
-                            x = int(ManoImitar[i].x * width)
-                            y = int(ManoImitar[i].y * height)
+                            x = int(mano_imitar_derecha[i].x * width)
+                            y = int(mano_imitar_derecha[i].y * height)
                             palma_coordenadas.append([x, y])
                         
                         # Calcular pulgar
@@ -543,7 +575,7 @@ def visualizar():
                         dedo_pulgar = np.array(False)
                         if angulo > 150: 
                             dedo_pulgar = np.array(True)
-                            print("pulgar abierto")
+                            # print("pulgar abierto")
 
                         # Calcular dedos
                         xn, yn = palma_centroCoordenadas(palma_coordenadas)
@@ -556,48 +588,48 @@ def visualizar():
                         diferencia = dis_centro_base - dis_centro_punta 
                         dedosAbiertos = diferencia < 0
                         dedosAbiertos = np.append(dedo_pulgar, dedosAbiertos)
-                        print("Dedos abiertos: ", dedosAbiertos)
+                        print("Dedos abiertos derecha: ", dedosAbiertos)
 
                         #Enviar al ESP32 los dedos abiertos y cerrados 
-                        if dedosAbiertos[0] and ultimo_dedo[0] == "None":  #PULGAR
-                            ultimo_dedo[0] = "Pulgar"
-                            print("Pulgar abierto")
+                        if dedosAbiertos[0] and ultimo_dedo_derecha[0] == "None":  #PULGAR
+                            ultimo_dedo_derecha[0] = "Pulgar"
+                            print("Pulgar derecho abierto")
                             enviar_comando_esp32(5519)
-                        elif dedosAbiertos[0] == False and ultimo_dedo[0] == "Pulgar":
-                            ultimo_dedo[0] = "None"
-                            print("Pulgar cerrado")
+                        elif dedosAbiertos[0] == False and ultimo_dedo_derecha[0] == "Pulgar":
+                            ultimo_dedo_derecha[0] = "None"
+                            print("Pulgar derecho cerrado")
                             enviar_comando_esp32(5518)
-                        if dedosAbiertos[1] and ultimo_dedo[1] == "None": #ÍNDICE
-                            ultimo_dedo[1] = "Indice"
-                            print("Índice abierto")
+                        if dedosAbiertos[1] and ultimo_dedo_derecha[1] == "None": #ÍNDICE
+                            ultimo_dedo_derecha[1] = "Indice"
+                            print("Índice derecho abierto")
                             enviar_comando_esp32(5517)
-                        elif dedosAbiertos[1] == False and ultimo_dedo[1] == "Indice":
-                            ultimo_dedo[1] = "None"
-                            print("Índice cerrado")
+                        elif dedosAbiertos[1] == False and ultimo_dedo_derecha[1] == "Indice":
+                            ultimo_dedo_derecha[1] = "None"
+                            print("Índice derecho cerrado")
                             enviar_comando_esp32(5516)
-                        if dedosAbiertos[2] and ultimo_dedo[2] == "None": #MEDIO
-                            ultimo_dedo[2] = "Medio"
-                            print("Medio abierto")
+                        if dedosAbiertos[2] and ultimo_dedo_derecha[2] == "None": #MEDIO
+                            ultimo_dedo_derecha[2] = "Medio"
+                            print("Medio derecho abierto")
                             enviar_comando_esp32(5511)
-                        elif dedosAbiertos[2] == False and ultimo_dedo[2] == "Medio":
-                            ultimo_dedo[2] = "None"
-                            print("Medio cerrado")
+                        elif dedosAbiertos[2] == False and ultimo_dedo_derecha[2] == "Medio":
+                            ultimo_dedo_derecha[2] = "None"
+                            print("Medio derecho cerrado")
                             enviar_comando_esp32(5510)
-                        if dedosAbiertos[3] and ultimo_dedo[3] == "None": #ANULAR
-                            ultimo_dedo[3] = "Anular"
-                            print("Anular abierto")
+                        if dedosAbiertos[3] and ultimo_dedo_derecha[3] == "None": #ANULAR
+                            ultimo_dedo_derecha[3] = "Anular"
+                            print("Anular derecho abierto")
                             enviar_comando_esp32(5513)
-                        elif dedosAbiertos[3] == False and ultimo_dedo[3] == "Anular":
-                            ultimo_dedo[3] = "None"
-                            print("Anular cerrado")
+                        elif dedosAbiertos[3] == False and ultimo_dedo_derecha[3] == "Anular":
+                            ultimo_dedo_derecha[3] = "None"
+                            print("Anular derecho cerrado")
                             enviar_comando_esp32(5512)
-                        if dedosAbiertos[4] and ultimo_dedo[4] == "None": #MEÑIQUE
-                            ultimo_dedo[4] = "Pinky"
-                            print("Meñique abierto")
+                        if dedosAbiertos[4] and ultimo_dedo_derecha[4] == "None": #MEÑIQUE
+                            ultimo_dedo_derecha[4] = "Pinky"
+                            print("Meñique derecho abierto")
                             enviar_comando_esp32(5515)
-                        elif dedosAbiertos[4] == False and ultimo_dedo[4] == "Pinky":
-                            ultimo_dedo[4] = "None"
-                            print("Meñique cerrado")
+                        elif dedosAbiertos[4] == False and ultimo_dedo_derecha[4] == "Pinky":
+                            ultimo_dedo_derecha[4] = "None"
+                            print("Meñique derecho cerrado")
                             enviar_comando_esp32(5514)
                         
                         # IMITAR MUÑECA DE LA MANO
@@ -609,38 +641,313 @@ def visualizar():
                             punta_nariz = [result.face_landmarks.landmark[4]]
                             punta_nariz = [punta_nariz[0].x * width, punta_nariz[0].y * height]
                             print("nariz encontrada", punta_nariz)
-                            print(punta_pulgar," <-> " , punta_pinky)
+                            # print(punta_pulgar," <-> " , punta_pinky)
                             distancia_pulgar_nariz = np.linalg.norm(np.array(punta_pulgar) - np.array(punta_nariz))
                             distancia_pinky_nariz = np.linalg.norm(np.array(punta_pinky) - np.array(punta_nariz))
                             
-                            if distancia_pulgar_nariz < distancia_pinky_nariz and (estado_muneca != "palma" or estado_muneca is None):
-                                # print("Mostrar palma")
-                                estado_muneca = "palma"
-                                # enviar_comando_esp32(5001)
-                            elif distancia_pulgar_nariz > distancia_pinky_nariz and (estado_muneca != "dorso" or estado_muneca is None):
-                                # print("Mostrar dorso")
-                                estado_muneca = "dorso"
-                                # enviar_comando_esp32(5000)
+                            if distancia_pulgar_nariz < distancia_pinky_nariz and (estado_muneca_derecha != "palma" or estado_muneca_derecha is None):
+                                print("Mostrar palma derecha")
+                                estado_muneca_derecha = "palma"
+                            elif distancia_pulgar_nariz > distancia_pinky_nariz and (estado_muneca_derecha != "dorso" or estado_muneca_derecha is None):
+                                print("Mostrar dorso derecho")
+                                estado_muneca_derecha = "dorso"
+
                             # Suavizado de la muñeca
-                            global media_estado_muneca
-                            if media_estado_muneca is None or not isinstance(media_estado_muneca, list):
-                                media_estado_muneca = []
-                            media_estado_muneca.append(estado_muneca)
-                            if len(media_estado_muneca) > 5:
-                                media_estado_muneca.pop(0)
-                            if len(media_estado_muneca) == 5 and all(m == media_estado_muneca[0] for m in media_estado_muneca):
-                                estado_muneca_oficial = media_estado_muneca[0]
-                                if not hasattr(visualizar, "ultimo_estado_muneca_oficial") or visualizar.ultimo_estado_muneca_oficial != estado_muneca_oficial:
-                                    print("Muñeca oficial:", estado_muneca_oficial)
-                                    if estado_muneca_oficial == "palma":
+                            if media_estado_muneca_derecha is None or not isinstance(media_estado_muneca_derecha, list):
+                                media_estado_muneca_derecha = []
+                            media_estado_muneca_derecha.append(estado_muneca_derecha)
+                            if len(media_estado_muneca_derecha) > 5:
+                                media_estado_muneca_derecha.pop(0)
+                            if len(media_estado_muneca_derecha) == 5 and all(m == media_estado_muneca_derecha[0] for m in media_estado_muneca_derecha):
+                                estado_muneca_derecha_oficial = media_estado_muneca_derecha[0]
+                                if not hasattr(visualizar, "ultimo_estado_muneca_derecha_oficial") or visualizar.ultimo_estado_muneca_derecha_oficial != estado_muneca_derecha_oficial:
+                                    print("Muñeca derecha oficial:", estado_muneca_derecha_oficial)
+                                    if estado_muneca_derecha_oficial == "palma":
                                         enviar_comando_esp32(5001)
-                                    elif estado_muneca_oficial == "dorso":
+                                    elif estado_muneca_derecha_oficial == "dorso":
                                         enviar_comando_esp32(5000)
-                                    visualizar.ultimo_estado_muneca_oficial = estado_muneca_oficial
+                                    visualizar.ultimo_estado_muneca_derecha_oficial = estado_muneca_derecha_oficial
                         else:
                             punta_nariz = None
-                            print("nariz no encontrada, no se puede mover muñeca")
+                            print("nariz no encontrada, no se puede mover muñeca derecha")
 
+                    if mano_imitar_izquierda is not None:
+                        palma_coordenadas = []
+                        pulgar_coordenadas = []
+                        punta_coordenadas = []
+                        base_coordenadas = []
+
+                        for i in pulgar_puntos:
+                            x = int(mano_imitar_izquierda[i].x * width)
+                            y = int(mano_imitar_izquierda[i].y * height)
+                            pulgar_coordenadas.append([x, y])
+
+                        for i in punta_puntos:
+                            x = int(mano_imitar_izquierda[i].x * width)
+                            y = int(mano_imitar_izquierda[i].y * height)
+                            punta_coordenadas.append([x, y])
+
+                        for i in base_puntos:
+                            x = int(mano_imitar_izquierda[i].x * width)
+                            y = int(mano_imitar_izquierda[i].y * height)
+                            base_coordenadas.append([x, y])
+                        
+                        for i in palma_puntos:
+                            x = int(mano_imitar_izquierda[i].x * width)
+                            y = int(mano_imitar_izquierda[i].y * height)
+                            palma_coordenadas.append([x, y])
+                        
+                        # Calcular pulgar
+                        p1 = np.array(pulgar_coordenadas[0])
+                        p2 = np.array(pulgar_coordenadas[1])
+                        p3 = np.array(pulgar_coordenadas[2])
+                        l1 = np.linalg.norm(p2-p3)
+                        l2 = np.linalg.norm(p1-p3)
+                        l3 = np.linalg.norm(p1-p2)
+
+                        centro_palma = palma_centroCoordenadas(palma_coordenadas)
+                        cv2.circle(frame, centro_palma, 5, (0, 255, 0), -1)
+
+                        try:
+                            cos_value = (l1**2 + l3**2 - l2**2) / (2 * l1 * l3)
+                            cos_value = max(-1, min(1, cos_value))  # Ensure value is within [-1, 1]
+                            angulo = math.degrees(math.acos(cos_value))
+                        except ValueError as e:
+                            print(f"Error calculando el angulo: {e}")
+                            angulo = 0  # Default value in case of error
+                            
+                        dedo_pulgar = np.array(False)
+                        if angulo > 150: 
+                            dedo_pulgar = np.array(True)
+                            # print("pulgar abierto")
+
+                        # Calcular dedos
+                        xn, yn = palma_centroCoordenadas(palma_coordenadas)
+                        centro_coordenadas = np.array([xn, yn])
+                        punta_coordenadas = np.array(punta_coordenadas)
+                        base_coordenadas = np.array(base_coordenadas)
+
+                        dis_centro_punta = np.linalg.norm(centro_coordenadas - punta_coordenadas, axis=1)
+                        dis_centro_base = np.linalg.norm(centro_coordenadas - base_coordenadas, axis=1)
+                        diferencia = dis_centro_base - dis_centro_punta 
+                        dedosAbiertos = diferencia < 0
+                        dedosAbiertos = np.append(dedo_pulgar, dedosAbiertos)
+                        print("Dedos abiertos izquierda: ", dedosAbiertos)
+
+                        #Enviar al ESP32 los dedos abiertos y cerrados 
+                        if dedosAbiertos[0] and ultimo_dedo_izquierda[0] == "None":  #PULGAR
+                            ultimo_dedo_izquierda[0] = "Pulgar"
+                            print("Pulgar izquierdo abierto")
+                            enviar_comando_esp32(5521)
+                        elif dedosAbiertos[0] == False and ultimo_dedo_izquierda[0] == "Pulgar":
+                            ultimo_dedo_izquierda[0] = "None"
+                            print("Pulgar izquierdo cerrado")
+                            enviar_comando_esp32(5520)
+                        if dedosAbiertos[1] and ultimo_dedo_izquierda[1] == "None": #ÍNDICE
+                            ultimo_dedo_izquierda[1] = "Indice"
+                            print("Índice izquierdo abierto")
+                            enviar_comando_esp32(5523)
+                        elif dedosAbiertos[1] == False and ultimo_dedo_izquierda[1] == "Indice":
+                            ultimo_dedo_izquierda[1] = "None"
+                            print("Índice izquierdo cerrado")
+                            enviar_comando_esp32(5522)
+                        if dedosAbiertos[2] and ultimo_dedo_izquierda[2] == "None": #MEDIO
+                            ultimo_dedo_izquierda[2] = "Medio"
+                            print("Medio izquierdo abierto")
+                            enviar_comando_esp32(5525)
+                        elif dedosAbiertos[2] == False and ultimo_dedo_izquierda[2] == "Medio":
+                            ultimo_dedo_izquierda[2] = "None"
+                            print("Medio izquierdo cerrado")
+                            enviar_comando_esp32(5524)
+                        if dedosAbiertos[3] and ultimo_dedo_izquierda[3] == "None": #ANULAR
+                            ultimo_dedo_izquierda[3] = "Anular"
+                            print("Anular izquierdo abierto")
+                            enviar_comando_esp32(5527)
+                        elif dedosAbiertos[3] == False and ultimo_dedo_izquierda[3] == "Anular":
+                            ultimo_dedo_izquierda[3] = "None"
+                            print("Anular izquierdo cerrado")
+                            enviar_comando_esp32(5526)
+                        if dedosAbiertos[4] and ultimo_dedo_izquierda[4] == "None": #MEÑIQUE
+                            ultimo_dedo_izquierda[4] = "Pinky"
+                            print("Meñique izquierdo abierto")
+                            enviar_comando_esp32(5529)
+                        elif dedosAbiertos[4] == False and ultimo_dedo_izquierda[4] == "Pinky":
+                            ultimo_dedo_izquierda[4] = "None"
+                            print("Meñique izquierdo cerrado")
+                            enviar_comando_esp32(5528)
+                        
+                        # IMITAR MUÑECA DE LA MANO
+                        # para mano derecha invertir el codigo 
+                        punta_pulgar = pulgar_coordenadas[2]
+                        punta_pinky = punta_coordenadas[3]
+
+                        if (result.face_landmarks is not None):
+                            punta_nariz = [result.face_landmarks.landmark[4]]
+                            punta_nariz = [punta_nariz[0].x * width, punta_nariz[0].y * height]
+                            print("nariz encontrada", punta_nariz)
+                            # print(punta_pulgar," <-> " , punta_pinky)
+                            distancia_pulgar_nariz = np.linalg.norm(np.array(punta_pulgar) - np.array(punta_nariz))
+                            distancia_pinky_nariz = np.linalg.norm(np.array(punta_pinky) - np.array(punta_nariz))
+                            
+                            if distancia_pulgar_nariz < distancia_pinky_nariz and (estado_muneca_izquierda != "palma" or estado_muneca_izquierda is None):
+                                print("Mostrar palma izquierda")
+                                estado_muneca_izquierda = "palma"
+                            elif distancia_pulgar_nariz > distancia_pinky_nariz and (estado_muneca_izquierda != "dorso" or estado_muneca_izquierda is None):
+                                print("Mostrar dorso izquierdo")
+                                estado_muneca_izquierda = "dorso"
+
+                            # Suavizado de la muñeca
+                            if media_estado_muneca_izquierda is None or not isinstance(media_estado_muneca_izquierda, list):
+                                media_estado_muneca_izquierda = []
+                            media_estado_muneca_izquierda.append(estado_muneca_izquierda)
+                            if len(media_estado_muneca_izquierda) > 5:
+                                media_estado_muneca_izquierda.pop(0)
+                            if len(media_estado_muneca_izquierda) == 5 and all(m == media_estado_muneca_izquierda[0] for m in media_estado_muneca_izquierda):
+                                estado_muneca_izquierda_oficial = media_estado_muneca_izquierda[0]
+                                if not hasattr(visualizar, "ultimo_estado_muneca_izquierda_oficial") or visualizar.ultimo_estado_muneca_izquierda_oficial != estado_muneca_izquierda_oficial:
+                                    print("Muñeca izquierda oficial:", estado_muneca_izquierda_oficial)
+                                    if estado_muneca_izquierda_oficial == "palma":
+                                        enviar_comando_esp32(5003)
+                                    elif estado_muneca_izquierda_oficial == "dorso":
+                                        enviar_comando_esp32(5002)
+                                    visualizar.ultimo_estado_muneca_izquierda_oficial = estado_muneca_izquierda_oficial
+                        else:
+                            punta_nariz = None
+                            print("nariz no encontrada, no se puede mover muñeca izquierda") 
+                if(result.pose_landmarks is not None):
+                    # Tener el angulo de muñeca derecha, codo derecho y hombro derecho
+                    # puntos 16, 14, 12
+                    landmarks = result.pose_landmarks.landmark
+                    x_hombro_der = int(landmarks[12].x * width)
+                    y_hombro_der = int(landmarks[12].y * height)
+                    x_codo_der = int(landmarks[14].x * width)
+                    y_codo_der = int(landmarks[14].y * height)
+                    x_muneca_der = int(landmarks[16].x * width)
+                    y_muneca_der = int(landmarks[16].y * height)
+
+                    angulo_muneca_derecha = calcular_angulo((x_hombro_der, y_hombro_der), (x_codo_der, y_codo_der), (x_muneca_der, y_muneca_der))
+                    if angulo_muneca_derecha is not None:
+                        if not hasattr(visualizar, "ultimo_angulo_muneca_derecha") or abs(visualizar.ultimo_angulo_muneca_derecha - angulo_muneca_derecha) > 5:
+                            print(f"Ángulo muñeca derecha: {angulo_muneca_derecha:.2f}")
+                            # Enviar comando al ESP32 según el ángulo de la muñeca derecha
+                            # Escalar a rango 4000-4180
+                            angulo_muneca_derecha_esp32 = int((angulo_muneca_derecha / 180) * 180) + 4000 # el * 180 puede cambiarse
+                            #redondear
+                            angulo_muneca_derecha_esp32 = round(angulo_muneca_derecha_esp32)
+                            print(angulo_muneca_derecha_esp32)
+                            enviar_comando_esp32(angulo_muneca_derecha_esp32)
+                            visualizar.ultimo_angulo_muneca_derecha = angulo_muneca_derecha
+
+            if imitar_vision in ["Cuerpo"] and result.pose_world_landmarks is not None:
+                puntos_cuerpo = result.pose_world_landmarks.landmark
+                # coordenas x,y,z de cada parte del cuerpo
+                punto_hombro_d = np.array([puntos_cuerpo[12].x, puntos_cuerpo[12].y, puntos_cuerpo[12].z])
+                punto_hombro_i = np.array([puntos_cuerpo[11].x, puntos_cuerpo[11].y, puntos_cuerpo[11].z])
+                punto_codo_d = np.array([puntos_cuerpo[14].x, puntos_cuerpo[14].y, puntos_cuerpo[14].z])
+                punto_codo_i = np.array([puntos_cuerpo[13].x, puntos_cuerpo[13].y, puntos_cuerpo[13].z])
+                punto_cadera_d = np.array([puntos_cuerpo[24].x, puntos_cuerpo[24].y, puntos_cuerpo[24].z])
+                punto_cadera_i = np.array([puntos_cuerpo[23].x, puntos_cuerpo[23].y, puntos_cuerpo[23].z])
+                punto_muneca_d = np.array([puntos_cuerpo[16].x, puntos_cuerpo[16].y, puntos_cuerpo[16].z])
+                punto_muneca_i = np.array([puntos_cuerpo[15].x, puntos_cuerpo[15].y, puntos_cuerpo[15].z])
+
+                # Defino los vectores necesarios HOMBRO DERECHO
+                    # vector móvil (brazo)
+                v_brazo_d = normalizar_vector(punto_codo_d - punto_hombro_d)
+                    # plano vertical
+                v_vertical_abajo_d = normalizar_vector(punto_cadera_d - punto_hombro_d)
+                    # plano frontal
+                v_frontal_dentro_d = normalizar_vector(punto_hombro_i - punto_hombro_d)
+                    # plano sagital
+                v_sagital_delante_d = normalizar_vector(np.cross(v_vertical_abajo_d, v_frontal_dentro_d))
+                v_sagital_atras_d = normalizar_vector(np.cross(v_frontal_dentro_d, v_vertical_abajo_d))
+                    # plano frontal
+                v_frontal_fuera_d = normalizar_vector(np.cross(v_vertical_abajo_d, v_sagital_delante_d))
+                    # plano vertical
+                v_vertical_arriba_d = normalizar_vector(np.cross(v_frontal_fuera_d, v_sagital_delante_d))
+
+                # Defino los vectores necesarios HOMBRO IZQUIERDO
+                    # vector móvil (brazo)
+                v_brazo_i = normalizar_vector(punto_codo_i - punto_hombro_i)
+                    # plano vertical
+                v_vertical_abajo_i = normalizar_vector(punto_cadera_i - punto_hombro_i)
+                    # plano frontal
+                v_frontal_dentro_i = normalizar_vector(punto_hombro_d - punto_hombro_i)
+                    # plano sagital
+                v_sagital_delante_i = normalizar_vector(np.cross(v_vertical_abajo_i, v_frontal_dentro_i))
+                v_sagital_atras_i = normalizar_vector(np.cross(v_frontal_dentro_i, v_vertical_abajo_i))
+                    # plano frontal
+                v_frontal_fuera_i = normalizar_vector(np.cross(v_vertical_abajo_i, v_sagital_delante_i))
+                    # plano vertical
+                v_vertical_arriba_i = normalizar_vector(np.cross(v_frontal_fuera_i, v_sagital_delante_i)) 
+
+
+                #FLEXION DEL BRAZO DERECHO
+                    # Defino los vectores necesarios para FLEXIÓN
+                v_antebrazo_d = normalizar_vector(punto_muneca_d - punto_codo_d)
+                v_brazo_d = normalizar_vector(punto_codo_d - punto_hombro_d)
+                    # Calculo el angulo de flexion 0 = extendido, 180 = flexionado
+                angulo_flexion_d = calcular_angulo_flexion(v_brazo_d, v_antebrazo_d)
+                if angulo_flexion_d is not None and len(grupo_angulo_flexion_d) <= 8:
+                    grupo_angulo_flexion_d.append(angulo_flexion_d)
+                if len(grupo_angulo_flexion_d) > 8:
+                    media_angulo_flexion_d = sum(grupo_angulo_flexion_d) / len(grupo_angulo_flexion_d)
+                    grupo_angulo_flexion_d = []
+                    # print(f"Ángulo de flexión del codo derecho: {media_angulo_flexion_d:.2f} grados")
+                    # Segun el angulo defino la posicion
+                    brazo_derecho[0], brazo_derecho[1] = definir_flexion(media_angulo_flexion_d, "derecho")
+
+                #PLANO FRONTAL DE HOMBRO DERECHO
+                    # Calculo de proyecciones escalares en el plano FRONTAL
+                componente_vertical_d_f = np.dot(v_brazo_d, v_vertical_arriba_d)
+                componente_frontal_d_f =np.dot(v_brazo_d, v_frontal_fuera_d)
+                    # Calculo el angulo del plano FRONTAL
+                angulo_frontal_d = calcular_angulo_brazos(componente_vertical_d_f, componente_frontal_d_f)
+                if angulo_frontal_d is not None and len(grupo_angulo_frontal_d) <= 5:
+                    grupo_angulo_frontal_d.append(angulo_frontal_d)
+                if len(grupo_angulo_frontal_d) > 5:
+                    media_angulo_frontal_d = sum(grupo_angulo_frontal_d) / len(grupo_angulo_frontal_d)
+                    print(f"Ángulo frontal derecho: {media_angulo_frontal_d:.2f} grados")
+                    # Segun el angulo defino la posicion
+                    brazo_derecho[2], brazo_derecho[3] = definir_posicion_frontal(media_angulo_frontal_d, "derecho")
+                    grupo_angulo_frontal_d = []
+
+
+                #FLEXION DEL BRAZO IZQUIERDO
+                    # Defino los vectores necesarios para FLEXIÓN
+                v_antebrazo_i = normalizar_vector(punto_muneca_i - punto_codo_i)
+                v_brazo_i = normalizar_vector(punto_codo_i - punto_hombro_i)
+                    # Calculo el angulo de flexion 0 = extendido, 180 = flexionado
+                angulo_flexion_i = calcular_angulo_flexion(v_brazo_i, v_antebrazo_i)
+                if angulo_flexion_i is not None and len(grupo_angulo_flexion_i) <= 8:
+                    grupo_angulo_flexion_i.append(angulo_flexion_i)
+                if len(grupo_angulo_flexion_i) > 8:
+                    media_angulo_flexion_i = sum(grupo_angulo_flexion_i) / len(grupo_angulo_flexion_i)
+                    grupo_angulo_flexion_i = []
+                    # print(f"Ángulo de flexión del codo derecho: {media_angulo_flexion_d:.2f} grados")
+                    # Segun el angulo defino la posicion
+                    brazo_izquierdo[0], brazo_izquierdo[1] = definir_flexion(media_angulo_flexion_i, "izquierdo")
+
+                # ENVIAR RESULTADOS AL ESP32 DEL BRAZO DERECHO
+                if brazo_derecho[0] != "None" and brazo_derecho[1] != "None" and brazo_derecho[2] != "None" and brazo_derecho[3] != "None":
+                    print("Brazo Derecho: ", brazo_derecho[0], brazo_derecho[1], brazo_derecho[2], brazo_derecho[3])
+                    enviar_comando_esp32(int(brazo_derecho[1]))
+
+                # ENVIAR RESULTADOS AL ESP32 DEL BRAZO IZQUIERDO
+                if brazo_izquierdo[0] != "None" and brazo_izquierdo[1] != "None":
+                    print("Brazo Izquierdo: ", brazo_izquierdo[0], brazo_izquierdo[1])
+                    enviar_comando_esp32(int(brazo_izquierdo[1]))
+                
+                
+
+
+
+
+
+
+
+            
+
+                
 
             if pintar:
                 # drawing.draw_landmarks(
@@ -934,6 +1241,9 @@ def grabar_audio_hilo():
                         elif "cara" in comandos_obtenidos:
                             seguir_vision = None  # Desactiva el seguimiento de visión al activar la imitación
                             imitar_vision = "Cara"
+                        elif "cuerpo" in comandos_obtenidos:
+                            seguir_vision = None  # Desactiva el seguimiento de visión al activar la imitación
+                            imitar_vision = "Cuerpo"
                         ejecutar_voz(respuestas_comando("imitar"))
                     elif "modo" in comandos_obtenidos and "desarrollador" in comandos_obtenidos:
                         dev_mode = True

@@ -58,3 +58,156 @@ def punto_medio_segmento(puntoA, puntoB):
     x_medio = (puntoA[0] + puntoB[0]) / 2
     y_medio = (puntoA[1] + puntoB[1]) / 2
     return (x_medio, y_medio)
+
+def calcular_angulo(puntoA, puntoB, puntoC):
+    """
+    Calcula el ángulo en puntoB formado por los puntos A-B-C.
+    Los puntos deben ser tuplas (x, y).
+    Retorna el ángulo en grados.
+    """
+    # Vectores BA y BC
+    BA = np.array([puntoA[0] - puntoB[0], puntoA[1] - puntoB[1]])
+    BC = np.array([puntoC[0] - puntoB[0], puntoC[1] - puntoB[1]])
+    # Producto punto y norma
+    coseno_angulo = np.dot(BA, BC) / (np.linalg.norm(BA) * np.linalg.norm(BC))
+    # Limitar el valor para evitar errores numéricos
+    coseno_angulo = np.clip(coseno_angulo, -1.0, 1.0)
+    angulo_rad = np.arccos(coseno_angulo)
+    angulo_deg = np.degrees(angulo_rad)
+    return angulo_deg
+
+# Funciones para visualizacion del cuerpo con MediaPipe
+def normalizar_vector(vector):
+    norma = np.linalg.norm(vector)
+    if norma == 0:
+        return vector
+    return vector / norma
+
+def calcular_angulo_brazos(componente1, componente2):
+    if componente1 == 0 and componente2 == 0:
+        return 0
+    # aplicaré la funcion "atan2" arcotangente de dos argumentos
+    angulo_radianes = np.arctan2(componente1, componente2)
+    angulo_grados = np.degrees(angulo_radianes)
+    return angulo_grados
+
+def calcular_angulo_flexion(vector1, vector2):
+    producto_escalar = np.dot(vector1, vector2)
+    magnitud_vector1 = np.linalg.norm(vector1)
+    magnitud_vector2 = np.linalg.norm(vector2)
+    if magnitud_vector1 < 1e-6 or magnitud_vector2 < 1e-6:
+        return 0
+        # print("angulo flexion codo", angulo_mfcd_grados)  #0 extendido, 180 flexionado
+    else:
+        coseno = producto_escalar / (magnitud_vector1 * magnitud_vector2)
+        coseno = np.clip(coseno, -1.0, 1.0)  # Asegurar que el coseno esté en el rango válido
+        angulo_radianes = np.arccos(coseno)
+        angulo_grados = np.degrees(angulo_radianes)
+        return angulo_grados
+
+def definir_flexion(angulo, brazo):
+    # brazo_derecho[0] es posición flexión y brazo_derecho[1] es el ángulo al esp32
+
+    if (brazo == "derecho"):
+        angulo_esp = angulo + 4000
+    if (brazo == "izquierdo"):
+        angulo_esp = angulo + 4200
+
+    if (brazo == "derecho" or brazo == "izquierdo"):
+        if 0 <= angulo < 22:
+            if (brazo == "derecho"):
+                angulo_esp = angulo + 4000
+            if (brazo == "izquierdo"):
+                angulo_esp = angulo + 4200
+            return "extendido", str(round(float(angulo_esp)))
+        elif 22 <= angulo < 60:
+            if (brazo == "derecho"):
+                angulo_esp = angulo + 4000
+            if (brazo == "izquierdo"):
+                angulo_esp = angulo + 4200
+            return "ligeramente-flexionado", str(round(float(angulo_esp)))
+        elif 60 <= angulo <= 90:
+            if (brazo == "derecho"):
+                angulo_esp = angulo + 4000
+            if (brazo == "izquierdo"):
+                angulo_esp = angulo + 4200
+            return "flexionado", str(round(float(angulo_esp)))
+        elif 90 < angulo <= 130:
+            if (brazo == "derecho"):
+                angulo_esp = angulo + 4000
+            if (brazo == "izquierdo"):
+                angulo_esp = angulo + 4200
+            return "muy-flexionado", str(round(float(angulo_esp)))
+        elif angulo > 130:
+            if (brazo == "derecho"):
+                angulo_esp = angulo + 4000
+            if (brazo == "izquierdo"):
+                angulo_esp = angulo + 4200
+            return "completamente-flexionado", str(round(float(angulo_esp)))
+        else:
+            print("Posición de flexión desconocida")
+            return "None", "None"
+
+def definir_posicion_frontal(angulo, brazo):
+    # brazo_dereccho[2] es posición frontal y brazo_derecho[3] es su código para ESP32
+
+    if (brazo == "derecho"):
+        angulo_esp = angulo + 4300
+    if (brazo == "izquierdo"):
+        angulo_esp = angulo + 4400
+
+    if (brazo == "derecho"):
+        if angulo >= 20:
+            angulo = 20
+            angulo_esp = angulo + 4300
+        elif angulo < 0:
+            angulo_esp = angulo - 4300
+
+
+        if -20 < angulo: 
+            # print("Frontal: derecha")
+            return "derecha", str(round(float(angulo_esp)))
+        elif -45 < angulo <= -20:
+            # print("Frontal: derecha-abajo")
+            return "derecha-abajo", str(round(float(angulo_esp)))
+        elif -65 < angulo <= -45:
+            # print("Frontal: abajo-derecha")
+            return "abajo-derecha", str(round(float(angulo_esp)))
+        elif angulo <= -65:
+            # print("Frontal: abajo")
+            return "abajo", str(round(float(angulo_esp)))
+        else:
+            # print("Posición frontal desconocida")
+            return "None", "None"
+        
+        # if 75 < angulo <= 105:
+        #     # print("Frontal: arriba")
+        #     return "arriba", str(round(float(angulo_esp)))
+        # elif 45 < angulo <= 75:
+        #     # print("Frontal: arriba-derecha")
+        #     return "arriba-derecha", str(round(float(angulo_esp)))
+        # elif 20 < angulo <= 45:
+        #     # print("Frontal: derecha-arriba")
+        #     return "derecha-arriba", str(round(float(angulo_esp)))
+        # elif -20 < angulo <= 20:
+        #     # print("Frontal: derecha")
+        #     return "derecha", str(round(float(angulo_esp)))
+        # elif -45 < angulo <= -20:
+        #     # print("Frontal: derecha-abajo")
+        #     return "derecha-abajo", str(round(float(angulo_esp)))
+        # elif -65 < angulo <= -45:
+        #     # print("Frontal: abajo-derecha")
+        #     return "abajo-derecha", str(round(float(angulo_esp)))
+        # elif -105 < angulo <= -65:
+        #     # print("Frontal: abajo")
+        #     return "abajo", str(round(float(angulo_esp)))
+        # elif 105 < angulo:
+        #     # print("Frontal: arriba-izquierda")
+        #     return "arriba-izquierda", str(round(float(angulo_esp)))
+        # elif angulo <= -105:
+        #     # print("Frontal: abajo-izquierda")
+        #     return "abajo-izquierda", str(round(float(angulo_esp)))
+        # else:
+        #     # print("Posición frontal desconocida")
+        #     return "None", "None"
+        

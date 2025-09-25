@@ -1,32 +1,62 @@
 #include "ESP32Servo.h"
+// #include <Adafruit_PWMServoDriver.h>
 
+// PCA
+// Adafruit_PWMServoDriver pca1 = Adafruit_PWMServoDriver(0x40)
+
+// CABEZA
 int ServoMandibulaPin = 21;
 int ServoOjoEjeXPin = 23;
 int ServoOjoEjeYPin = 22;
 int ServoCuelloEjeXPin = 19;
+
+// TORSO
 int ServoCuelloEjeYPin = 18;
-int ServoPulgarPin = 14;
-int ServoIndicePin = 13;
-int ServoMedioPin = 4;
-int ServoAnularPin = 17;
-int ServoMeniquePin = 16;
 int ServoClaviculaIzqPin = 2;
 int ServoClaviculaDerPin = 15;
-int ServoMunecaPin = 27;
+
+// BRAZO DERECHO
+int ServoPulgarDerechoPin = 32;
+int ServoIndiceDerechoPin = 33;
+int ServoMedioDerechoPin = 25;
+int ServoAnularDerechoPin = 26;
+int ServoMeniqueDerechoPin = 27;
+int ServoMunecaDerechoPin = 14;
+int ServoBicepsDerechoPin = 12;
+
+// BRAZO IZQUIERDO
+int ServoPulgarIzquierdoPin = 23;
+int ServoIndiceIzquierdoPin = 22;
+int ServoMedioIzquierdoPin = 21;
+int ServoAnularIzquierdoPin = 19;
+int ServoMeniqueIzquierdoPin = 18;
+int ServoMunecaIzquierdaPin = 17;
+int ServoBicepsIzquierdoPin = 16;
 
 Servo ServoMandibula;
 Servo ServoOjoEjeX;
 Servo ServoOjoEjeY;
 Servo ServoCuelloEjeX;
+
 Servo ServoCuelloEjeY;
-Servo ServoPulgar;
-Servo ServoIndice;
-Servo ServoMedio;
-Servo ServoAnular;
-Servo ServoMenique;
 Servo ServoClaviculaIzq;
 Servo ServoClaviculaDer;
-Servo ServoMuneca;
+
+Servo ServoMunecaDerecho;
+Servo ServoPulgarDerecho;
+Servo ServoIndiceDerecho;
+Servo ServoMedioDerecho;
+Servo ServoAnularDerecho;
+Servo ServoMeniqueDerecho;
+Servo ServoBicepsDerecho;
+
+Servo ServoMunecaIzquierda;
+Servo ServoPulgarIzquierdo;
+Servo ServoIndiceIzquierdo;
+Servo ServoMedioIzquierdo;
+Servo ServoAnularIzquierdo;
+Servo ServoMeniqueIzquierdo;
+Servo ServoBicepsIzquierdo;
 
 int OjoEjeX_Pos = 90;
 int CuelloEjeX_Pos = 90;
@@ -48,29 +78,57 @@ unsigned long cuello_last_update = 0;
 int Mover_cuello_lento_vertical = 0;
 unsigned long cuello_last_update_vertical = 0;
 
-int Dedos_max = 180;
-int Dedos_min = 0;
-int Pulgar_Pos_deseada = 0;
-bool Pulgar_return = false;
-int Pulgar_Pos = 0;
-unsigned long Pulgar_last_update = 0;
-int Indice_Pos_deseada = 0;
-bool Indice_return = false;
-int Indice_Pos = 0;
-unsigned long Indice_last_update = 0;
-int Medio_Pos_deseada = 0;
-bool Medio_return = false;
-int Medio_Pos = 0;
-unsigned long Medio_last_update = 0;
-int Anular_Pos_deseada = 180;
-bool Anular_return = false;
-int Anular_Pos = 180;
-unsigned long Anular_last_update = 0;  int Menique_Pos_deseada = 180;
-bool Menique_return = false;
-int Menique_Pos = 180;
-unsigned long Menique_last_update = 0;
+// DERECHO
+int Pulgar_Der_Pos_deseada = 0;
+bool Pulgar_Der_return = false;
+int Pulgar_Der_Pos = 0;
+unsigned long Pulgar_Der_last_update = 0;
+int Indice_Der_Pos_deseada = 0;
+bool Indice_Der_return = false;
+int Indice_Der_Pos = 0;
+unsigned long Indice_Der_last_update = 0;
+int Medio_Der_Pos_deseada = 0;
+bool Medio_Der_return = false;
+int Medio_Der_Pos = 0;
+unsigned long Medio_Der_last_update = 0;
+int Anular_Der_Pos_deseada = 180;
+bool Anular_Der_return = false;
+int Anular_Der_Pos = 180;
+unsigned long Anular_Der_last_update = 0;  
+int Menique_Der_Pos_deseada = 180;
+bool Menique_Der_return = false;
+int Menique_Der_Pos = 180;
+unsigned long Menique_Der_last_update = 0;
+int Muneca_Der_Pos_deseada = 0;
+bool Muneca_Der_return = false;
+int Muneca_Der_Pos = 0;
+unsigned long Muneca_Der_last_update = 0;
 
-
+// IZQUIERDO
+int Pulgar_Izq_Pos_deseada = 0;
+bool Pulgar_Izq_return = false;
+int Pulgar_Izq_Pos = 180;
+unsigned long Pulgar_Izq_last_update = 0;
+int Indice_Izq_Pos_deseada = 0;
+bool Indice_Izq_return = false;
+int Indice_Izq_Pos = 180;
+unsigned long Indice_Izq_last_update = 0;
+int Medio_Izq_Pos_deseada = 0;
+bool Medio_Izq_return = false;
+int Medio_Izq_Pos = 0;
+unsigned long Medio_Izq_last_update = 0;
+int Anular_Izq_Pos_deseada = 180;
+bool Anular_Izq_return = false;
+int Anular_Izq_Pos = 0;
+unsigned long Anular_Izq_last_update = 0;  
+int Menique_Izq_Pos_deseada = 180;
+bool Menique_Izq_return = false;
+int Menique_Izq_Pos = 0;
+unsigned long Menique_Izq_last_update = 0;
+int Muneca_Izq_Pos_deseada = 0;
+bool Muneca_Izq_return = false;
+int Muneca_Izq_Pos = 180;
+unsigned long Muneca_Izq_last_update = 0;
 
 bool mandibula_activa = false; //para saber cuando esta activa la mandibula
 bool mandibula_cerrar = true; //para saber si está abierta o cerrada
@@ -79,6 +137,9 @@ bool mandibula_cerrar = true; //para saber si está abierta o cerrada
 unsigned long mandibula_last_update = 0;
 int mandibula_estado = 0; // 0: inactiva, 1: abriendo, 2: cerrando
 
+// Variables PCA
+int Muneca_Derecha_Pos = 0;
+
 void setup() {
   Serial.begin(115200);
   ServoMandibula.attach(ServoMandibulaPin);
@@ -86,27 +147,59 @@ void setup() {
   ServoOjoEjeX.attach(ServoOjoEjeXPin);
   ServoCuelloEjeY.attach(ServoCuelloEjeYPin);
   ServoCuelloEjeX.attach(ServoCuelloEjeXPin);
-  ServoPulgar.attach(ServoPulgarPin);
-  ServoIndice.attach(ServoIndicePin);
-  ServoMedio.attach(ServoMedioPin);
-  ServoAnular.attach(ServoAnularPin);
-  ServoMenique.attach(ServoMeniquePin);
+
   ServoClaviculaIzq.attach(ServoClaviculaIzqPin);
   ServoClaviculaDer.attach(ServoClaviculaDerPin);
-  ServoMuneca.attach(ServoMunecaPin);
+  ServoMunecaDerecho.attach(ServoMunecaDerechoPin);
+
+  ServoPulgarDerecho.attach(ServoPulgarDerechoPin);
+  ServoIndiceDerecho.attach(ServoIndiceDerechoPin);
+  ServoMedioDerecho.attach(ServoMedioDerechoPin);
+  ServoAnularDerecho.attach(ServoAnularDerechoPin);
+  ServoMeniqueDerecho.attach(ServoMeniqueDerechoPin);
+  ServoMunecaDerecho.attach(ServoMunecaDerechoPin);
+  ServoBicepsDerecho.attach(ServoBicepsDerechoPin);
+
+  ServoPulgarIzquierdo.attach(ServoPulgarIzquierdoPin);
+  ServoIndiceIzquierdo.attach(ServoIndiceIzquierdoPin);
+  ServoMedioIzquierdo.attach(ServoMedioIzquierdoPin);
+  ServoAnularIzquierdo.attach(ServoAnularIzquierdoPin);
+  ServoMeniqueIzquierdo.attach(ServoMeniqueIzquierdoPin);
+  ServoMunecaIzquierda.attach(ServoMunecaIzquierdaPin);
+  ServoBicepsIzquierdo.attach(ServoBicepsIzquierdoPin);
+
   delay(100);
+
+  ServoPulgarDerecho.write(0);
+  ServoIndiceDerecho.write(0);
+  ServoMedioDerecho.write(0);
+  ServoAnularDerecho.write(180);
+  ServoMeniqueDerecho.write(180);
+  ServoMunecaDerecho.write(0);
+  ServoBicepsDerecho.write(20);
+
+  ServoPulgarIzquierdo.write(180);
+  ServoIndiceIzquierdo.write(180);
+  ServoMedioIzquierdo.write(0);
+  ServoAnularIzquierdo.write(0);
+  ServoMeniqueIzquierdo.write(0);
+  ServoMunecaIzquierda.write(180);
+  ServoBicepsIzquierdo.write(20);
 
   ServoCuelloEjeX.write(90);
   ServoOjoEjeY.write(140);
   ServoOjoEjeX.write(90);
-  ServoPulgar.write(0);
-  ServoIndice.write(0);
-  ServoMedio.write(0);
-  ServoAnular.write(180);
-  ServoMenique.write(180);
-  ServoMuneca.write(0);
+  ServoPulgarDerecho.write(0);
+  ServoIndiceDerecho.write(0);
+  ServoMedioDerecho.write(0);
+  ServoAnularDerecho.write(180);
+  ServoMeniqueDerecho.write(180);
+  ServoMunecaDerecho.write(0);
 
   delay(100);
+
+  // pca1.begin();
+  // pca1.setPWMFreq(50);
 }
 
 void loop() {
@@ -204,155 +297,322 @@ void loop() {
     ServoOjoEjeX.write(OjoEjeX_Pos);
     ServoCuelloEjeX.write(CuelloEjeX_Pos);
 
-        //MUÑECA
+      //MUÑECA DERECHA
     if (codigo == 5001) {
-      ServoMuneca.write(180);  //mostrar dorso
+      // Muneca_Der_Pos_deseada = 180;  //mostrar palma
+      ServoMunecaDerecho.write(180);
     }
     if (codigo == 5000) {
-      ServoMuneca.write(0);  //mostrar palma
+      // Muneca_Der_Pos_deseada = 0;  //mostrar dorso
+      ServoMunecaDerecho.write(0);
     }
 
-        //DEDOS DE LA MANO
+      // MUÑECA IZQUIERDA
+    if (codigo == 5002) {
+      // Muneca_Der_Pos_deseada = 180;  //mostrar dorso
+      ServoMunecaIzquierda.write(180);
+    }
+    if (codigo == 5003) {
+      // Muneca_Der_Pos_deseada = 0;  //mostrar palma
+      ServoMunecaIzquierda.write(0);
+    }
+
+        //DEDOS DE LA MANO DERECHA
     if (codigo == 5510) { //  Numeros par cierra 
-      Medio_Pos_deseada = 180;
+      Medio_Der_Pos_deseada = 180;
     }
     if (codigo == 5511) { //  Numeros impar abre
-      Medio_Pos_deseada = 0;
+      Medio_Der_Pos_deseada = 0;
     } 
     if (codigo == 5512) {
-      Anular_Pos_deseada = 0;
+      Anular_Der_Pos_deseada = 0;
     } 
     if (codigo == 5513) {
-      Anular_Pos_deseada = 180;
+      Anular_Der_Pos_deseada = 180;
     } 
     if (codigo == 5514) {
-      Menique_Pos_deseada = 0;
+      Menique_Der_Pos_deseada = 0;
     } 
     if (codigo == 5515) {
-      Menique_Pos_deseada = 180;
+      Menique_Der_Pos_deseada = 180;
     } 
     if (codigo == 5516) {
-      Indice_Pos_deseada = 180;
+      Indice_Der_Pos_deseada = 180;
     } 
     if (codigo == 5517) {
-      Indice_Pos_deseada = 0;
+      Indice_Der_Pos_deseada = 0;
     } 
     if (codigo == 5518) {
-      Pulgar_Pos_deseada = 180;
+      Pulgar_Der_Pos_deseada = 180;
     } 
     if (codigo == 5519) {
-      Pulgar_Pos_deseada = 0;
+      Pulgar_Der_Pos_deseada = 0;
+    }
+
+        //DEDOS DE LA MANO izquierda
+    if (codigo == 5524) { //  Numeros par cierra 
+      Medio_Izq_Pos_deseada = 140;
+    }
+    if (codigo == 5525) { //  Numeros impar abre
+      Medio_Izq_Pos_deseada = 0;
+    } 
+    if (codigo == 5526) {
+      Anular_Izq_Pos_deseada = 130;
+    } 
+    if (codigo == 5527) {
+      Anular_Izq_Pos_deseada = 0;
+    } 
+    if (codigo == 5528) {
+      Menique_Izq_Pos_deseada = 130;
+    } 
+    if (codigo == 5529) {
+      Menique_Izq_Pos_deseada = 0;
+    } 
+    if (codigo == 5522) {
+      Indice_Izq_Pos_deseada = 30;
+    } 
+    if (codigo == 5523) {
+      Indice_Izq_Pos_deseada = 180;
+    } 
+    if (codigo == 5520) {
+      Pulgar_Izq_Pos_deseada = 90;
+    } 
+    if (codigo == 5521) {
+      Pulgar_Izq_Pos_deseada = 180;
+    }
+    if (codigo > 4000 && codigo < 4180) { //  codigo de biceps 
+      // Biceps_Der_Pos_deseada = 20;
+      int grados_biceps_derecho = codigo % 1000; // o usa codigo - 4000
+      grados_biceps_derecho = map(grados_biceps_derecho, 180, 0, 20, 80);
+      ServoBicepsDerecho.write(grados_biceps_derecho);
+    }
+    if (codigo > 4200 && codigo < 4280) { //  codigo de biceps 
+      // Biceps_Der_Pos_deseada = 20;
+      int grados_biceps_izquierdo = codigo - 4200
+      grados_biceps_izquierdo = map(grados_biceps_izquierdo, 180, 0, 20, 80);
+      ServoBicepsIzquierdo.write(grados_biceps_izquierdo);
     }
     delay(10);
   }
 
-  // Regresar 15° (cuando están recogido) los dedos para apagar servomotor y evitar calentamiento
-  if (Pulgar_Pos_deseada == 0){
-    Pulgar_return = false;
-    Pulgar_Pos = 0;
-    ServoPulgar.write(Pulgar_Pos);
-    Pulgar_last_update = millis();
+  if (Pulgar_Der_Pos_deseada == 0){
+    Pulgar_Der_return = false;
+    Pulgar_Der_Pos = 0;
+    ServoPulgarDerecho.write(Pulgar_Der_Pos);
+    Pulgar_Der_last_update = millis();
   }
-  if (Pulgar_Pos_deseada == 180){
+  if (Pulgar_Der_Pos_deseada == 180){
     static unsigned long tiempo_espera_pulgar = 1500;
     unsigned long ahora_pulgar = millis();
-    if((ahora_pulgar - Pulgar_last_update >= tiempo_espera_pulgar)&&!Pulgar_return){
-      Pulgar_return = true;
+    if((ahora_pulgar - Pulgar_Der_last_update >= tiempo_espera_pulgar)&&!Pulgar_Der_return){
+      Pulgar_Der_return = true;
     }
-    if(!Pulgar_return){
-      Pulgar_Pos = 180;
+    if(!Pulgar_Der_return){
+      Pulgar_Der_Pos = 180;
     }else{
-      Pulgar_Pos = 165;
+      Pulgar_Der_Pos = 165;
     }
-    ServoPulgar.write(Pulgar_Pos);
+    ServoPulgarDerecho.write(Pulgar_Der_Pos);
   }
 
   // Indice
 
-  if (Indice_Pos_deseada == 0){
-    Indice_return = false;
-    Indice_Pos = 0;
-    ServoIndice.write(Indice_Pos);
-    Indice_last_update = millis();
+  if (Indice_Der_Pos_deseada == 0){
+    Indice_Der_return = false;
+    Indice_Der_Pos = 0;
+    ServoIndiceDerecho.write(Indice_Der_Pos);
+    Indice_Der_last_update = millis();
   }
-  if (Indice_Pos_deseada == 180){
+  if (Indice_Der_Pos_deseada == 180){
     static unsigned long tiempo_espera_indice = 1500;
     unsigned long ahora_indice = millis();
-    if((ahora_indice - Indice_last_update >= tiempo_espera_indice)&&!Indice_return){
-      Indice_return = true;
+    if((ahora_indice - Indice_Der_last_update >= tiempo_espera_indice)&&!Indice_Der_return){
+      Indice_Der_return = true;
     }
-    if(!Indice_return){
-      Indice_Pos = 180;
+    if(!Indice_Der_return){
+      Indice_Der_Pos = 180;
     }else{
-      Indice_Pos = 165;
+      Indice_Der_Pos = 165;
     }
-    ServoIndice.write(Indice_Pos);
+    ServoIndiceDerecho.write(Indice_Der_Pos);
   }
 
     // Medio
 
-  if (Medio_Pos_deseada == 0){
-    Medio_return = false;
-    Medio_Pos = 0;
-    ServoMedio.write(Medio_Pos);
-    Medio_last_update = millis();
+  if (Medio_Der_Pos_deseada == 0){
+    Medio_Der_return = false;
+    Medio_Der_Pos = 0;
+    ServoMedioDerecho.write(Medio_Der_Pos);
+    Medio_Der_last_update = millis();
   }
-  if (Medio_Pos_deseada == 180){
+  if (Medio_Der_Pos_deseada == 180){
     static unsigned long tiempo_espera_medio = 1500;
     unsigned long ahora_medio = millis();
-    if((ahora_medio - Medio_last_update >= tiempo_espera_medio)&&!Medio_return){
-      Medio_return = true;
+    if((ahora_medio - Medio_Der_last_update >= tiempo_espera_medio)&&!Medio_Der_return){
+      Medio_Der_return = true;
     }
-    if(!Medio_return){
-      Medio_Pos = 180;
+    if(!Medio_Der_return){
+      Medio_Der_Pos = 180;
     }else{
-      Medio_Pos = 165;
+      Medio_Der_Pos = 165;
     }
-    ServoMedio.write(Medio_Pos);
+    ServoMedioDerecho.write(Medio_Der_Pos);
   }
 
     // Anular
  
-  if (Anular_Pos_deseada == 180){
-    Anular_return = false;
-    Anular_Pos = 180;
-    ServoAnular.write(Anular_Pos);
-    Anular_last_update = millis();
+  if (Anular_Der_Pos_deseada == 180){
+    Anular_Der_return = false;
+    Anular_Der_Pos = 180;
+    ServoAnularDerecho.write(Anular_Der_Pos);
+    Anular_Der_last_update = millis();
   }
-  if (Anular_Pos_deseada == 0){
+  if (Anular_Der_Pos_deseada == 0){
     static unsigned long tiempo_espera_anular = 1500;
     unsigned long ahora_anular = millis();
-    if((ahora_anular - Anular_last_update >= tiempo_espera_anular)&&!Anular_return){
-      Anular_return = true;
+    if((ahora_anular - Anular_Der_last_update >= tiempo_espera_anular)&&!Anular_Der_return){
+      Anular_Der_return = true;
     }
-    if(!Anular_return){
-      Anular_Pos = 0;
+    if(!Anular_Der_return){
+      Anular_Der_Pos = 0;
     }else{
-      Anular_Pos = 15;
+      Anular_Der_Pos = 15;
     }
-    ServoAnular.write(Anular_Pos);
+    ServoAnularDerecho.write(Anular_Der_Pos);
   }
 
       // Menique
 
-  if (Menique_Pos_deseada == 180){
-    Menique_return = false;
-    Menique_Pos = 180;
-    ServoMenique.write(Menique_Pos);
-    Menique_last_update = millis();
+  if (Menique_Der_Pos_deseada == 180){
+    Menique_Der_return = false;
+    Menique_Der_Pos = 180;
+    ServoMeniqueDerecho.write(Menique_Der_Pos);
+    Menique_Der_last_update = millis();
   }
-  if (Menique_Pos_deseada == 0){
+  if (Menique_Der_Pos_deseada == 0){
     static unsigned long tiempo_espera_menique = 1500;
     unsigned long ahora_menique = millis();
-    if((ahora_menique - Menique_last_update >= tiempo_espera_menique)&&!Menique_return){
-      Menique_return = true;
+    if((ahora_menique - Menique_Der_last_update >= tiempo_espera_menique)&&!Menique_Der_return){
+      Menique_Der_return = true;
     }
-    if(!Menique_return){
-      Menique_Pos = 0;
+    if(!Menique_Der_return){
+      Menique_Der_Pos = 0;
     }else{
-      Menique_Pos = 15;
+      Menique_Der_Pos = 15;
     }
-    ServoMenique.write(Menique_Pos);
+    ServoMeniqueDerecho.write(Menique_Der_Pos);
+  }
+  
+
+
+
+    // Regresar 15° (cuando están recogido) los dedos para apagar servomotor y evitar calentamiento
+  if (Pulgar_Izq_Pos_deseada == 180){
+    Pulgar_Izq_return = false;
+    Pulgar_Izq_Pos = 180;
+    ServoPulgarIzquierdo.write(Pulgar_Izq_Pos);
+    Pulgar_Izq_last_update = millis();
+  }
+  if (Pulgar_Izq_Pos_deseada == 90){
+    static unsigned long tiempo_espera_pulgar = 1500;
+    unsigned long ahora_pulgar = millis();
+    if((ahora_pulgar - Pulgar_Izq_last_update >= tiempo_espera_pulgar)&&!Pulgar_Izq_return){
+      Pulgar_Izq_return = true;
+    }
+    if(!Pulgar_Izq_return){
+      Pulgar_Izq_Pos = 90;
+    }else{
+      Pulgar_Izq_Pos = 105;
+    }
+    ServoPulgarIzquierdo.write(Pulgar_Izq_Pos);
+  }
+
+  // Indice
+
+  if (Indice_Izq_Pos_deseada == 180){
+    Indice_Izq_return = false;
+    Indice_Izq_Pos = 180;
+    ServoIndiceIzquierdo.write(Indice_Izq_Pos);
+    Indice_Izq_last_update = millis();
+  }
+  if (Indice_Izq_Pos_deseada == 30){
+    static unsigned long tiempo_espera_indice = 1500;
+    unsigned long ahora_indice = millis();
+    if((ahora_indice - Indice_Izq_last_update >= tiempo_espera_indice)&&!Indice_Izq_return){
+      Indice_Izq_return = true;
+    }
+    if(!Indice_Izq_return){
+      Indice_Izq_Pos = 30;
+    }else{
+      Indice_Izq_Pos = 45;
+    }
+    ServoIndiceIzquierdo.write(Indice_Izq_Pos);
+  }
+
+    // Medio
+
+  if (Medio_Izq_Pos_deseada == 0){
+    Medio_Izq_return = false;
+    Medio_Izq_Pos = 0;
+    ServoMedioIzquierdo.write(Medio_Izq_Pos);
+    Medio_Izq_last_update = millis();
+  }
+  if (Medio_Izq_Pos_deseada == 140){
+    static unsigned long tiempo_espera_medio = 1500;
+    unsigned long ahora_medio = millis();
+    if((ahora_medio - Medio_Izq_last_update >= tiempo_espera_medio)&&!Medio_Izq_return){
+      Medio_Izq_return = true;
+    }
+    if(!Medio_Izq_return){
+      Medio_Izq_Pos = 140;
+    }else{
+      Medio_Izq_Pos = 125;
+    }
+    ServoMedioIzquierdo.write(Medio_Izq_Pos);
+  }
+
+    // Anular
+
+  if (Anular_Izq_Pos_deseada == 0){ //abrir
+    Anular_Izq_return = false;
+    Anular_Izq_Pos = 0;
+    ServoAnularIzquierdo.write(Anular_Izq_Pos);
+    Anular_Izq_last_update = millis();
+  }
+  if (Anular_Izq_Pos_deseada == 130){ //cerrar
+    static unsigned long tiempo_espera_anular = 1500;
+    unsigned long ahora_anular = millis();
+    if((ahora_anular - Anular_Izq_last_update >= tiempo_espera_anular)&&!Anular_Izq_return){
+      Anular_Izq_return = true;
+    }
+    if(!Anular_Izq_return){
+      Anular_Izq_Pos = 130;
+    }else{
+      Anular_Izq_Pos = 115;
+    }
+    ServoAnularIzquierdo.write(Anular_Izq_Pos);
+  }
+
+      // Menique
+
+  if (Menique_Izq_Pos_deseada == 0){
+    Menique_Izq_return = false;
+    Menique_Izq_Pos = 0;
+    ServoMeniqueIzquierdo.write(Menique_Izq_Pos);
+    Menique_Izq_last_update = millis();
+  }
+  if (Menique_Izq_Pos_deseada == 130){
+    static unsigned long tiempo_espera_menique = 1500;
+    unsigned long ahora_menique = millis();
+    if((ahora_menique - Menique_Izq_last_update >= tiempo_espera_menique)&&!Menique_Izq_return){
+      Menique_Izq_return = true;
+    }
+    if(!Menique_Izq_return){
+      Menique_Izq_Pos = 130;
+    }else{
+      Menique_Izq_Pos = 115;
+    }
+    ServoMeniqueIzquierdo.write(Menique_Izq_Pos);
   }
   
 
@@ -381,7 +641,7 @@ void loop() {
   //   if (Pulgar_Pos <= Dedos_min){
   //     Pulgar_Pos = Dedos_min;
   //   }
-  //   ServoPulgar.write(Pulgar_Pos);
+  //   ServoPulgarDerecho.write(Pulgar_Pos);
 
   // } else {
   //   Pulgar_ultima_Pos = Pulgar_Pos_deseada;

@@ -185,7 +185,7 @@ void loop() {
             }
         }else if (command == '5'){
             if (TaskHandle_servoMovement == NULL) {
-                Serial.println("Comando '5' recibido. Creando tarea para servo (centrar)...")
+                Serial.println("Comando '5' recibido. Creando tarea para servo (centrar)...");
                 xTaskCreatePinnedToCore(
                     moveServos,
                     "servo_center",

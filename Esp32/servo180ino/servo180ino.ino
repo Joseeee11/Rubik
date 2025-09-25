@@ -1,6 +1,6 @@
 #include <ESP32Servo.h>
-int pin21 = 27;
-int pos21 = 0;
+int pin21 = 16;
+int pos21 = 20;
 int orientacion = 1;
 Servo servo21;
 
