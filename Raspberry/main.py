@@ -128,18 +128,18 @@ palma_puntos = [0,1,2,5,9,13,17]
 pulgar_puntos = [1,2,4]
 punta_puntos = [8,12,16,20]
 base_puntos = [6,10,14,18]
-ultimo_dedo_derecha = ["None", "None", "None", "None", "None"]
+ultimo_dedo_derecha = [None, None, None, None, None]
 mano_imitar_derecha = None
 estado_muneca_derecha = None
 media_estado_muneca_derecha = None # Variable para almacenar la media de la muñeca imitada
-ultimo_dedo_izquierda = ["None", "None", "None", "None", "None"]
+ultimo_dedo_izquierda = [None, None, None, None, None]
 mano_imitar_izquierda = None
 estado_muneca_izquierda = None
 media_estado_muneca_izquierda = None # Variable para almacenar la media de la muñeca imitada
 
 # imitar cuerpo
-brazo_derecho = ["None", "None", "None", "None", "None", "None", "None", "None"] # posición flexión, angulo_codigo flexión, posición frontal, angulo_codigo frontal, posición sagital, angulo_codigo sagital, posición rotación, angulo_codigo rotación
-brazo_izquierdo = ["None", "None", "None", "None", "None", "None", "None", "None"] # posición flexión, angulo_codigo flexión, posición frontal, angulo_codigo frontal, posición sagital, angulo_codigo sagital, posición rotación, angulo_codigo rotación
+brazo_derecho = [None, None, None, None, None, None, None, None] # posición flexión, angulo_codigo flexión, posición frontal, angulo_codigo frontal, posición sagital, angulo_codigo sagital, posición rotación, angulo_codigo rotación
+brazo_izquierdo = [None, None, None, None, None, None, None, None] # posición flexión, angulo_codigo flexión, posición frontal, angulo_codigo frontal, posición sagital, angulo_codigo sagital, posición rotación, angulo_codigo rotación
 grupo_angulo_frontal_d = []
 grupo_angulo_flexion_d = []
 grupo_angulo_frontal_i = []
@@ -591,44 +591,44 @@ def visualizar():
                         print("Dedos abiertos derecha: ", dedosAbiertos)
 
                         #Enviar al ESP32 los dedos abiertos y cerrados 
-                        if dedosAbiertos[0] and ultimo_dedo_derecha[0] == "None":  #PULGAR
+                        if dedosAbiertos[0] and ultimo_dedo_derecha[0] is None:  #PULGAR
                             ultimo_dedo_derecha[0] = "Pulgar"
                             print("Pulgar derecho abierto")
                             enviar_comando_esp32(5519)
                         elif dedosAbiertos[0] == False and ultimo_dedo_derecha[0] == "Pulgar":
-                            ultimo_dedo_derecha[0] = "None"
+                            ultimo_dedo_derecha[0] = None
                             print("Pulgar derecho cerrado")
                             enviar_comando_esp32(5518)
-                        if dedosAbiertos[1] and ultimo_dedo_derecha[1] == "None": #ÍNDICE
+                        if dedosAbiertos[1] and ultimo_dedo_derecha[1] is None: #ÍNDICE
                             ultimo_dedo_derecha[1] = "Indice"
                             print("Índice derecho abierto")
                             enviar_comando_esp32(5517)
                         elif dedosAbiertos[1] == False and ultimo_dedo_derecha[1] == "Indice":
-                            ultimo_dedo_derecha[1] = "None"
+                            ultimo_dedo_derecha[1] = None
                             print("Índice derecho cerrado")
                             enviar_comando_esp32(5516)
-                        if dedosAbiertos[2] and ultimo_dedo_derecha[2] == "None": #MEDIO
+                        if dedosAbiertos[2] and ultimo_dedo_derecha[2] is None: #MEDIO
                             ultimo_dedo_derecha[2] = "Medio"
                             print("Medio derecho abierto")
                             enviar_comando_esp32(5511)
                         elif dedosAbiertos[2] == False and ultimo_dedo_derecha[2] == "Medio":
-                            ultimo_dedo_derecha[2] = "None"
+                            ultimo_dedo_derecha[2] = None
                             print("Medio derecho cerrado")
                             enviar_comando_esp32(5510)
-                        if dedosAbiertos[3] and ultimo_dedo_derecha[3] == "None": #ANULAR
+                        if dedosAbiertos[3] and ultimo_dedo_derecha[3] is None: #ANULAR
                             ultimo_dedo_derecha[3] = "Anular"
                             print("Anular derecho abierto")
                             enviar_comando_esp32(5513)
                         elif dedosAbiertos[3] == False and ultimo_dedo_derecha[3] == "Anular":
-                            ultimo_dedo_derecha[3] = "None"
+                            ultimo_dedo_derecha[3] = None
                             print("Anular derecho cerrado")
                             enviar_comando_esp32(5512)
-                        if dedosAbiertos[4] and ultimo_dedo_derecha[4] == "None": #MEÑIQUE
+                        if dedosAbiertos[4] and ultimo_dedo_derecha[4] is None: #MEÑIQUE
                             ultimo_dedo_derecha[4] = "Pinky"
                             print("Meñique derecho abierto")
                             enviar_comando_esp32(5515)
                         elif dedosAbiertos[4] == False and ultimo_dedo_derecha[4] == "Pinky":
-                            ultimo_dedo_derecha[4] = "None"
+                            ultimo_dedo_derecha[4] = None
                             print("Meñique derecho cerrado")
                             enviar_comando_esp32(5514)
                         
@@ -735,44 +735,44 @@ def visualizar():
                         print("Dedos abiertos izquierda: ", dedosAbiertos)
 
                         #Enviar al ESP32 los dedos abiertos y cerrados 
-                        if dedosAbiertos[0] and ultimo_dedo_izquierda[0] == "None":  #PULGAR
+                        if dedosAbiertos[0] and ultimo_dedo_izquierda[0] is None:  #PULGAR
                             ultimo_dedo_izquierda[0] = "Pulgar"
                             print("Pulgar izquierdo abierto")
                             enviar_comando_esp32(5521)
                         elif dedosAbiertos[0] == False and ultimo_dedo_izquierda[0] == "Pulgar":
-                            ultimo_dedo_izquierda[0] = "None"
+                            ultimo_dedo_izquierda[0] = None
                             print("Pulgar izquierdo cerrado")
                             enviar_comando_esp32(5520)
-                        if dedosAbiertos[1] and ultimo_dedo_izquierda[1] == "None": #ÍNDICE
+                        if dedosAbiertos[1] and ultimo_dedo_izquierda[1] is None: #ÍNDICE
                             ultimo_dedo_izquierda[1] = "Indice"
                             print("Índice izquierdo abierto")
                             enviar_comando_esp32(5523)
                         elif dedosAbiertos[1] == False and ultimo_dedo_izquierda[1] == "Indice":
-                            ultimo_dedo_izquierda[1] = "None"
+                            ultimo_dedo_izquierda[1] = None
                             print("Índice izquierdo cerrado")
                             enviar_comando_esp32(5522)
-                        if dedosAbiertos[2] and ultimo_dedo_izquierda[2] == "None": #MEDIO
+                        if dedosAbiertos[2] and ultimo_dedo_izquierda[2] is None: #MEDIO
                             ultimo_dedo_izquierda[2] = "Medio"
                             print("Medio izquierdo abierto")
                             enviar_comando_esp32(5525)
                         elif dedosAbiertos[2] == False and ultimo_dedo_izquierda[2] == "Medio":
-                            ultimo_dedo_izquierda[2] = "None"
+                            ultimo_dedo_izquierda[2] = None
                             print("Medio izquierdo cerrado")
                             enviar_comando_esp32(5524)
-                        if dedosAbiertos[3] and ultimo_dedo_izquierda[3] == "None": #ANULAR
+                        if dedosAbiertos[3] and ultimo_dedo_izquierda[3] is None: #ANULAR
                             ultimo_dedo_izquierda[3] = "Anular"
                             print("Anular izquierdo abierto")
                             enviar_comando_esp32(5527)
                         elif dedosAbiertos[3] == False and ultimo_dedo_izquierda[3] == "Anular":
-                            ultimo_dedo_izquierda[3] = "None"
+                            ultimo_dedo_izquierda[3] = None
                             print("Anular izquierdo cerrado")
                             enviar_comando_esp32(5526)
-                        if dedosAbiertos[4] and ultimo_dedo_izquierda[4] == "None": #MEÑIQUE
+                        if dedosAbiertos[4] and ultimo_dedo_izquierda[4] is None: #MEÑIQUE
                             ultimo_dedo_izquierda[4] = "Pinky"
                             print("Meñique izquierdo abierto")
                             enviar_comando_esp32(5529)
                         elif dedosAbiertos[4] == False and ultimo_dedo_izquierda[4] == "Pinky":
-                            ultimo_dedo_izquierda[4] = "None"
+                            ultimo_dedo_izquierda[4] = None
                             print("Meñique izquierdo cerrado")
                             enviar_comando_esp32(5528)
                         
@@ -892,7 +892,6 @@ def visualizar():
                 if len(grupo_angulo_flexion_d) > 8:
                     media_angulo_flexion_d = sum(grupo_angulo_flexion_d) / len(grupo_angulo_flexion_d)
                     grupo_angulo_flexion_d = []
-                    # print(f"Ángulo de flexión del codo derecho: {media_angulo_flexion_d:.2f} grados")
                     # Segun el angulo defino la posicion
                     brazo_derecho[0], brazo_derecho[1] = definir_flexion(media_angulo_flexion_d, "derecho")
 
@@ -906,7 +905,6 @@ def visualizar():
                     grupo_angulo_frontal_d.append(angulo_frontal_d)
                 if len(grupo_angulo_frontal_d) > 5:
                     media_angulo_frontal_d = sum(grupo_angulo_frontal_d) / len(grupo_angulo_frontal_d)
-                    print(f"Ángulo frontal derecho: {media_angulo_frontal_d:.2f} grados")
                     # Segun el angulo defino la posicion
                     brazo_derecho[2], brazo_derecho[3] = definir_posicion_frontal(media_angulo_frontal_d, "derecho")
                     grupo_angulo_frontal_d = []
@@ -923,19 +921,34 @@ def visualizar():
                 if len(grupo_angulo_flexion_i) > 8:
                     media_angulo_flexion_i = sum(grupo_angulo_flexion_i) / len(grupo_angulo_flexion_i)
                     grupo_angulo_flexion_i = []
-                    # print(f"Ángulo de flexión del codo derecho: {media_angulo_flexion_d:.2f} grados")
                     # Segun el angulo defino la posicion
                     brazo_izquierdo[0], brazo_izquierdo[1] = definir_flexion(media_angulo_flexion_i, "izquierdo")
 
+                #PLANO FRONTAL DE HOMBRO IZQUIERDO
+                    # Calculo de proyecciones escalares en el plano FRONTAL
+                componente_vertical_i_f = np.dot(v_brazo_i, v_vertical_arriba_i)
+                componente_frontal_i_f =np.dot(v_brazo_i, v_frontal_fuera_i)
+                    # Calculo el angulo del plano FRONTAL
+                angulo_frontal_i = calcular_angulo_brazos(componente_vertical_i_f, componente_frontal_i_f)
+                if angulo_frontal_i is not None and len(grupo_angulo_frontal_i) <= 5:
+                    grupo_angulo_frontal_i.append(angulo_frontal_i)
+                if len(grupo_angulo_frontal_i) > 5:
+                    media_angulo_frontal_i = sum(grupo_angulo_frontal_i) / len(grupo_angulo_frontal_i)
+                    # Segun el angulo defino la posicion
+                    brazo_izquierdo[2], brazo_izquierdo[3] = definir_posicion_frontal(media_angulo_frontal_i, "izquierdo")
+                    grupo_angulo_frontal_i = []
+
                 # ENVIAR RESULTADOS AL ESP32 DEL BRAZO DERECHO
-                if brazo_derecho[0] != "None" and brazo_derecho[1] != "None" and brazo_derecho[2] != "None" and brazo_derecho[3] != "None":
-                    print("Brazo Derecho: ", brazo_derecho[0], brazo_derecho[1], brazo_derecho[2], brazo_derecho[3])
-                    enviar_comando_esp32(int(brazo_derecho[1]))
+                if brazo_derecho[0] is not None and brazo_derecho[1] is not None and brazo_derecho[2] is not None and brazo_derecho[3] is not None:
+                    print("Brazo Derecho: ", brazo_derecho)
+                    enviar_comando_esp32(brazo_derecho[1])
+                    enviar_comando_esp32(brazo_derecho[3])
 
                 # ENVIAR RESULTADOS AL ESP32 DEL BRAZO IZQUIERDO
-                if brazo_izquierdo[0] != "None" and brazo_izquierdo[1] != "None":
-                    print("Brazo Izquierdo: ", brazo_izquierdo[0], brazo_izquierdo[1])
-                    enviar_comando_esp32(int(brazo_izquierdo[1]))
+                if brazo_izquierdo[0] is not None and brazo_izquierdo[1] is not None and brazo_izquierdo[2] is not None and brazo_izquierdo[3] is not None:
+                    print("Brazo Izquierdo: ", brazo_izquierdo)
+                    enviar_comando_esp32(brazo_izquierdo[1])
+                    enviar_comando_esp32(brazo_izquierdo[3])
                 
                 
 
