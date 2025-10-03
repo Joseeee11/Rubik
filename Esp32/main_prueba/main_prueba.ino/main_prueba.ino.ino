@@ -8,13 +8,18 @@ Adafruit_PWMServoDriver pca1 = Adafruit_PWMServoDriver(0x40);
 #define SERVOMAX 553  // Maximum pulse length (180 degrees)
 
 // BRAZO DERECHO
-int ServoPulgarDerechoPin = 6;
-int ServoIndiceDerechoPin = 7;
-int ServoMedioDerechoPin = 8;
+int ServoPulgarDerechoPin = 6; // Blanco naranja
+int ServoIndiceDerechoPin = 7; // naranja
+int ServoMedioDerechoPin = 8; // 
 int ServoAnularDerechoPin = 9;
 int ServoMeniqueDerechoPin = 10;
 int ServoMunecaDerechoPin = 11;
-int ServoBicepsDerechoPin = 12; //esp32
+
+// int ServoBicepsDerechoPin = 15; //esp32
+int ServoBicepsDerechoPin = 12; //pca
+
+int ServoHombroFrontalDerechoPin = 16; //esp32
+int ServoHombroSagitalDerechoPin = 17; //esp32
 
 // BRAZO IZQUIERDO
 int ServoPulgarIzquierdoPin = 0;
@@ -23,9 +28,13 @@ int ServoMedioIzquierdoPin = 2;
 int ServoAnularIzquierdoPin = 3;
 int ServoMeniqueIzquierdoPin = 4;
 int ServoMunecaIzquierdaPin = 5;
-int ServoBicepsIzquierdoPin = 16; //esp32
 
-Servo ServoBicepsDerecho;
+int ServoBicepsIzquierdoPin = 12; //esp32
+
+// Servo ServoBicepsDerecho;
+Servo ServoHombroFrontalDerecho;
+Servo ServoHombroSagitalDerecho;
+
 Servo ServoBicepsIzquierdo;
 
 int Pulgar_Der_Pos_deseada = 0;
@@ -86,12 +95,21 @@ void setup() {
   pca1.begin();
   pca1.setPWMFreq(60);
 
-  ServoBicepsDerecho.attach(ServoBicepsDerechoPin);
+  // ServoBicepsDerecho.attach(ServoBicepsDerechoPin);
+  
+  ServoHombroFrontalDerecho.attach(ServoHombroFrontalDerechoPin);
+  ServoHombroSagitalDerecho.attach(ServoHombroSagitalDerechoPin);
+
   ServoBicepsIzquierdo.attach(ServoBicepsIzquierdoPin);
 
   delay(100);
 
-  ServoBicepsDerecho.write(20);
+  // ServoBicepsDerecho.write(20);
+  setServo(ServoBicepsDerechoPin, 25);
+
+  ServoHombroSagitalDerecho.write(10);
+  ServoHombroFrontalDerecho.write(13);
+
   ServoBicepsIzquierdo.write(20);
 
   delay(100);
@@ -198,18 +216,35 @@ void loop() {
     if (codigo == 5521) {
       Pulgar_Izq_Pos_deseada = 180;
     }
+
+    // BRAZOS
     if (codigo > 4000 && codigo < 4180) { //  codigo de biceps 
       // Biceps_Der_Pos_deseada = 20;
-      int grados_biceps_derecho = codigo % 1000; // o usa codigo - 4000
-      grados_biceps_derecho = map(grados_biceps_derecho, 180, 0, 20, 80);
-      ServoBicepsDerecho.write(grados_biceps_derecho);
+      int grados_biceps_derecho = codigo -  4000; // o usa codigo - 4000
+      grados_biceps_derecho = map(grados_biceps_derecho, 0, 180, 20, 80);
+      // ServoBicepsDerecho.write(grados_biceps_derecho);
+      setServo(ServoBicepsDerechoPin, grados_biceps_derecho);
     }
-        if (codigo > 4200 && codigo < 4280) { //  codigo de biceps 
+
+    if (codigo > 4400 && codigo < 4580) { //  codigo de hombro frontal 
+      int grados_hombro_frontal_derecho = codigo - 4400;
+      // grados_hombro_frontal_derecho = map(grados_hombro_frontal_derecho, 180, 0, 20, 80);
+      ServoHombroFrontalDerecho.write(grados_hombro_frontal_derecho);
+    }
+
+    if (codigo > 4800 && codigo < 4980) { //  codigo de hombro sagital 
+      int grados_hombro_sagital_derecho = codigo - 4800;
+      // grados_hombro_sagital_derecho = map(grados_hombro_sagital_derecho, 180, 0, 20, 80);
+      ServoHombroSagitalDerecho.write(grados_hombro_sagital_derecho);
+    }
+
+    if (codigo > 4200 && codigo < 4280) { //  codigo de biceps 
       // Biceps_Der_Pos_deseada = 20;
       int grados_biceps_izquierdo = codigo - 4200;
       grados_biceps_izquierdo = map(grados_biceps_izquierdo, 180, 0, 20, 80);
       ServoBicepsIzquierdo.write(grados_biceps_izquierdo);
     }
+
     delay(10);
   }
 

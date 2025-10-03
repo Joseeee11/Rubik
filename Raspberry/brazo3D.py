@@ -172,23 +172,23 @@ def definir_posicion_sagital(angulo, brazo):
 def definir_flexion(angulo, brazo):
     # brazo_derecho[4] es posición flexión y brazo_derecho[5] es su código para ESP32
     if (brazo == "derecho"):
-        if 0 <= angulo < 20:
+        if 0 <= angulo < 30:
             # print("Flexión: extendido")
             brazo_derecho[4] = "extendido"
             brazo_derecho[5] = str(angulo)
-        elif 20 <= angulo < 60:
+        elif 30 <= angulo < 45:
             # print("Flexión: ligeramente flexionado")
             brazo_derecho[4] = "ligeramente-flexionado"
             brazo_derecho[5] = str(angulo)
-        elif 60 <= angulo <= 90:
+        elif 45 <= angulo <= 65:
             # print("Flexión: flexionado")
             brazo_derecho[4] = "flexionado"
             brazo_derecho[5] = str(angulo)
-        elif 90 < angulo <= 130:
+        elif 65 < angulo <= 80:
             # print("Flexión: muy flexionado")
             brazo_derecho[4] = "muy-flexionado"
             brazo_derecho[5] = str(angulo)
-        elif angulo > 130:
+        elif angulo > 80:
             # print("Flexión: completamente flexionado")
             brazo_derecho[4] = "completamente-flexionado"
             brazo_derecho[5] = str(angulo)
@@ -259,7 +259,8 @@ while True:
 
         # Defino los vectores necesarios HOMBRO DERECHO
             # vector móvil (brazo)
-        v_brazo_d = c_codo_d - c_hombro_d
+        v_antebrazo_d = normalizar_vector(c_muneca_d - c_codo_d)
+        v_brazo_d = normalizar_vector(c_codo_d - c_hombro_d)
             # plano vertical
         v_vertical_abajo_d = normalizar_vector(c_cadera_d - c_hombro_d)
             # plano frontal
@@ -272,62 +273,170 @@ while True:
             # plano vertical
         v_vertical_arriba_d = normalizar_vector(np.cross(v_frontal_fuera_d, v_sagital_delante_d))
 
-            #PLANO FRONTAL 
-            # Calculo de proyecciones escalares en el plano FRONTAL
-        componente_vertical_d_f = np.dot(v_brazo_d, v_vertical_arriba_d)
-        componente_frontal_d_f =np.dot(v_brazo_d, v_frontal_fuera_d)
-            # Calculo el angulo del plano FRONTAL
-        angulo_frontal_d = calcular_angulo(componente_vertical_d_f, componente_frontal_d_f)
-        # print(f"Ángulo frontal derecho: {angulo_frontal_d:.2f} grados")
-            # Segun el angulo defino la posicion
-        definir_posicion_frontal(angulo_frontal_d, "derecho")
-
-            #PLANO SAGITAL
-            # Calculo de proyecciones escalares en el plano SAGITAL
-        componente_frontal_d_s = np.dot(v_brazo_d, v_frontal_fuera_d)
-        componente_sagital_d_s = np.dot(v_brazo_d, v_sagital_delante_d)
-            # Calculo el angulo del plano SAGITAL
-        angulo_sagital_d = calcular_angulo(componente_frontal_d_s, componente_sagital_d_s)
-        # print(f"Ángulo sagital derecho: {angulo_sagital_d:.2f} grados")
-            # Segun el angulo defino la posicion
-        definir_posicion_sagital(angulo_sagital_d, "derecho")
-
-        #FLEXIÓN ENTRE BRAZO Y ANTEBRAZO DERECHO 
-            # Defino los vectores necesarios para FLEXIÓN
-        v_antebrazo_d = normalizar_vector(c_muneca_d - c_codo_d)
-        v_brazo_d = normalizar_vector(c_codo_d - c_hombro_d)
+            #FLEXIÓN ENTRE BRAZO Y ANTEBRAZO DERECHO
             # Calculo el angulo de flexion 0 = extendido (apuntan a la misma dirección), 180 = flexionado (apunta a direcciones distintas)
         angulo_flexion_d = calcular_angulo_flexion(v_brazo_d, v_antebrazo_d)
         # print(f"Ángulo de flexión del codo derecho: {angulo_flexion_d:.2f} grados")
             # Segun el angulo defino la posicion
         definir_flexion(angulo_flexion_d, "derecho")
 
+            #PLANO SAGITAL
+            # Calculo de proyecciones escalares en el plano SAGITAL
+        componente_vertical_d_s = np.dot(v_brazo_d, v_vertical_abajo_d)
+        componente_sagital_d_s = np.dot(v_brazo_d, v_sagital_delante_d)
+            # Calculo el angulo del plano SAGITAL
+        angulo_sagital_d = calcular_angulo(componente_vertical_d_s, componente_sagital_d_s)
+        # print(f"Ángulo sagital derecho: {angulo_sagital_d:.2f} grados")
+            # Segun el angulo defino la posicion
+        # definir_posicion_sagital(angulo_sagital_d, "derecho")
+
+            #PLANO FRONTAL 
+            # Calculo de proyecciones escalares en el plano FRONTAL
+        # Componentes en el plano frontal
+        componente_vertical_frontal = np.dot(v_brazo_d, v_vertical_abajo_d)
+        componente_lateral_frontal = np.dot(v_brazo_d, v_frontal_dentro_d)
+
+            # Calculo el angulo del plano FRONTAL
+        angulo_frontal_d = calcular_angulo(componente_vertical_frontal, componente_lateral_frontal)
+        # print(f"Ángulo frontal derecho: {angulo_frontal_d:.2f} grados")
+            # Segun el angulo defino la posicion
+        # definir_posicion_frontal(angulo_frontal_d, "derecho")
+
             #PLANO TRANSVERSAL/SAGITAL
             # Va a actuar dependiendo de si hay una mínima flexión del codo
+            ##############################################################################
         if brazo_derecho[4] != "extendido" and brazo_derecho[4] != "None":
-            # Defino los vectores necesarios para la rotación por flexion
-                # vector antebrazo (perpendicular a brazo para evitar problemas al estar más flexionado o menos flexionado)
-            # v_antebrazo_perp_d = calcular_vector_perpendicular(v_brazo_d, v_antebrazo_d)
-                # vector plano vertical
-            v_vertical_abajo_d = normalizar_vector(c_cadera_d - c_hombro_d)
-                # vector perpendicular móvil
-            v_perp_movil_d = normalizar_vector(np.cross(v_brazo_d, v_antebrazo_d))
-            # v_perp_movil_d = normalizar_vector(np.cross(v_brazo_d, v_antebrazo_perp_d))
-                # vector de referencia
-            v_ref_vertical_d = normalizar_vector(np.cross(v_brazo_d, v_vertical_abajo_d))
-            v_ref_horizontal_d = normalizar_vector(np.cross(v_brazo_d, v_ref_vertical_d))
-                # Calculo de proyecciones escalares
-            componente_vertical_d_r = np.dot(v_perp_movil_d, v_ref_vertical_d)
-            componente_horizontal_d_r = np.dot(v_perp_movil_d, v_ref_horizontal_d)
-                # Calculo el angulo de rotación
-            angulo_rotacion_d = calcular_angulo(componente_vertical_d_r, componente_horizontal_d_r)
-            # print(f"Ángulo de rotación del hombro derecho: {angulo_rotacion_d:.2f} grados")
-            definir_rotacion(angulo_rotacion_d, "derecho")
+            # MÉTODO 3: Sistema de Coordenadas Local
+            # Crear sistema de coordenadas fijo respecto al brazo
+            
+            # Eje Z local: dirección del brazo
+            z_local = v_brazo_d
+            
+            # Eje Y local: proyección de la gravedad perpendicular al brazo
+            componente_gravedad_brazo = np.dot(v_vertical_abajo_d, z_local)
+            y_local = v_vertical_abajo_d - componente_gravedad_brazo * z_local
+            y_local = normalizar_vector(y_local)
+            
+            # Eje X local: perpendicular a Y y Z
+            x_local = normalizar_vector(np.cross(y_local, z_local))
+            
+            # Proyectar el antebrazo sobre el plano X-Y local
+            componente_x = np.dot(v_antebrazo_d, x_local)
+            componente_y = np.dot(v_antebrazo_d, y_local)
+            
+            # Calcular ángulo (independiente de la flexión del codo)
+            angulo_rotacion_d = np.degrees(np.arctan2(componente_x, componente_y))
+            
+            # definir_rotacion(angulo_rotacion_d, "derecho")
         else:
-            #configurar un vector entre la muñeca y el pulgar, y entre la muñeca y el meñique
-            #con esos vectores voy a usar las mismas refrerencias anteriores, si sale como quiero el pulgar al apuntas al vector vertical (70 a 110 grados) está mostrando la palma y si esta al contrario (-70 a -110) está mostrando el dorso. 
             angulo_rotacion_d = 0
-        print("brazo derecho", brazo_derecho)
+            ##############################################################################
+        # if brazo_derecho[4] != "extendido" and brazo_derecho[4] != "None":
+        #     # Vector perpendicular móvil (normal al plano brazo-antebrazo)
+        #     v_perp_movil_d = normalizar_vector(np.cross(v_brazo_d, v_antebrazo_d))
+            
+        #     # Proyectar sobre el plano transversal (remover componente vertical)
+        #     componente_vertical_perp = np.dot(v_perp_movil_d, v_vertical_abajo_d)
+        #     v_perp_proyectado = v_perp_movil_d - componente_vertical_perp * v_vertical_abajo_d
+        #     v_perp_proyectado = normalizar_vector(v_perp_proyectado)
+            
+        #     # Calcular ángulo en el plano transversal usando referencias fijas
+        #     componente_sagital_rot = np.dot(v_perp_proyectado, v_sagital_delante_d)
+        #     componente_frontal_rot = np.dot(v_perp_proyectado, v_frontal_fuera_d)
+            
+        #     angulo_rotacion_d = calcular_angulo(componente_frontal_rot, componente_sagital_rot)
+        #     # definir_rotacion(angulo_rotacion_d, "derecho")
+        # # if brazo_derecho[4] != "extendido" and brazo_derecho[4] != "None":
+        # #     v_vertical_abajo_d = normalizar_vector(c_cadera_d - c_hombro_d)
+        # #         # vector perpendicular móvil
+        # #     v_perp_movil_d = normalizar_vector(np.cross(v_brazo_d, v_antebrazo_d))
+        # #         # vector de referencia
+        # #     v_ref_vertical_d = normalizar_vector(np.cross(v_brazo_d, v_vertical_abajo_d))
+        # #     v_ref_horizontal_d = normalizar_vector(np.cross(v_brazo_d, v_ref_vertical_d))
+        # #         # Calculo de proyecciones escalares
+        # #     componente_vertical_d_r = np.dot(v_perp_movil_d, v_ref_vertical_d)
+        # #     componente_horizontal_d_r = np.dot(v_perp_movil_d, v_ref_horizontal_d)
+        # #         # Calculo el angulo de rotación
+        # #     angulo_rotacion_d = calcular_angulo(componente_vertical_d_r, componente_horizontal_d_r)
+        # #     # print(f"Ángulo de rotación derecho: {angulo_rotacion_d:.2f} grados")
+        # #     # definir_rotacion(angulo_rotacion_d, "derecho")
+        # else:
+        #     #configurar un vector entre la muñeca y el pulgar, y entre la muñeca y el meñique
+        #     #con esos vectores voy a usar las mismas refrerencias anteriores, si sale como quiero el pulgar al apuntas al vector vertical (70 a 110 grados) está mostrando la palma y si esta al contrario (-70 a -110) está mostrando el dorso. 
+        #     angulo_rotacion_d = 0
+        #     # print(f"Brazo extendido rotacion: {angulo_rotacion_d:.2f} grados")
+
+        print("sagital", angulo_sagital_d, "frontal", angulo_frontal_d, "biceps", angulo_flexion_d, "rotacion", angulo_rotacion_d)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        #     #PLANO FRONTAL 
+        #     # Calculo de proyecciones escalares en el plano FRONTAL
+        # componente_vertical_d_f = np.dot(v_brazo_d, v_vertical_arriba_d)
+        # componente_frontal_d_f =np.dot(v_brazo_d, v_frontal_fuera_d)
+        #     # Calculo el angulo del plano FRONTAL
+        # angulo_frontal_d = calcular_angulo(componente_vertical_d_f, componente_frontal_d_f)
+        # # print(f"Ángulo frontal derecho: {angulo_frontal_d:.2f} grados")
+        #     # Segun el angulo defino la posicion
+        # definir_posicion_frontal(angulo_frontal_d, "derecho")
+
+        #     #PLANO SAGITAL
+        #     # Calculo de proyecciones escalares en el plano SAGITAL
+        # componente_frontal_d_s = np.dot(v_brazo_d, v_frontal_fuera_d)
+        # componente_sagital_d_s = np.dot(v_brazo_d, v_sagital_delante_d)
+        #     # Calculo el angulo del plano SAGITAL
+        # angulo_sagital_d = calcular_angulo(componente_frontal_d_s, componente_sagital_d_s)
+        # # print(f"Ángulo sagital derecho: {angulo_sagital_d:.2f} grados")
+        #     # Segun el angulo defino la posicion
+        # definir_posicion_sagital(angulo_sagital_d, "derecho")
+
+        # #FLEXIÓN ENTRE BRAZO Y ANTEBRAZO DERECHO 
+        #     # Defino los vectores necesarios para FLEXIÓN
+        # v_antebrazo_d = normalizar_vector(c_muneca_d - c_codo_d)
+        # v_brazo_d = normalizar_vector(c_codo_d - c_hombro_d)
+        #     # Calculo el angulo de flexion 0 = extendido (apuntan a la misma dirección), 180 = flexionado (apunta a direcciones distintas)
+        # angulo_flexion_d = calcular_angulo_flexion(v_brazo_d, v_antebrazo_d)
+        # # print(f"Ángulo de flexión del codo derecho: {angulo_flexion_d:.2f} grados")
+        #     # Segun el angulo defino la posicion
+        # definir_flexion(angulo_flexion_d, "derecho")
+
+        #     #PLANO TRANSVERSAL/SAGITAL
+        #     # Va a actuar dependiendo de si hay una mínima flexión del codo
+        # if brazo_derecho[4] != "extendido" and brazo_derecho[4] != "None":
+        #     # Defino los vectores necesarios para la rotación por flexion
+        #         # vector antebrazo (perpendicular a brazo para evitar problemas al estar más flexionado o menos flexionado)
+        #     # v_antebrazo_perp_d = calcular_vector_perpendicular(v_brazo_d, v_antebrazo_d)
+        #         # vector plano vertical
+        #     v_vertical_abajo_d = normalizar_vector(c_cadera_d - c_hombro_d)
+        #         # vector perpendicular móvil
+        #     v_perp_movil_d = normalizar_vector(np.cross(v_brazo_d, v_antebrazo_d))
+        #     # v_perp_movil_d = normalizar_vector(np.cross(v_brazo_d, v_antebrazo_perp_d))
+        #         # vector de referencia
+        #     v_ref_vertical_d = normalizar_vector(np.cross(v_brazo_d, v_vertical_abajo_d))
+        #     v_ref_horizontal_d = normalizar_vector(np.cross(v_brazo_d, v_ref_vertical_d))
+        #         # Calculo de proyecciones escalares
+        #     componente_vertical_d_r = np.dot(v_perp_movil_d, v_ref_vertical_d)
+        #     componente_horizontal_d_r = np.dot(v_perp_movil_d, v_ref_horizontal_d)
+        #         # Calculo el angulo de rotación
+        #     angulo_rotacion_d = calcular_angulo(componente_vertical_d_r, componente_horizontal_d_r)
+        #     # print(f"Ángulo de rotación del hombro derecho: {angulo_rotacion_d:.2f} grados")
+        #     definir_rotacion(angulo_rotacion_d, "derecho")
+        # else:
+        #     #configurar un vector entre la muñeca y el pulgar, y entre la muñeca y el meñique
+        #     #con esos vectores voy a usar las mismas refrerencias anteriores, si sale como quiero el pulgar al apuntas al vector vertical (70 a 110 grados) está mostrando la palma y si esta al contrario (-70 a -110) está mostrando el dorso. 
+        #     angulo_rotacion_d = 0
+        # print("brazo derecho", brazo_derecho)
 
     cv2.imshow("Frame", frame)
     # Salir si se presiona ESC o si la ventana fue cerrada

@@ -23,7 +23,7 @@ import json
 ## al compilar recordar que se deben incluir los archivos de modelo y los recursos necesarios
 
 ## importar modulos personalizados
-from Clavicula import definir_posicion_frontal, calcular_angulo_brazos, definir_flexion, calcular_angulo_flexion, normalizar_vector, calcular_angulo,Calcular_distancia_Punto_a_RectaAB, punto_medio_segmento
+from Clavicula import definir_posicion_sagital, definir_posicion_frontal, calcular_angulo_brazos, definir_flexion, calcular_angulo_flexion, normalizar_vector, calcular_angulo,Calcular_distancia_Punto_a_RectaAB, punto_medio_segmento
 from esp32 import iniciar_conexion_serial, enviar_esp32, cerrar_serial, listar_seriales
 # para la hora actual quitar si se hace de otra manera
 from datetime import datetime
@@ -922,7 +922,7 @@ def visualizar():
                 if len(grupo_angulo_sagital_d) > 5:
                     media_angulo_sagital_d = sum(grupo_angulo_sagital_d) / len(grupo_angulo_sagital_d)
                         # Segun el angulo defino la posicion
-                    # brazo_derecho[4], brazo_derecho[5] = definir_posicion_sagital(media_angulo_sagital_d, "derecho")
+                    brazo_derecho[4], brazo_derecho[5] = definir_posicion_sagital(media_angulo_sagital_d, "derecho")
                     grupo_angulo_sagital_d = []
                 
 
@@ -959,14 +959,18 @@ def visualizar():
                 # ENVIAR RESULTADOS AL ESP32 DEL BRAZO DERECHO
                 if brazo_derecho[0] is not None and brazo_derecho[1] is not None and brazo_derecho[2] is not None and brazo_derecho[3] is not None:
                     print("Brazo Derecho: ", brazo_derecho)
+                    print("Brazo Derecho: ", brazo_derecho)
                     enviar_comando_esp32(brazo_derecho[1])
                     enviar_comando_esp32(brazo_derecho[3])
+                    if brazo_derecho[2] != "arriba":
+                        enviar_comando_esp32(brazo_derecho[5])
 
                 # ENVIAR RESULTADOS AL ESP32 DEL BRAZO IZQUIERDO
                 if brazo_izquierdo[0] is not None and brazo_izquierdo[1] is not None and brazo_izquierdo[2] is not None and brazo_izquierdo[3] is not None:
-                    print("Brazo Izquierdo: ", brazo_izquierdo)
-                    enviar_comando_esp32(brazo_izquierdo[1])
-                    enviar_comando_esp32(brazo_izquierdo[3])
+                    # print("Brazo Izquierdo: ", brazo_izquierdo)
+                    print("--------------------------------")
+                    # enviar_comando_esp32(brazo_izquierdo[1])
+                    # enviar_comando_esp32(brazo_izquierdo[3])
                 
                 
 

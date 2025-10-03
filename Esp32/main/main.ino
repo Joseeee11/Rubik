@@ -211,7 +211,7 @@ void loop() {
     //los códigos 1000 a 1999 -> ojos movimiento
     //los códigos 2000 a 2999 -> cuello movimiento
     //los códigos 3000 a 3999 -> mandibula movimiento
-    //los códigos 4000 a 4999 -> brazo(hombro-codo) movimiento
+    //los códigos 4000 a 4999 y 6000 a 6999-> brazo(hombro-codo) movimiento
     //los códigos 5000 a 5999 -> mano muñeca movimiento
 
     //MANDIBULA
