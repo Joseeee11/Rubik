@@ -3,39 +3,37 @@
 #include <Adafruit_PWMServoDriver.h>
 
 Adafruit_PWMServoDriver pca1 = Adafruit_PWMServoDriver(0x40);
+Adafruit_PWMServoDriver pca2 = Adafruit_PWMServoDriver(0x41);
 
 #define SERVOMIN 102  // Minimum pulse length (0 degrees)
 #define SERVOMAX 553  // Maximum pulse length (180 degrees)
 
 // BRAZO DERECHO
-int ServoPulgarDerechoPin = 6; // Blanco naranja
-int ServoIndiceDerechoPin = 7; // naranja
-int ServoMedioDerechoPin = 8; // 
-int ServoAnularDerechoPin = 9;
-int ServoMeniqueDerechoPin = 10;
-int ServoMunecaDerechoPin = 11;
+int ServoPulgarDerechoPin = 7; // Blanco naranja --- pca1
+int ServoIndiceDerechoPin = 8; // naranja --- pca1
+int ServoMedioDerechoPin = 9; // --- pca1
+int ServoAnularDerechoPin = 10; // --- pca1
+int ServoMeniqueDerechoPin = 11; // --- pca1
+int ServoMunecaDerechoPin = 12; // --- pca1
 
-// int ServoBicepsDerechoPin = 15; //esp32
-int ServoBicepsDerechoPin = 12; //pca
-
-int ServoHombroFrontalDerechoPin = 16; //esp32
-int ServoHombroSagitalDerechoPin = 17; //esp32
+int ServoBicepsDerechoPin = 13; //pca1
+int ServoHombroFrontalDerechoPin = 0; //pca2
+int ServoHombroSagitalDerechoPin = 1; //pca2
+int ServoHombroRotacionDerechoPin = 2; //pca2
 
 // BRAZO IZQUIERDO
-int ServoPulgarIzquierdoPin = 0;
-int ServoIndiceIzquierdoPin = 1;
-int ServoMedioIzquierdoPin = 2;
-int ServoAnularIzquierdoPin = 3;
-int ServoMeniqueIzquierdoPin = 4;
-int ServoMunecaIzquierdaPin = 5;
+int ServoPulgarIzquierdoPin = 0; // pca1
+int ServoIndiceIzquierdoPin = 1; // pca1
+int ServoMedioIzquierdoPin = 2; // pca1
+int ServoAnularIzquierdoPin = 3; // pca1
+int ServoMeniqueIzquierdoPin = 4; // pca1
+int ServoMunecaIzquierdaPin = 5; // pca1
 
-int ServoBicepsIzquierdoPin = 12; //esp32
+int ServoBicepsIzquierdoPin = 6; //pca1
+int ServoHombroFrontalIzquierdoPin = 3; //pca2
+int ServoHombroSagitalIzquierdoPin = 4; //pca2
+int ServoHombroRotacionIzquierdoPin = 5; //pca2
 
-// Servo ServoBicepsDerecho;
-Servo ServoHombroFrontalDerecho;
-Servo ServoHombroSagitalDerecho;
-
-Servo ServoBicepsIzquierdo;
 
 int Pulgar_Der_Pos_deseada = 0;
 bool Pulgar_Der_return = false;
@@ -89,28 +87,31 @@ bool Muneca_Izq_return = false;
 int Muneca_Izq_Pos = 180;
 unsigned long Muneca_Izq_last_update = 0;
 
+int grados_seguridad_hombro_sagital_derecho = 0;
+int grados_seguridad_hombro_frontal_derecho = 0;
+
+int grados_seguridad_hombro_sagital_izquierdo = 0;
+int grados_seguridad_hombro_frontal_izquierdo = 0;
+
 void setup() {
   Serial.begin(115200);
  
   pca1.begin();
   pca1.setPWMFreq(60);
 
-  // ServoBicepsDerecho.attach(ServoBicepsDerechoPin);
-  
-  ServoHombroFrontalDerecho.attach(ServoHombroFrontalDerechoPin);
-  ServoHombroSagitalDerecho.attach(ServoHombroSagitalDerechoPin);
+  pca2.begin();
+  pca2.setPWMFreq(60);
 
-  ServoBicepsIzquierdo.attach(ServoBicepsIzquierdoPin);
 
   delay(100);
 
-  // ServoBicepsDerecho.write(20);
-  setServo(ServoBicepsDerechoPin, 25);
+  setServoPCA1(ServoBicepsDerechoPin, 40);
+  setServoPCA2(ServoHombroFrontalDerechoPin, 13);
+  setServoPCA2(ServoHombroSagitalDerechoPin, 10);
+  setServoPCA2(ServoHombroRotacionDerechoPin, 90); //90
 
-  ServoHombroSagitalDerecho.write(10);
-  ServoHombroFrontalDerecho.write(13);
-
-  ServoBicepsIzquierdo.write(20);
+  setServoPCA1(ServoBicepsIzquierdoPin, 40);
+  setServoPCA2(ServoHombroSagitalIzquierdoPin, 30);
 
   delay(100);
 
@@ -217,32 +218,57 @@ void loop() {
       Pulgar_Izq_Pos_deseada = 180;
     }
 
-    // BRAZOS
+    // BRAZO DERECHO
     if (codigo > 4000 && codigo < 4180) { //  codigo de biceps 
-      // Biceps_Der_Pos_deseada = 20;
       int grados_biceps_derecho = codigo -  4000; // o usa codigo - 4000
       grados_biceps_derecho = map(grados_biceps_derecho, 0, 180, 20, 80);
-      // ServoBicepsDerecho.write(grados_biceps_derecho);
-      setServo(ServoBicepsDerechoPin, grados_biceps_derecho);
+      setServoPCA1(ServoBicepsDerechoPin, grados_biceps_derecho);
     }
 
     if (codigo > 4400 && codigo < 4580) { //  codigo de hombro frontal 
       int grados_hombro_frontal_derecho = codigo - 4400;
-      // grados_hombro_frontal_derecho = map(grados_hombro_frontal_derecho, 180, 0, 20, 80);
-      ServoHombroFrontalDerecho.write(grados_hombro_frontal_derecho);
+      grados_hombro_frontal_derecho = map(grados_hombro_frontal_derecho, 0, 180, 13, 55);
+      grados_seguridad_hombro_frontal_derecho = grados_hombro_frontal_derecho;
+
+      setServoPCA2(ServoHombroFrontalDerechoPin, grados_hombro_frontal_derecho);
     }
 
     if (codigo > 4800 && codigo < 4980) { //  codigo de hombro sagital 
       int grados_hombro_sagital_derecho = codigo - 4800;
-      // grados_hombro_sagital_derecho = map(grados_hombro_sagital_derecho, 180, 0, 20, 80);
-      ServoHombroSagitalDerecho.write(grados_hombro_sagital_derecho);
+      grados_hombro_sagital_derecho = map(grados_hombro_sagital_derecho, 180, 0, 230, 10);
+      if (grados_hombro_sagital_derecho > 160){
+        grados_hombro_sagital_derecho = 160;
+      }
+      grados_seguridad_hombro_sagital_derecho = grados_hombro_sagital_derecho;
+      setServoPCA2(ServoHombroSagitalDerechoPin, grados_hombro_sagital_derecho);
     }
 
-    if (codigo > 4200 && codigo < 4280) { //  codigo de biceps 
-      // Biceps_Der_Pos_deseada = 20;
+    if (codigo >= 6200 && codigo <= 6380) { //  codigo de hombro rotacion
+      int grados_hombro_rotacion_derecho = codigo - 6200;
+      grados_hombro_rotacion_derecho = map(grados_hombro_rotacion_derecho, 180, 0, 10, 170);
+      if (grados_hombro_rotacion_derecho < 50){
+        if (grados_seguridad_hombro_frontal_derecho < 20 && grados_seguridad_hombro_sagital_derecho < 40){
+          grados_hombro_rotacion_derecho = 50;
+        }
+      }
+      setServoPCA2(ServoHombroRotacionDerechoPin, grados_hombro_rotacion_derecho);
+    }
+
+    // BRAZO IZQUIERDO
+    if (codigo > 4200 && codigo < 4380) { //  codigo de biceps 
       int grados_biceps_izquierdo = codigo - 4200;
       grados_biceps_izquierdo = map(grados_biceps_izquierdo, 180, 0, 20, 80);
-      ServoBicepsIzquierdo.write(grados_biceps_izquierdo);
+      setServoPCA1(ServoBicepsIzquierdoPin, grados_biceps_izquierdo);
+    }
+
+    if (codigo > 6000 && codigo < 6180) { //  codigo de hombro sagital 
+      int grados_hombro_sagital_izquierdo = codigo - 6000;
+      grados_hombro_sagital_izquierdo = map(grados_hombro_sagital_izquierdo, 180, 0, 170, 30);
+      // if (grados_hombro_sagital_izquierdo > 160){
+      //   grados_hombro_sagital_izquierdo = 160;
+      // }
+      grados_seguridad_hombro_sagital_izquierdo = grados_hombro_sagital_izquierdo;
+      setServoPCA2(ServoHombroSagitalIzquierdoPin, grados_hombro_sagital_izquierdo);
     }
 
     delay(10);
@@ -259,10 +285,10 @@ void loop() {
         pca1.setPWM(ServoMunecaIzquierdaPin, 0, 0);
       } else{
         if (Muneca_Izq_Pos_deseada == 0){
-          setServo(ServoMunecaIzquierdaPin, 0);
+          setServoPCA1(ServoMunecaIzquierdaPin, 0);
         }
         if (Muneca_Izq_Pos_deseada == 180){
-          setServo(ServoMunecaIzquierdaPin, 180);
+          setServoPCA1(ServoMunecaIzquierdaPin, 180);
         }
       }
   }
@@ -277,10 +303,10 @@ void loop() {
         pca1.setPWM(ServoMunecaDerechoPin, 0, 0);
       } else{
         if (Muneca_Der_Pos_deseada == 0){
-          setServo(ServoMunecaDerechoPin, 0);
+          setServoPCA1(ServoMunecaDerechoPin, 0);
         }
         if (Muneca_Der_Pos_deseada == 180){
-          setServo(ServoMunecaDerechoPin, 180);
+          setServoPCA1(ServoMunecaDerechoPin, 180);
         }
       }
   }
@@ -289,7 +315,7 @@ void loop() {
   if (Pulgar_Der_Pos_deseada == 0){
     Pulgar_Der_return = false;
     Pulgar_Der_Pos = 0;
-    setServo(ServoPulgarDerechoPin, Pulgar_Der_Pos);
+    setServoPCA1(ServoPulgarDerechoPin, Pulgar_Der_Pos);
     Pulgar_Der_last_update = millis();
   }
   if (Pulgar_Der_Pos_deseada == 180){
@@ -303,7 +329,7 @@ void loop() {
     }else{
       Pulgar_Der_Pos = 165;
     }
-    setServo(ServoPulgarDerechoPin, Pulgar_Der_Pos);
+    setServoPCA1(ServoPulgarDerechoPin, Pulgar_Der_Pos);
   }
 
   // Indice
@@ -311,7 +337,7 @@ void loop() {
   if (Indice_Der_Pos_deseada == 0){
     Indice_Der_return = false;
     Indice_Der_Pos = 0;
-    setServo(ServoIndiceDerechoPin, Indice_Der_Pos);
+    setServoPCA1(ServoIndiceDerechoPin, Indice_Der_Pos);
     Indice_Der_last_update = millis();
   }
   if (Indice_Der_Pos_deseada == 180){
@@ -325,7 +351,7 @@ void loop() {
     }else{
       Indice_Der_Pos = 165;
     }
-    setServo(ServoIndiceDerechoPin, Indice_Der_Pos);
+    setServoPCA1(ServoIndiceDerechoPin, Indice_Der_Pos);
   }
 
     // Medio
@@ -333,7 +359,7 @@ void loop() {
   if (Medio_Der_Pos_deseada == 0){
     Medio_Der_return = false;
     Medio_Der_Pos = 0;
-    setServo(ServoMedioDerechoPin, Medio_Der_Pos);
+    setServoPCA1(ServoMedioDerechoPin, Medio_Der_Pos);
     Medio_Der_last_update = millis();
   }
   if (Medio_Der_Pos_deseada == 180){
@@ -347,7 +373,7 @@ void loop() {
     }else{
       Medio_Der_Pos = 165;
     }
-    setServo(ServoMedioDerechoPin, Medio_Der_Pos);
+    setServoPCA1(ServoMedioDerechoPin, Medio_Der_Pos);
   }
 
     // Anular
@@ -355,7 +381,7 @@ void loop() {
   if (Anular_Der_Pos_deseada == 180){
     Anular_Der_return = false;
     Anular_Der_Pos = 180;
-    setServo(ServoAnularDerechoPin, Anular_Der_Pos);
+    setServoPCA1(ServoAnularDerechoPin, Anular_Der_Pos);
     Anular_Der_last_update = millis();
   }
   if (Anular_Der_Pos_deseada == 0){
@@ -369,7 +395,7 @@ void loop() {
     }else{
       Anular_Der_Pos = 15;
     }
-    setServo(ServoAnularDerechoPin, Anular_Der_Pos);
+    setServoPCA1(ServoAnularDerechoPin, Anular_Der_Pos);
   }
 
       // Menique
@@ -377,7 +403,7 @@ void loop() {
   if (Menique_Der_Pos_deseada == 180){
     Menique_Der_return = false;
     Menique_Der_Pos = 180;
-    setServo(ServoMeniqueDerechoPin, Menique_Der_Pos);
+    setServoPCA1(ServoMeniqueDerechoPin, Menique_Der_Pos);
     Menique_Der_last_update = millis();
   }
   if (Menique_Der_Pos_deseada == 0){
@@ -391,7 +417,7 @@ void loop() {
     }else{
       Menique_Der_Pos = 15;
     }
-    setServo(ServoMeniqueDerechoPin, Menique_Der_Pos);
+    setServoPCA1(ServoMeniqueDerechoPin, Menique_Der_Pos);
   }
   
 
@@ -401,7 +427,7 @@ void loop() {
   if (Pulgar_Izq_Pos_deseada == 180){
     Pulgar_Izq_return = false;
     Pulgar_Izq_Pos = 180;
-    setServo(ServoPulgarIzquierdoPin, Pulgar_Izq_Pos);
+    setServoPCA1(ServoPulgarIzquierdoPin, Pulgar_Izq_Pos);
     Pulgar_Izq_last_update = millis();
   }
   if (Pulgar_Izq_Pos_deseada == 90){
@@ -415,7 +441,7 @@ void loop() {
     }else{
       Pulgar_Izq_Pos = 105;
     }
-    setServo(ServoPulgarIzquierdoPin, Pulgar_Izq_Pos);
+    setServoPCA1(ServoPulgarIzquierdoPin, Pulgar_Izq_Pos);
   }
 
   // Indice
@@ -423,7 +449,7 @@ void loop() {
   if (Indice_Izq_Pos_deseada == 180){
     Indice_Izq_return = false;
     Indice_Izq_Pos = 180;
-    setServo(ServoIndiceIzquierdoPin, Indice_Izq_Pos);
+    setServoPCA1(ServoIndiceIzquierdoPin, Indice_Izq_Pos);
     Indice_Izq_last_update = millis();
   }
   if (Indice_Izq_Pos_deseada == 30){
@@ -437,7 +463,7 @@ void loop() {
     }else{
       Indice_Izq_Pos = 45;
     }
-    setServo(ServoIndiceIzquierdoPin, Indice_Izq_Pos);
+    setServoPCA1(ServoIndiceIzquierdoPin, Indice_Izq_Pos);
   }
 
     // Medio
@@ -445,7 +471,7 @@ void loop() {
   if (Medio_Izq_Pos_deseada == 0){
     Medio_Izq_return = false;
     Medio_Izq_Pos = 0;
-    setServo(ServoMedioIzquierdoPin, Medio_Izq_Pos);
+    setServoPCA1(ServoMedioIzquierdoPin, Medio_Izq_Pos);
     Medio_Izq_last_update = millis();
   }
   if (Medio_Izq_Pos_deseada == 140){
@@ -459,7 +485,7 @@ void loop() {
     }else{
       Medio_Izq_Pos = 125;
     }
-    setServo(ServoMedioIzquierdoPin, Medio_Izq_Pos);
+    setServoPCA1(ServoMedioIzquierdoPin, Medio_Izq_Pos);
   }
 
     // Anular
@@ -467,7 +493,7 @@ void loop() {
   if (Anular_Izq_Pos_deseada == 0){ //abrir
     Anular_Izq_return = false;
     Anular_Izq_Pos = 0;
-    setServo(ServoAnularIzquierdoPin, Anular_Izq_Pos);
+    setServoPCA1(ServoAnularIzquierdoPin, Anular_Izq_Pos);
     Anular_Izq_last_update = millis();
   }
   if (Anular_Izq_Pos_deseada == 130){ //cerrar
@@ -481,7 +507,7 @@ void loop() {
     }else{
       Anular_Izq_Pos = 115;
     }
-    setServo(ServoAnularIzquierdoPin, Anular_Izq_Pos);
+    setServoPCA1(ServoAnularIzquierdoPin, Anular_Izq_Pos);
   }
 
       // Menique
@@ -489,7 +515,7 @@ void loop() {
   if (Menique_Izq_Pos_deseada == 0){
     Menique_Izq_return = false;
     Menique_Izq_Pos = 0;
-    setServo(ServoMeniqueIzquierdoPin, Menique_Izq_Pos);
+    setServoPCA1(ServoMeniqueIzquierdoPin, Menique_Izq_Pos);
     Menique_Izq_last_update = millis();
   }
   if (Menique_Izq_Pos_deseada == 130){
@@ -503,12 +529,17 @@ void loop() {
     }else{
       Menique_Izq_Pos = 115;
     }
-    setServo(ServoMeniqueIzquierdoPin, Menique_Izq_Pos);
+    setServoPCA1(ServoMeniqueIzquierdoPin, Menique_Izq_Pos);
   }
 }
   
-void setServo(uint8_t n_numero, int grados){
+void setServoPCA1(uint8_t n_numero, int grados){
   int hallar_pulso;
   hallar_pulso = map(grados, 0, 180, SERVOMIN, SERVOMAX);
   pca1.setPWM(n_numero, 0, hallar_pulso);
+}
+void setServoPCA2(uint8_t n_numero, int grados){
+  int hallar_pulso;
+  hallar_pulso = map(grados, 0, 180, SERVOMIN, SERVOMAX);
+  pca2.setPWM(n_numero, 0, hallar_pulso);
 }

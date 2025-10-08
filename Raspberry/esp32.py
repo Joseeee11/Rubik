@@ -29,8 +29,8 @@ def enviar_esp32(comando, ser, ):
             print(f"Comando enviado: {comando}")
         except serial.SerialException as e:
             print(f"Error al enviar comando: {e}")
-    else:
-        print("La conexión serial no está abierta o no se ha establecido.")
+    # else:
+        # print("La conexión serial no está abierta o no se ha establecido.")
 
 def cerrar_serial(ser):
     if ser is not None and ser.is_open:

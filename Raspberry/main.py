@@ -23,7 +23,7 @@ import json
 ## al compilar recordar que se deben incluir los archivos de modelo y los recursos necesarios
 
 ## importar modulos personalizados
-from Clavicula import definir_posicion_sagital, definir_posicion_frontal, calcular_angulo_brazos, definir_flexion, calcular_angulo_flexion, normalizar_vector, calcular_angulo,Calcular_distancia_Punto_a_RectaAB, punto_medio_segmento
+from Clavicula import definir_angulo_hombro_rotacion, definir_angulo_hombro_frontal, definir_angulo_hombro_sagital, calcular_angulo_brazos, definir_flexion, calcular_angulo_flexion, normalizar_vector, calcular_angulo,Calcular_distancia_Punto_a_RectaAB, punto_medio_segmento
 from esp32 import iniciar_conexion_serial, enviar_esp32, cerrar_serial, listar_seriales
 # para la hora actual quitar si se hace de otra manera
 from datetime import datetime
@@ -143,9 +143,11 @@ brazo_izquierdo = [None, None, None, None, None, None, None, None] # posición f
 grupo_angulo_frontal_d = []
 grupo_angulo_sagital_d = []
 grupo_angulo_flexion_d = []
+grupo_angulo_rotacion_d = []
 grupo_angulo_frontal_i = []
 grupo_angulo_sagital_i = []
 grupo_angulo_flexion_i = []
+grupo_angulo_rotacion_i = []
 
 
 
@@ -157,8 +159,8 @@ def visualizar():
     global palma_puntos, pulgar_puntos, punta_puntos, base_puntos
     global ultimo_dedo_derecha, estado_muneca_derecha, media_estado_muneca_derecha, mano_imitar_derecha
     global ultimo_dedo_izquierda, estado_muneca_izquierda, media_estado_muneca_izquierda, mano_imitar_izquierda
-    global brazo_derecho, grupo_angulo_frontal_d, grupo_angulo_flexion_d, grupo_angulo_sagital_d
-    global brazo_izquierdo, grupo_angulo_frontal_i, grupo_angulo_flexion_i, grupo_angulo_sagital_i
+    global brazo_derecho, grupo_angulo_frontal_d, grupo_angulo_flexion_d, grupo_angulo_sagital_d, grupo_angulo_rotacion_d
+    global brazo_izquierdo, grupo_angulo_frontal_i, grupo_angulo_flexion_i, grupo_angulo_sagital_i, grupo_angulo_rotacion_i
     # Lee un fotograma de la cámara
     if cap is not None:
         ret, frame = cap.read()
@@ -894,83 +896,119 @@ def visualizar():
                 if len(grupo_angulo_flexion_d) > 8:
                     media_angulo_flexion_d = sum(grupo_angulo_flexion_d) / len(grupo_angulo_flexion_d)
                     grupo_angulo_flexion_d = []
+                    if media_angulo_flexion_d < 20:
+                    # Verificar alineación real
+                        producto_punto = np.dot(v_brazo_d, v_antebrazo_d)
+                        if producto_punto < 0.95:  # No están bien alineados (cos(18°) ≈ 0.95)
+                            # Recalcular el ángulo tomando el valor absoluto del producto punto
+                            media_angulo_flexion_d = np.degrees(np.arccos(np.abs(producto_punto)))
                     # Segun el angulo defino la posicion
                     brazo_derecho[0], brazo_derecho[1] = definir_flexion(media_angulo_flexion_d, "derecho")
-
-                #PLANO FRONTAL DE HOMBRO DERECHO
-                    # Calculo de proyecciones escalares en el plano FRONTAL
-                componente_vertical_d_f = np.dot(v_brazo_d, v_vertical_arriba_d)
-                componente_frontal_d_f =np.dot(v_brazo_d, v_frontal_fuera_d)
-                    # Calculo el angulo del plano FRONTAL
-                angulo_frontal_d = calcular_angulo_brazos(componente_vertical_d_f, componente_frontal_d_f)
-                if angulo_frontal_d is not None and len(grupo_angulo_frontal_d) <= 5:
-                    grupo_angulo_frontal_d.append(angulo_frontal_d)
-                if len(grupo_angulo_frontal_d) > 5:
-                    media_angulo_frontal_d = sum(grupo_angulo_frontal_d) / len(grupo_angulo_frontal_d)
-                        # Segun el angulo defino la posicion
-                    brazo_derecho[2], brazo_derecho[3] = definir_posicion_frontal(media_angulo_frontal_d, "derecho")
-                    grupo_angulo_frontal_d = []
+                    # brazo_derecho[0], brazo_derecho[1] = "flexion", round(media_angulo_flexion_d)
 
                 #PLANO SAGITAL DE HOMBRO DERECHO
                     # Calculo de proyecciones escalares en el plano SAGITAL
-                componente_frontal_d_s = np.dot(v_brazo_d, v_frontal_fuera_d)
+                componente_vertical_d_s = np.dot(v_brazo_d, v_vertical_abajo_d)
                 componente_sagital_d_s = np.dot(v_brazo_d, v_sagital_delante_d)
                     # Calculo el angulo del plano SAGITAL
-                angulo_sagital_d = calcular_angulo_brazos(componente_frontal_d_s, componente_sagital_d_s)
+                angulo_sagital_d = calcular_angulo_brazos(componente_sagital_d_s, componente_vertical_d_s)
                 if angulo_sagital_d is not None and len(grupo_angulo_sagital_d) <= 5:
                     grupo_angulo_sagital_d.append(angulo_sagital_d)
                 if len(grupo_angulo_sagital_d) > 5:
                     media_angulo_sagital_d = sum(grupo_angulo_sagital_d) / len(grupo_angulo_sagital_d)
                         # Segun el angulo defino la posicion
-                    brazo_derecho[4], brazo_derecho[5] = definir_posicion_sagital(media_angulo_sagital_d, "derecho")
+                    brazo_derecho[2] = "sagital"
+                    brazo_derecho[3] = definir_angulo_hombro_sagital("derecho", media_angulo_sagital_d)
                     grupo_angulo_sagital_d = []
-                
 
-
-
-                #FLEXION DEL BRAZO IZQUIERDO
-                    # Defino los vectores necesarios para FLEXIÓN
-                v_antebrazo_i = normalizar_vector(punto_muneca_i - punto_codo_i)
-                v_brazo_i = normalizar_vector(punto_codo_i - punto_hombro_i)
-                    # Calculo el angulo de flexion 0 = extendido, 180 = flexionado
-                angulo_flexion_i = calcular_angulo_flexion(v_brazo_i, v_antebrazo_i)
-                if angulo_flexion_i is not None and len(grupo_angulo_flexion_i) <= 8:
-                    grupo_angulo_flexion_i.append(angulo_flexion_i)
-                if len(grupo_angulo_flexion_i) > 8:
-                    media_angulo_flexion_i = sum(grupo_angulo_flexion_i) / len(grupo_angulo_flexion_i)
-                    grupo_angulo_flexion_i = []
-                    # Segun el angulo defino la posicion
-                    brazo_izquierdo[0], brazo_izquierdo[1] = definir_flexion(media_angulo_flexion_i, "izquierdo")
-
-                #PLANO FRONTAL DE HOMBRO IZQUIERDO
+                #PLANO FRONTAL DE HOMBRO DERECHO
                     # Calculo de proyecciones escalares en el plano FRONTAL
-                componente_vertical_i_f = np.dot(v_brazo_i, v_vertical_arriba_i)
-                componente_frontal_i_f =np.dot(v_brazo_i, v_frontal_fuera_i)
+                componente_vertical_d_f = np.dot(v_brazo_d, v_vertical_abajo_d)
+                componente_lateral_d_f = np.dot(v_brazo_d, v_frontal_dentro_d)
                     # Calculo el angulo del plano FRONTAL
-                angulo_frontal_i = calcular_angulo_brazos(componente_vertical_i_f, componente_frontal_i_f)
-                if angulo_frontal_i is not None and len(grupo_angulo_frontal_i) <= 5:
-                    grupo_angulo_frontal_i.append(angulo_frontal_i)
-                if len(grupo_angulo_frontal_i) > 5:
-                    media_angulo_frontal_i = sum(grupo_angulo_frontal_i) / len(grupo_angulo_frontal_i)
-                    # Segun el angulo defino la posicion
-                    brazo_izquierdo[2], brazo_izquierdo[3] = definir_posicion_frontal(media_angulo_frontal_i, "izquierdo")
-                    grupo_angulo_frontal_i = []
+                angulo_frontal_d = calcular_angulo_brazos(componente_lateral_d_f, componente_vertical_d_f)
+                angulo_frontal_d = -angulo_frontal_d
+                    # Normalizar al rango anatómico esperado (0° = abajo, 90° = T-pose, 180° = arriba)
+                if angulo_frontal_d < -90:
+                    angulo_frontal_d = 180 + (angulo_frontal_d + 90)
+
+                if angulo_frontal_d is not None and len(grupo_angulo_frontal_d) <= 5:
+                    grupo_angulo_frontal_d.append(angulo_frontal_d)
+                if len(grupo_angulo_frontal_d) > 5:
+                    media_angulo_frontal_d = sum(grupo_angulo_frontal_d) / len(grupo_angulo_frontal_d)
+                        # Segun el angulo defino la posicion
+                    brazo_derecho[4] = "frontal"
+                    brazo_derecho[5] = definir_angulo_hombro_frontal("derecho", media_angulo_frontal_d)
+                    grupo_angulo_frontal_d = []
+
+                #PLANO ROTACION DE HOMBRO DERECHO
+                if brazo_derecho[0] != "extendido" and brazo_derecho[0] is not None:
+                    z_local = v_brazo_d
+                    componente_gravedad_brazo = np.dot(v_vertical_abajo_d, z_local)
+                    y_local = v_vertical_abajo_d - componente_gravedad_brazo * z_local
+                    y_local = normalizar_vector(y_local)
+                    x_local = normalizar_vector(np.cross(y_local, z_local))
+                    componente_x = np.dot(v_antebrazo_d, x_local)
+                    componente_y = np.dot(v_antebrazo_d, y_local)
+                    angulo_rotacion_d = np.degrees(np.arctan2(componente_x, componente_y))
+                    if angulo_rotacion_d is not None and len(grupo_angulo_rotacion_d) <= 5:
+                        grupo_angulo_rotacion_d.append(angulo_rotacion_d)  
+                    if len(grupo_angulo_rotacion_d) > 5:
+                        media_angulo_rotacion_d = sum(grupo_angulo_rotacion_d) / len(grupo_angulo_rotacion_d)
+                        # brazo_derecho[6] = definir_rotacion(media_angulo_rotacion_d, "derecho")
+                        brazo_derecho[6] = "rotacion"
+                        brazo_derecho[7] = definir_angulo_hombro_rotacion("derecho", media_angulo_rotacion_d)
+                        grupo_angulo_rotacion_d = []
+                else:
+                    angulo_rotacion_d = 0
+
+            
+
+
+                # #FLEXION DEL BRAZO IZQUIERDO
+                #     # Defino los vectores necesarios para FLEXIÓN
+                # v_antebrazo_i = normalizar_vector(punto_muneca_i - punto_codo_i)
+                # v_brazo_i = normalizar_vector(punto_codo_i - punto_hombro_i)
+                #     # Calculo el angulo de flexion 0 = extendido, 180 = flexionado
+                # angulo_flexion_i = calcular_angulo_flexion(v_brazo_i, v_antebrazo_i)
+                # if angulo_flexion_i is not None and len(grupo_angulo_flexion_i) <= 8:
+                #     grupo_angulo_flexion_i.append(angulo_flexion_i)
+                # if len(grupo_angulo_flexion_i) > 8:
+                #     media_angulo_flexion_i = sum(grupo_angulo_flexion_i) / len(grupo_angulo_flexion_i)
+                #     grupo_angulo_flexion_i = []
+                #     # Segun el angulo defino la posicion
+                #     brazo_izquierdo[0], brazo_izquierdo[1] = definir_flexion(media_angulo_flexion_i, "izquierdo")
+
+                # #PLANO FRONTAL DE HOMBRO IZQUIERDO
+                #     # Calculo de proyecciones escalares en el plano FRONTAL
+                # componente_vertical_i_f = np.dot(v_brazo_i, v_vertical_arriba_i)
+                # componente_frontal_i_f =np.dot(v_brazo_i, v_frontal_fuera_i)
+                #     # Calculo el angulo del plano FRONTAL
+                # angulo_frontal_i = calcular_angulo_brazos(componente_vertical_i_f, componente_frontal_i_f)
+                # if angulo_frontal_i is not None and len(grupo_angulo_frontal_i) <= 5:
+                #     grupo_angulo_frontal_i.append(angulo_frontal_i)
+                # if len(grupo_angulo_frontal_i) > 5:
+                #     media_angulo_frontal_i = sum(grupo_angulo_frontal_i) / len(grupo_angulo_frontal_i)
+                #     # Segun el angulo defino la posicion
+                #     brazo_izquierdo[2], brazo_izquierdo[3] = definir_posicion_frontal(media_angulo_frontal_i, "izquierdo")
+                #     grupo_angulo_frontal_i = []
 
                 # ENVIAR RESULTADOS AL ESP32 DEL BRAZO DERECHO
-                if brazo_derecho[0] is not None and brazo_derecho[1] is not None and brazo_derecho[2] is not None and brazo_derecho[3] is not None:
+                if brazo_derecho[1] is not None and brazo_derecho[3] is not None and brazo_derecho[5] is not None and brazo_derecho[7] is not None:
                     print("Brazo Derecho: ", brazo_derecho)
                     print("Brazo Derecho: ", brazo_derecho)
                     enviar_comando_esp32(brazo_derecho[1])
                     enviar_comando_esp32(brazo_derecho[3])
-                    if brazo_derecho[2] != "arriba":
-                        enviar_comando_esp32(brazo_derecho[5])
+                    enviar_comando_esp32(brazo_derecho[5])
+                    enviar_comando_esp32(brazo_derecho[7])
 
-                # ENVIAR RESULTADOS AL ESP32 DEL BRAZO IZQUIERDO
-                if brazo_izquierdo[0] is not None and brazo_izquierdo[1] is not None and brazo_izquierdo[2] is not None and brazo_izquierdo[3] is not None:
-                    # print("Brazo Izquierdo: ", brazo_izquierdo)
-                    print("--------------------------------")
-                    # enviar_comando_esp32(brazo_izquierdo[1])
-                    # enviar_comando_esp32(brazo_izquierdo[3])
+
+                # # ENVIAR RESULTADOS AL ESP32 DEL BRAZO IZQUIERDO
+                # if brazo_izquierdo[0] is not None and brazo_izquierdo[1] is not None and brazo_izquierdo[2] is not None and brazo_izquierdo[3] is not None:
+                #     # print("Brazo Izquierdo: ", brazo_izquierdo)
+                #     print("--------------------------------")
+                #     # enviar_comando_esp32(brazo_izquierdo[1])
+                #     # enviar_comando_esp32(brazo_izquierdo[3])
                 
                 
 
