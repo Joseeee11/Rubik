@@ -264,11 +264,30 @@ void loop() {
     if (codigo > 6000 && codigo < 6180) { //  codigo de hombro sagital 
       int grados_hombro_sagital_izquierdo = codigo - 6000;
       grados_hombro_sagital_izquierdo = map(grados_hombro_sagital_izquierdo, 180, 0, 170, 30);
-      // if (grados_hombro_sagital_izquierdo > 160){
-      //   grados_hombro_sagital_izquierdo = 160;
-      // }
+      if (grados_hombro_sagital_izquierdo > 160){
+        grados_hombro_sagital_izquierdo = 160;
+      }
       grados_seguridad_hombro_sagital_izquierdo = grados_hombro_sagital_izquierdo;
       setServoPCA2(ServoHombroSagitalIzquierdoPin, grados_hombro_sagital_izquierdo);
+    }
+
+    if (codigo > 4600 && codigo < 4780) { //  codigo de hombro frontal 
+      int grados_hombro_frontal_izquierdo = codigo - 4600;
+      grados_hombro_frontal_izquierdo = map(grados_hombro_frontal_izquierdo, 0, 180, 13, 55);
+      grados_seguridad_hombro_frontal_izquierdo = grados_hombro_frontal_izquierdo;
+
+      setServoPCA2(ServoHombroFrontalIzquierdoPin, grados_hombro_frontal_izquierdo);
+    }
+
+    if (codigo >= 6400 && codigo <= 6580) { //  codigo de hombro rotacion
+      int grados_hombro_rotacion_izquierdo = codigo - 6400;
+      grados_hombro_rotacion_izquierdo = map(grados_hombro_rotacion_izquierdo, 180, 0, 10, 170);
+      if (grados_hombro_rotacion_izquierdo < 50){
+        if (grados_seguridad_hombro_frontal_izquierdo < 20 && grados_seguridad_hombro_sagital_izquierdo < 40){
+          grados_hombro_rotacion_izquierdo = 50;
+        }
+      }
+      setServoPCA2(ServoHombroRotacionIzquierdoPin, grados_hombro_rotacion_izquierdo);
     }
 
     delay(10);

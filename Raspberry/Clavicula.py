@@ -113,6 +113,39 @@ def mapear_valor(valor, min_original, max_original, min_deseado, max_deseado):
     valor_mapeado = proporcion * (max_deseado - min_deseado) + min_deseado
     return round(valor_mapeado)
 
+def definir_flexion(angulo, brazo):
+    # brazo_derecho[0] es posición flexión y brazo_derecho[1] es el ángulo al esp32
+    # rango para flexion de codo derecha 4000 a 4199
+    # rango para flexion de codo izquierdo 4200 a 4399
+
+    angulo_absoluto = round(angulo)
+
+    # de 30 a 80 en mediapipe
+    if angulo_absoluto < 30:
+        angulo_absoluto = 30
+    elif angulo_absoluto > 80:
+        angulo_absoluto = 80
+
+    ## mapear angulo de 30 a 80 a 0 a 180
+    angulo_absoluto = mapear_valor(angulo_absoluto, 30, 80, 0, 180)
+    if brazo == "derecho":
+        angulo_esp = angulo_absoluto + 4000 # valor que se enviará al esp32
+    if brazo == "izquierdo":
+        angulo_esp = angulo_absoluto + 4200 # valor que se enviará al esp32
+
+    if 0 <= angulo < 30:
+        return "extendido", round(float(angulo_esp))
+    elif 30 <= angulo < 45:
+        return "ligeramente-flexionado", round(float(angulo_esp))
+    elif 45 <= angulo <= 60:
+        return "flexionado", round(float(angulo_esp))
+    elif 60 < angulo <= 70:
+        return "muy-flexionado", round(float(angulo_esp))
+    elif angulo > 70:
+        return "completamente-flexionado", round(float(angulo_esp))
+    else:
+        return "Posición de flexión desconocida", 4000
+
 def definir_angulo_hombro_sagital(brazo, sagital):
     min_deseado = 0
     max_deseado = 180
@@ -135,6 +168,23 @@ def definir_angulo_hombro_sagital(brazo, sagital):
         else:
             return None
 
+    if brazo == "izquierdo":
+        # Sagital
+        if sagital is not None:
+            sagital = round(abs(sagital))
+
+            min_original_sagital = 5
+            max_original_sagital = 150
+            if sagital < 5:
+                sagital = 5
+            elif sagital > 150:
+                sagital = 150
+
+            sagital_absoluto = mapear_valor(sagital, min_original_sagital, max_original_sagital, min_deseado, max_deseado)
+            angulo_sagital_esp = sagital_absoluto + 6000
+            return angulo_sagital_esp
+        else:
+            return None
 
 def definir_angulo_hombro_frontal(brazo, frontal):
     min_deseado = 0
@@ -157,6 +207,22 @@ def definir_angulo_hombro_frontal(brazo, frontal):
         else:
             return None
 
+    if brazo == "izquierdo":
+        if frontal is not None:
+            frontal = round(abs(frontal))
+
+            min_original_frontal = 0
+            max_original_frontal = 80
+            if frontal < 0:
+                frontal = 0
+            elif frontal > 80:
+                frontal = 80
+
+            frontal_absoluto = mapear_valor(frontal, min_original_frontal, max_original_frontal, min_deseado, max_deseado)
+            angulo_frontal_esp = frontal_absoluto + 4600
+            return angulo_frontal_esp
+        else:
+            return None
 
 def definir_angulo_hombro_rotacion(brazo, rotacion):
     min_deseado = 0
@@ -178,41 +244,8 @@ def definir_angulo_hombro_rotacion(brazo, rotacion):
             return angulo_rotacion_esp
         else:
             return None
-
-def definir_angulos_hombro(brazo, sagital, frontal, rotacion):
-    min_deseado = 0
-    max_deseado = 180
-
-
-    if brazo == "derecho":
-        # Sagital
-        if sagital is not None:
-            sagital = round(abs(sagital))
-
-            min_original_sagital = 0
-            max_original_sagital = 150
-            if sagital < 0:
-                sagital = 0
-            elif sagital > 150:
-                sagital = 150
-            
-            sagital_absoluto = mapear_valor(sagital, min_original_sagital, max_original_sagital, min_deseado, max_deseado)
-            angulo_sagital_esp = sagital_absoluto + 4800
-
-        # Frontal
-        if frontal is not None:
-            frontal = round(abs(frontal))
-
-            min_original_frontal = 0
-            max_original_frontal = 80
-            if frontal < 0:
-                frontal = 0
-            elif frontal > 80:
-                frontal = 0
-            frontal_absoluto = mapear_valor(frontal, min_original_frontal, max_original_frontal, min_deseado, max_deseado)
-            angulo_frontal_esp = frontal_absoluto + 4400
-
-        # Rotación
+    
+    if brazo == "izquierdo":
         if rotacion is not None:
             rotacion = round(abs(rotacion))
 
@@ -220,72 +253,122 @@ def definir_angulos_hombro(brazo, sagital, frontal, rotacion):
             max_original_rotacion = 150
             if rotacion < 60:
                 rotacion = 60
-                
             elif rotacion > 150:
                 rotacion = 150
+
             rotacion_absoluto = mapear_valor(rotacion, min_original_rotacion, max_original_rotacion, min_deseado, max_deseado)
-            angulo_rotacion_esp = rotacion_absoluto + 6200
+            angulo_rotacion_esp = rotacion_absoluto + 6400
+            return angulo_rotacion_esp
+        else:
+            return None
 
-        return angulo_sagital_esp, angulo_frontal_esp, angulo_rotacion_esp
+# def definir_angulos_hombro(brazo, sagital, frontal, rotacion):
+#     min_deseado = 0
+#     max_deseado = 180
 
 
-def definir_flexion(angulo, brazo):
-    # brazo_derecho[0] es posición flexión y brazo_derecho[1] es el ángulo al esp32
-    # rango para flexion de codo derecha 4000 a 4199
-    # rango para flexion de codo izquierdo 4200 a 4399
+#     if brazo == "derecho":
+#         # Sagital
+#         if sagital is not None:
+#             sagital = round(abs(sagital))
 
-    # min_original = 30
-    # max_original = 80
-    # min_deseado = 0
-    # max_deseado = 180
-    # angulo_original = round(angulo)
-    # angulo_absoluto = mapear_valor(angulo_original, min_original, max_original, min_deseado, max_deseado)
+#             min_original_sagital = 0
+#             max_original_sagital = 150
+#             if sagital < 0:
+#                 sagital = 0
+#             elif sagital > 150:
+#                 sagital = 150
+            
+#             sagital_absoluto = mapear_valor(sagital, min_original_sagital, max_original_sagital, min_deseado, max_deseado)
+#             angulo_sagital_esp = sagital_absoluto + 4800
 
-    angulo_absoluto = round(angulo)
+#         # Frontal
+#         if frontal is not None:
+#             frontal = round(abs(frontal))
 
-    # de 30 a 80 en mediapipe
-    if angulo_absoluto < 30:
-        angulo_absoluto = 30
-    elif angulo_absoluto > 80:
-        angulo_absoluto = 80
-    ## mapear angulo de 30 a 80 a 0 a 180
-    angulo_absoluto = mapear_valor(angulo_absoluto, 30, 80, 0, 180)
-    if brazo == "derecho":
-        angulo_esp = angulo_absoluto + 4000 # valor que se enviará al esp32
-    if brazo == "izquierdo":
-        angulo_esp = angulo_absoluto + 4200 # valor que se enviará al esp32
-    if 0 <= angulo < 30:
-        # if (brazo == "derecho"):
-        #     angulo_esp = angulo_absoluto + 4000
-        # if (brazo == "izquierdo"):
-        #     angulo_esp = angulo_absoluto + 4200
-        return "extendido", round(float(angulo_esp))
-    elif 30 <= angulo < 45:
-        # if (brazo == "derecho"):
-        #     angulo_esp = angulo_absoluto + 4000
-        # if (brazo == "izquierdo"):
-        #     angulo_esp = angulo_absoluto + 4200
-        return "ligeramente-flexionado", round(float(angulo_esp))
-    elif 45 <= angulo <= 60:
-        # if (brazo == "derecho"):
-        #     angulo_esp = angulo_absoluto + 4000
-        # if (brazo == "izquierdo"):
-        #     angulo_esp = angulo_absoluto + 4200
-        return "flexionado", round(float(angulo_esp))
-    elif 60 < angulo <= 70:
-        # if (brazo == "derecho"):
-        #     angulo_esp = angulo_absoluto + 4000
-        # if (brazo == "izquierdo"):
-        #     angulo_esp = angulo_absoluto + 4200
-        return "muy-flexionado", round(float(angulo_esp))
-    elif angulo > 70:
-        # if (brazo == "derecho"):
-        #     angulo_esp = angulo_absoluto + 4000
-        # if (brazo == "izquierdo"):
-        #     angulo_esp = angulo_absoluto + 4200
-        return "completamente-flexionado", round(float(angulo_esp))
-    else:
-        return "Posición de flexión desconocida", 4000
+#             min_original_frontal = 0
+#             max_original_frontal = 80
+#             if frontal < 0:
+#                 frontal = 0
+#             elif frontal > 80:
+#                 frontal = 0
+#             frontal_absoluto = mapear_valor(frontal, min_original_frontal, max_original_frontal, min_deseado, max_deseado)
+#             angulo_frontal_esp = frontal_absoluto + 4400
+
+#         # Rotación
+#         if rotacion is not None:
+#             rotacion = round(abs(rotacion))
+
+#             min_original_rotacion = 60
+#             max_original_rotacion = 150
+#             if rotacion < 60:
+#                 rotacion = 60
+                
+#             elif rotacion > 150:
+#                 rotacion = 150
+#             rotacion_absoluto = mapear_valor(rotacion, min_original_rotacion, max_original_rotacion, min_deseado, max_deseado)
+#             angulo_rotacion_esp = rotacion_absoluto + 6200
+
+#         return angulo_sagital_esp, angulo_frontal_esp, angulo_rotacion_esp
+
+
+# def definir_flexion(angulo, brazo):
+#     # brazo_derecho[0] es posición flexión y brazo_derecho[1] es el ángulo al esp32
+#     # rango para flexion de codo derecha 4000 a 4199
+#     # rango para flexion de codo izquierdo 4200 a 4399
+
+#     # min_original = 30
+#     # max_original = 80
+#     # min_deseado = 0
+#     # max_deseado = 180
+#     # angulo_original = round(angulo)
+#     # angulo_absoluto = mapear_valor(angulo_original, min_original, max_original, min_deseado, max_deseado)
+
+#     angulo_absoluto = round(angulo)
+
+#     # de 30 a 80 en mediapipe
+#     if angulo_absoluto < 30:
+#         angulo_absoluto = 30
+#     elif angulo_absoluto > 80:
+#         angulo_absoluto = 80
+#     ## mapear angulo de 30 a 80 a 0 a 180
+#     angulo_absoluto = mapear_valor(angulo_absoluto, 30, 80, 0, 180)
+#     if brazo == "derecho":
+#         angulo_esp = angulo_absoluto + 4000 # valor que se enviará al esp32
+#     if brazo == "izquierdo":
+#         angulo_esp = angulo_absoluto + 4200 # valor que se enviará al esp32
+#     if 0 <= angulo < 30:
+#         # if (brazo == "derecho"):
+#         #     angulo_esp = angulo_absoluto + 4000
+#         # if (brazo == "izquierdo"):
+#         #     angulo_esp = angulo_absoluto + 4200
+#         return "extendido", round(float(angulo_esp))
+#     elif 30 <= angulo < 45:
+#         # if (brazo == "derecho"):
+#         #     angulo_esp = angulo_absoluto + 4000
+#         # if (brazo == "izquierdo"):
+#         #     angulo_esp = angulo_absoluto + 4200
+#         return "ligeramente-flexionado", round(float(angulo_esp))
+#     elif 45 <= angulo <= 60:
+#         # if (brazo == "derecho"):
+#         #     angulo_esp = angulo_absoluto + 4000
+#         # if (brazo == "izquierdo"):
+#         #     angulo_esp = angulo_absoluto + 4200
+#         return "flexionado", round(float(angulo_esp))
+#     elif 60 < angulo <= 70:
+#         # if (brazo == "derecho"):
+#         #     angulo_esp = angulo_absoluto + 4000
+#         # if (brazo == "izquierdo"):
+#         #     angulo_esp = angulo_absoluto + 4200
+#         return "muy-flexionado", round(float(angulo_esp))
+#     elif angulo > 70:
+#         # if (brazo == "derecho"):
+#         #     angulo_esp = angulo_absoluto + 4000
+#         # if (brazo == "izquierdo"):
+#         #     angulo_esp = angulo_absoluto + 4200
+#         return "completamente-flexionado", round(float(angulo_esp))
+#     else:
+#         return "Posición de flexión desconocida", 4000
 
 
 

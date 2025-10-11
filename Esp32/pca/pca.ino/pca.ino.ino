@@ -8,7 +8,7 @@ Adafruit_PWMServoDriver pca0 = Adafruit_PWMServoDriver(0x40);
 #define SERVOMAX 553  // Maximum pulse length (180 degrees)
 
 int pinServo = 0;
-int posServo = 90;
+int posServo = 30;
 
 void setup() {
   Serial.begin(115200);
@@ -19,8 +19,13 @@ void setup() {
   pca1.begin();
   pca1.setPWMFreq(60);
 
-  setServoPCA0(13, 40);
-  setServoPCA0(6, 40);
+  setServoPCA0(13, 40); //bicep derecho
+  setServoPCA0(6, 40);  //bicep izquierdo
+  // setServoPCA(1, 40);  // hombro sagi derecho
+  // setServoPCA(4, 40);  // hombro sagi izquierdo
+  // setServoPCA(0, 40);  // hombro fron derecho
+  // setServoPCA(3, 40);  // hombro fron izquierdo
+  // setServoPCA(2, 40);  // hombro rotac derecho
 
   setServoPCA(pinServo, posServo);
   delay(100);

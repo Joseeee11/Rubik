@@ -912,9 +912,9 @@ def visualizar():
                 componente_sagital_d_s = np.dot(v_brazo_d, v_sagital_delante_d)
                     # Calculo el angulo del plano SAGITAL
                 angulo_sagital_d = calcular_angulo_brazos(componente_sagital_d_s, componente_vertical_d_s)
-                if angulo_sagital_d is not None and len(grupo_angulo_sagital_d) <= 5:
+                if angulo_sagital_d is not None and len(grupo_angulo_sagital_d) <= 8:
                     grupo_angulo_sagital_d.append(angulo_sagital_d)
-                if len(grupo_angulo_sagital_d) > 5:
+                if len(grupo_angulo_sagital_d) > 8:
                     media_angulo_sagital_d = sum(grupo_angulo_sagital_d) / len(grupo_angulo_sagital_d)
                         # Segun el angulo defino la posicion
                     brazo_derecho[2] = "sagital"
@@ -932,9 +932,9 @@ def visualizar():
                 if angulo_frontal_d < -90:
                     angulo_frontal_d = 180 + (angulo_frontal_d + 90)
 
-                if angulo_frontal_d is not None and len(grupo_angulo_frontal_d) <= 5:
+                if angulo_frontal_d is not None and len(grupo_angulo_frontal_d) <= 8:
                     grupo_angulo_frontal_d.append(angulo_frontal_d)
-                if len(grupo_angulo_frontal_d) > 5:
+                if len(grupo_angulo_frontal_d) > 8:
                     media_angulo_frontal_d = sum(grupo_angulo_frontal_d) / len(grupo_angulo_frontal_d)
                         # Segun el angulo defino la posicion
                     brazo_derecho[4] = "frontal"
@@ -951,9 +951,9 @@ def visualizar():
                     componente_x = np.dot(v_antebrazo_d, x_local)
                     componente_y = np.dot(v_antebrazo_d, y_local)
                     angulo_rotacion_d = np.degrees(np.arctan2(componente_x, componente_y))
-                    if angulo_rotacion_d is not None and len(grupo_angulo_rotacion_d) <= 5:
+                    if angulo_rotacion_d is not None and len(grupo_angulo_rotacion_d) <= 8:
                         grupo_angulo_rotacion_d.append(angulo_rotacion_d)  
-                    if len(grupo_angulo_rotacion_d) > 5:
+                    if len(grupo_angulo_rotacion_d) > 8:
                         media_angulo_rotacion_d = sum(grupo_angulo_rotacion_d) / len(grupo_angulo_rotacion_d)
                         # brazo_derecho[6] = definir_rotacion(media_angulo_rotacion_d, "derecho")
                         brazo_derecho[6] = "rotacion"
@@ -962,7 +962,86 @@ def visualizar():
                 else:
                     angulo_rotacion_d = 0
 
-            
+                #FLEXION DEL BRAZO IZQUIERDO
+                    # Defino los vectores necesarios para FLEXIÓN
+                v_antebrazo_i = normalizar_vector(punto_muneca_i - punto_codo_i)
+                v_brazo_i = normalizar_vector(punto_codo_i - punto_hombro_i)
+                    # Calculo el angulo de flexion 0 = extendido, 180 = flexionado
+                angulo_flexion_i = calcular_angulo_flexion(v_brazo_i, v_antebrazo_i)
+                if angulo_flexion_i is not None and len(grupo_angulo_flexion_i) <= 8:
+                    grupo_angulo_flexion_i.append(angulo_flexion_i)
+                if len(grupo_angulo_flexion_i) > 8:
+                    media_angulo_flexion_i = sum(grupo_angulo_flexion_i) / len(grupo_angulo_flexion_i)
+                    grupo_angulo_flexion_i = []
+                    if media_angulo_flexion_i < 20:
+                    # Verificar alineación real
+                        producto_punto = np.dot(v_brazo_i, v_antebrazo_i)
+                        if producto_punto < 0.95:  # No están bien alineados (cos(18°) ≈ 0.95)
+                            # Recalcular el ángulo tomando el valor absoluto del producto punto
+                            media_angulo_flexion_i = np.degrees(np.arccos(np.abs(producto_punto)))
+                    # Segun el angulo defino la posicion
+                    brazo_izquierdo[0], brazo_izquierdo[1] = definir_flexion(media_angulo_flexion_i, "izquierdo")
+                    # brazo_izquierdo[0], brazo_izquierdo[1] = "flexion", round(media_angulo_flexion_i)
+
+                #PLANO SAGITAL DE HOMBRO IZQUIERDO
+                    # Calculo de proyecciones escalares en el plano SAGITAL
+                componente_vertical_i_s = np.dot(v_brazo_i, v_vertical_abajo_i)
+                componente_sagital_i_s = np.dot(v_brazo_i, v_sagital_delante_i)
+                    # Calculo el angulo del plano SAGITAL
+                angulo_sagital_i = calcular_angulo_brazos(componente_sagital_i_s, componente_vertical_i_s)
+                if angulo_sagital_i is not None and len(grupo_angulo_sagital_i) <= 8:
+                    grupo_angulo_sagital_i.append(angulo_sagital_i)
+                if len(grupo_angulo_sagital_i) > 8:
+                    media_angulo_sagital_i = sum(grupo_angulo_sagital_i) / len(grupo_angulo_sagital_i)
+                        # Segun el angulo defino la posicion
+                    brazo_izquierdo[2] = "sagital"
+                    # brazo_izquierdo[3] = definir_angulo_hombro_sagital("izquierdo", media_angulo_sagital_i)
+                    brazo_izquierdo[3] = round(media_angulo_sagital_i)
+                    grupo_angulo_sagital_i = []
+
+                #PLANO FRONTAL DE HOMBRO IZQUIERDO
+                    # Calculo de proyecciones escalares en el plano FRONTAL
+                componente_vertical_i_f = np.dot(v_brazo_i, v_vertical_abajo_i) 
+                componente_lateral_i_f = np.dot(v_brazo_i, v_frontal_dentro_i)
+                    # Calculo el angulo del plano FRONTAL
+                angulo_frontal_i = calcular_angulo_brazos(componente_lateral_i_f, componente_vertical_i_f)
+                angulo_frontal_i = -angulo_frontal_i
+                    # Normalizar al rango anatómico esperado (0° = abajo, 90° = T-pose, 180° = arriba)
+                if angulo_frontal_i < -90:
+                    angulo_frontal_i = 180 + (angulo_frontal_i + 90)
+
+                if angulo_frontal_i is not None and len(grupo_angulo_frontal_i) <= 8:
+                    grupo_angulo_frontal_i.append(angulo_frontal_i)
+                if len(grupo_angulo_frontal_i) > 8:
+                    media_angulo_frontal_i = sum(grupo_angulo_frontal_i) / len(grupo_angulo_frontal_i)
+                    # Segun el angulo defino la posicion
+                    brazo_izquierdo[4] = "frontal"
+                    brazo_izquierdo[5] = round(media_angulo_frontal_i)
+                    # O si tienes función de definición:
+                    # brazo_izquierdo[5] = definir_angulo_hombro_frontal("izquierdo", media_angulo_frontal_i)
+                    grupo_angulo_frontal_i = []
+
+                #PLANO ROTACION DE HOMBRO IZQUIERDO
+                if brazo_izquierdo[0] != "extendido" and brazo_izquierdo[0] is not None:
+                    z_local = v_brazo_i
+                    componente_gravedad_brazo = np.dot(v_vertical_abajo_i, z_local)
+                    y_local = v_vertical_abajo_i - componente_gravedad_brazo * z_local
+                    y_local = normalizar_vector(y_local)
+                    x_local = normalizar_vector(np.cross(y_local, z_local))
+                    componente_x = np.dot(v_antebrazo_i, x_local)
+                    componente_y = np.dot(v_antebrazo_i, y_local)
+                    angulo_rotacion_i = np.degrees(np.arctan2(componente_x, componente_y))
+                    if angulo_rotacion_i is not None and len(grupo_angulo_rotacion_i) <= 8:
+                        grupo_angulo_rotacion_i.append(angulo_rotacion_i)  
+                    if len(grupo_angulo_rotacion_i) > 8:
+                        media_angulo_rotacion_i = sum(grupo_angulo_rotacion_i) / len(grupo_angulo_rotacion_i)
+                        brazo_izquierdo[6] = "rotacion"
+                        # brazo_izquierdo[7] = definir_angulo_hombro_rotacion("izquierdo", media_angulo_rotacion_i)
+                        brazo_izquierdo[7] = round(media_angulo_rotacion_i)
+                        grupo_angulo_rotacion_i = []
+                else:
+                    angulo_rotacion_i = 0
+
 
 
                 # #FLEXION DEL BRAZO IZQUIERDO
@@ -995,30 +1074,26 @@ def visualizar():
 
                 # ENVIAR RESULTADOS AL ESP32 DEL BRAZO DERECHO
                 if brazo_derecho[1] is not None and brazo_derecho[3] is not None and brazo_derecho[5] is not None and brazo_derecho[7] is not None:
-                    print("Brazo Derecho: ", brazo_derecho)
-                    print("Brazo Derecho: ", brazo_derecho)
+                    # print("Brazo Derecho: ", brazo_derecho)
+                    # print("Brazo Derecho: ", brazo_derecho)
                     enviar_comando_esp32(brazo_derecho[1])
                     enviar_comando_esp32(brazo_derecho[3])
                     enviar_comando_esp32(brazo_derecho[5])
                     enviar_comando_esp32(brazo_derecho[7])
 
 
-                # # ENVIAR RESULTADOS AL ESP32 DEL BRAZO IZQUIERDO
-                # if brazo_izquierdo[0] is not None and brazo_izquierdo[1] is not None and brazo_izquierdo[2] is not None and brazo_izquierdo[3] is not None:
-                #     # print("Brazo Izquierdo: ", brazo_izquierdo)
-                #     print("--------------------------------")
-                #     # enviar_comando_esp32(brazo_izquierdo[1])
-                #     # enviar_comando_esp32(brazo_izquierdo[3])
-                
-                
+                # ENVIAR RESULTADOS AL ESP32 DEL BRAZO IZQUIERDO
+                if brazo_izquierdo[1] is not None and brazo_izquierdo[3] is not None and brazo_izquierdo[5] is not None and brazo_izquierdo[7] is not None:
+                    print("Brazo Izquierdo: ", brazo_izquierdo)
+                    print("Brazo Izquierdo: ", brazo_izquierdo)
+                    enviar_comando_esp32(brazo_izquierdo[1])
+                    enviar_comando_esp32(brazo_izquierdo[3])
+                    enviar_comando_esp32(brazo_izquierdo[5])
+                    enviar_comando_esp32(brazo_izquierdo[7])
 
 
 
 
-
-
-
-            
 
                 
 
