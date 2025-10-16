@@ -5,7 +5,7 @@
             "palabras":["apagar", "desactivar", "cerrar", "terminar", "finalizar", "detener", "dejar", "para","parar","deja","desactiva","desactivado"]
         },
         {   "comando": "nombre",
-            "palabras":["rubik", "rubi", "ruvi", "rubí", "ruby","rudi","rudic","rudik","rubick","rubli"]
+            "palabras":["Zoé", "Zoe", "zoe", "zoé", "sooe", "sóe", "sóe", "sóee", "sóee", "zooe", "zóe", "zóee", "zóee","noe","noé","noee","noée","nóe","nóee","nóée","joe","joé","joee","joée","jóe","jóee","jóée", "soy", "soi", "soui","sui","sóei","suoi"]
         },
         { "comando": "imitar",
             "palabras": ["imitar", "imita", "espejo"]
@@ -68,7 +68,7 @@
     "Respuestas":[
         {
             "responder":"hola",
-            "respuesta":["Hola, ¿cómo puedo ayudarte?", "¡Hola! ¿Qué necesitas?","Hola, soy Rubik, ¿en qué puedo ayudarte?","Qué tal, ¿cómo puedo asistirte?"],
+            "respuesta":["Hola, ¿cómo puedo ayudarte?", "¡Hola! ¿Qué necesitas?","Hola, soy Zoé, ¿en qué puedo ayudarte?","Qué tal, ¿cómo puedo asistirte?"],
             "pesos":false
         },
         {
