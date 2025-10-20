@@ -2,14 +2,23 @@ from groq import Groq
 
 class manejoDeConversacion:
 
-    def __init__(self, system_prompt: str):
+    def __init__(self, system_prompt: str, token: str =None, model: str ="llama-3.1-8b-instant"):
         if not system_prompt:
             raise ValueError("El prompt del sistema no puede estar vacío.")
         self.historial = [{
             "role": "system",
             "content": system_prompt
         }]
+        self.model = model 
+        self.client = None
+        if token:
+            self.set_token(token)
     
+    def set_token(self, token: str):
+        if not token:
+            raise ValueError("El token no puede estar vacío.")
+        self.client = Groq(api_key=token)
+
     def agregar(self, role: str, contenido: str):
         if not role or not contenido:
             raise ValueError("El rol y el contenido no pueden estar vacíos.")
@@ -30,17 +39,24 @@ class manejoDeConversacion:
         self.historial.clear()
         self.historial.append(system_message)
 
-    def enviar(self, contexto: str, TOKEN):
+    def enviarMSG(self, contexto: str, token: str = None):
+
+        if token:
+            self.set_token(token)
+        if self.client is None:
+            raise RuntimeError("Groq client no inicializado. Pase TOKEN en __init__ o en enviar().")
         self.agregar("user", contexto)
-        # Aquí puedes agregar la lógica para enviar el contexto a la API de Groq
-        client = Groq(api_key=TOKEN)
-        respuesta = client.chat.completions.create(
-            model="groq-1.5-chat",
-            messages=self.historial
-        )
-        mensaje_respuesta = respuesta.choices[0].message['content']
-        self.agregar("assistant", mensaje_respuesta)
-        return mensaje_respuesta
+        try:
+            respuesta = self.client.chat.completions.create(
+                model=self.model,
+                messages=self.historial
+            )
+            mensaje_respuesta = respuesta.choices[0].message.content
+            self.agregar("assistant", mensaje_respuesta)
+            return mensaje_respuesta
+        except Exception as e:
+            # Propaga o loggea según prefieras
+            raise RuntimeError(f"Error al llamar a la API de Groq: {e}")
 
 # Ejemplo de uso:
 # manejo = manejoDeConversacion("Eres un robot llamado Zoé...")  Recuerda cambiar el prompt inicial actual, se esta creando el objeto con el prompt del sistema
