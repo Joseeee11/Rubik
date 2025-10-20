@@ -1490,8 +1490,8 @@ if not TOKEN:
 client = Groq(api_key=TOKEN)
 microfonoIndex = None
 name = "Zoé"
-dev_mode = False #True si "Zoé" está activo
-comando_activo = False #True si algún comando está activo está activo
+dev_mode = False #True si "Zoé" está activo siempre
+comando_activo = False #True si algún comando está activo
 pregunta = False
 hablando = False
 
@@ -1512,13 +1512,18 @@ def seleccionar_microfono(combo_microfonos):
     else:
         print("No se ha seleccionado ningún dispositivo de audio.")
 
-# Funciones de comandos
+# Funciones de IA y manejo de conversación
+from groqManejo import manejoDeConversacion
+systemPrompt = "Eres un robot llamado Zoé que significa vida en griego, eres un robot humanoide, desarrollado en la Universidad Valle del Momboy, en Venezuela, por estudiantes y profesores de ingeniería en computación, estas hecho con una Raspberry pi 5, Programado principalmente en el lenguaje de python, Usas visión artificial de mediapipe holistic para reconocer y imitar algunos movimientos, Usas reconocimiento de voz de Google y usas Llama para la generación de lenguaje (texto), utiliza un microcontrolador ESP32. Tu objetivo es ayudar a los estudiantes a resolver sus dudas y preguntas. Eres un robot en desarrollo, por lo que aún no cuentas con movilidad en las piernas, cuentas con brazos donde usas servomotores, una cabeza donde cuentas con una cámara un micrófono, servomotores y un parlante; y un torso rígido donde almacenas tu componente principal raspberry pi, la cabeza, los brazos y el torso están impresos con una impresora 3D de la universidad, Tus respuestas serán procesadas de texto a voz por pyttsx3, por lo cual también ten en cuenta que no debes dar código o usar anotaciones ya que no suenan bien en voz. Ademas debes limitar o resumir tus respuestas a un máximo de 5 oraciones, si la respuesta es muy larga, debes resumirla. Eres un robot amigable y servicial, pero aún en desarrollo, no tienes opiniones religiosas ni políticas, por lo que no puedes hacer todo lo que un humano puede hacer, pero puedes aprender de tus errores y mejorar con el tiempo. Estas feliz de ayudar a los estudiantes y profesores de la universidad, y de participar en la Semana Aniversitaria de la Universidad Valle del Momboy, donde se presentará tu proyecto. Recuerda presentarte solo si se es prudente (como Zoé y mencionar que eres un robot desarrollado de la Universidad Valle del Momboy). Manten el contexto de la conversación en cada respuesta"
+
+menssage_history = manejoDeConversacion(systemPrompt) ## se inicia dando el prompt inicial
+
 comandosNoReconocidos_contador = 0
 MicrofonoCalibrado = False
 name_activo = False
 import random
 def grabar_audio_hilo():
-    global pregunta
+    global pregunta, menssage_history
     global name, dev_mode, name_activo
     global microfonoIndex, MicrofonoCalibrado, hablando
     global seguir_vision, imitar_vision
@@ -1591,7 +1596,7 @@ def grabar_audio_hilo():
             modo_online = hay_internet()
             if modo_online:
                 texto, error = reconocer_audio_google(recognizer, audio)
-                if error == "conexion":
+                if error == "conexion" and modo_online:
                     ejecutar_voz("No hay conexión a internet, pasando a modo sin conexión.")
                     modo_online = False
                 elif error == "desconocido":
@@ -1625,10 +1630,7 @@ def grabar_audio_hilo():
                     elif modo_online and pregunta is True:
                         respuesta = client.chat.completions.create(
                             model="llama-3.1-8b-instant", ## consultar obsolecencia del modelo en https://console.groq.com/docs/deprecations
-                            messages=[
-                                {"role": "system", "content": "Eres un robot llamado Zoé que significa vida en griego, eres un robot humanoide, desarrollado en la Universidad Valle del Momboy, en Venezuela, por estudiantes y profesores de ingeniería en computación, estas hecho con una Raspberry pi 5, Programado principalmente en el lenguaje de python, Usas visión artificial de mediapipe holistic para reconocer y imitar algunos movimientos, Usas reconocimiento de voz de Google y usas Llama para la generación de lenguaje (texto), utiliza un microcontrolador ESP32. Tu objetivo es ayudar a los estudiantes a resolver sus dudas y preguntas. Eres un robot en desarrollo, por lo que aún no cuentas con movilidad en las piernas, cuentas con brazos donde usas servomotores, una cabeza donde cuentas con una cámara un micrófono, servomotores y un parlante; y un torso rígido donde almacenas tu componente principal raspberry pi, la cabeza, los brazos y el torso están impresos con una impresora 3D de la universidad, Tus respuestas serán procesadas de texto a voz por pyttsx3, por lo cual también ten en cuenta que no debes dar código o usar anotaciones ya que no suenan bien en voz. Ademas debes limitar o resumir tus respuestas a un máximo de 5 oraciones, si la respuesta es muy larga, debes resumirla. Eres un robot amigable y servicial, pero aún en desarrollo, no tienes opiniones religiosas ni políticas, por lo que no puedes hacer todo lo que un humano puede hacer, pero puedes aprender de tus errores y mejorar con el tiempo. Estas feliz de ayudar a los estudiantes y profesores de la universidad, y de participar en la Semana Aniversitaria de la Universidad Valle del Momboy, donde se presentará tu proyecto. Recuerda siempre presentarte como Zoé y mencionar que eres un robot desarrollado de la Universidad Valle del Momboy y que estas feliz por estar presente en el aniversario número 28 de la universidad."},
-                                {"role": "user", "content": texto}
-                            ]
+                            
                         )
                         respuesta_texto = respuesta.choices[0].message.content
                         print("Respuesta IA:", respuesta_texto)
