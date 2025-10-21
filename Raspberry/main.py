@@ -150,10 +150,10 @@ grupo_angulo_flexion_i = []
 grupo_angulo_rotacion_i = []
 
 
-
+frameExportado= None
 def visualizar():
     global cap
-    global pintar
+    global pintar, frameExportado
     global EjeY, EjeX
     global seguir_vision, punto_seguir, imitar_vision
     global palma_puntos, pulgar_puntos, punta_puntos, base_puntos
@@ -166,10 +166,10 @@ def visualizar():
         ret, frame = cap.read()
         if ret == True:
             frame = imutils.resize(frame, width=1200)
+            frameExportado = frame
             height, width, _ = frame.shape
             # Convierte el fotograma a RGB
             frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-
             # if check_var_IAvision.get():
             result = holistic.process(frame_rgb)
             # print(result.left_hand_landmarks)
@@ -1489,9 +1489,10 @@ if not TOKEN:
 from groqManejo import manejoDeConversacion
 ## consultar obsolecencia del modelo en https://console.groq.com/docs/deprecations
 modeloIA = "llama-3.1-8b-instant"
+modeloImagen= "meta-llama/llama-4-scout-17b-16e-instruct"
 systemPrompt = "Eres un robot llamado Zoé que significa vida en griego, eres un robot humanoide, desarrollado en la Universidad Valle del Momboy, en Venezuela, por estudiantes y profesores de ingeniería en computación, estas hecho con una Raspberry pi 5, Programado principalmente en el lenguaje de python, Usas visión artificial de mediapipe holistic para reconocer y imitar algunos movimientos, Usas reconocimiento de voz de Google y usas Llama para la generación de lenguaje (texto), utiliza un microcontrolador ESP32. Tu objetivo es ayudar a los estudiantes a resolver sus dudas y preguntas. Eres un robot en desarrollo, por lo que aún no cuentas con movilidad en las piernas, cuentas con brazos donde usas servomotores, una cabeza donde cuentas con una cámara un micrófono, servomotores y un parlante; y un torso rígido donde almacenas tu componente principal raspberry pi, la cabeza, los brazos y el torso están impresos con una impresora 3D de la universidad, Tus respuestas serán procesadas de texto a voz por pyttsx3, por lo cual también ten en cuenta que no debes dar código o usar anotaciones ya que no suenan bien en voz. Ademas debes limitar o resumir tus respuestas a un máximo de 5 oraciones, si la respuesta es muy larga, debes resumirla. Eres un robot amigable y servicial, pero aún en desarrollo, no tienes opiniones religiosas ni políticas, por lo que no puedes hacer todo lo que un humano puede hacer, pero puedes aprender de tus errores y mejorar con el tiempo. Estas feliz de ayudar a los estudiantes y profesores de la universidad, y de participar en la Semana Aniversitaria de la Universidad Valle del Momboy, donde se presentará tu proyecto. Recuerda presentarte solo si se es prudente (como Zoé y mencionar que eres un robot desarrollado de la Universidad Valle del Momboy). Manten el contexto de la conversación en cada respuesta"
 
-groqIA = manejoDeConversacion(system_prompt=systemPrompt,token=TOKEN, model=modeloIA) ## se inicia dando el prompt inicial
+groqIA = manejoDeConversacion(system_prompt=systemPrompt,token=TOKEN, model=modeloIA, modelImage=modeloImagen) ## se inicia dando el prompt inicial
 
 
 microfonoIndex = None
@@ -1529,7 +1530,7 @@ def grabar_audio_hilo():
     global microfonoIndex, MicrofonoCalibrado, hablando
     global seguir_vision, imitar_vision
     global comandosNoReconocidos_contador
-    global client
+    global client, frameExportado
 
     # Variable para saber si hay conexión a internet
     def hay_internet():
@@ -1627,13 +1628,9 @@ def grabar_audio_hilo():
                             ejecutar_voz("Conexión a internet restablecida. Volveré a usar el reconocimiento en línea.")
                         else:
                             ejecutar_voz("No fue posible conectar a internet. Seguiré en modo sin conexión.")
-                    
-                    elif "gracias" in comandos_obtenidos:
-                        ejecutar_voz(respuestas_comando("gracias"))
-                        pregunta = False
-                        
+
                     elif modo_online and pregunta is True:
-                        respuestas_texto = groqIA.enviarMSG(texto)
+                        respuestas_texto = groqIA.enviarMSG(texto, frameExportado=frameExportado)
                         print("Respuesta IA:", respuestas_texto)
                         ejecutar_voz(respuestas_texto)
                         pregunta = False
@@ -1644,6 +1641,9 @@ def grabar_audio_hilo():
 
                     elif "hora" in comandos_obtenidos:
                         comando_hora()
+                    elif "gracias" in comandos_obtenidos:
+                        ejecutar_voz(respuestas_comando("gracias"))
+                        pregunta = False
                     elif "pregunta" in comandos_obtenidos:
                         if modo_online:
                             pregunta = True
