@@ -113,6 +113,12 @@ def mapear_valor(valor, min_original, max_original, min_deseado, max_deseado):
     valor_mapeado = proporcion * (max_deseado - min_deseado) + min_deseado
     return round(valor_mapeado)
 
+def _to_int_safe(v):
+    try:
+        return int(round(float(v)))
+    except Exception:
+        return None
+
 def definir_flexion(angulo, brazo):
     # brazo_derecho[0] es posición flexión y brazo_derecho[1] es el ángulo al esp32
     # rango para flexion de codo derecha 4000 a 4199

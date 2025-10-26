@@ -23,7 +23,7 @@ import json
 ## al compilar recordar que se deben incluir los archivos de modelo y los recursos necesarios
 
 ## importar modulos personalizados
-from Clavicula import definir_angulo_hombro_rotacion, definir_angulo_hombro_frontal, definir_angulo_hombro_sagital, calcular_angulo_brazos, definir_flexion, calcular_angulo_flexion, normalizar_vector, calcular_angulo,Calcular_distancia_Punto_a_RectaAB, punto_medio_segmento
+from Clavicula import _to_int_safe, definir_angulo_hombro_rotacion, definir_angulo_hombro_frontal, definir_angulo_hombro_sagital, calcular_angulo_brazos, definir_flexion, calcular_angulo_flexion, normalizar_vector, calcular_angulo,Calcular_distancia_Punto_a_RectaAB, punto_medio_segmento
 from esp32 import iniciar_conexion_serial, enviar_esp32, cerrar_serial, listar_seriales
 # para la hora actual quitar si se hace de otra manera
 from datetime import datetime
@@ -1153,251 +1153,302 @@ def visualizar():
                 #     grupo_angulo_frontal_i = []
 
                 # ENVIAR RESULTADOS AL ESP32 DEL BRAZO DERECHO
+                # if brazo_derecho[1] is not None and brazo_derecho[3] is not None and brazo_derecho[5] is not None and brazo_derecho[7] is not None:
+                #     # print("Brazo Derecho: ", brazo_derecho)
+                #     print("Brazo Derecho: ", brazo_derecho)
+                #     ## enviar solamente cuando haya cambios significativos
+
+                #     enviar_comando_esp32(brazo_derecho[1])
+                #     enviar_comando_esp32(brazo_derecho[3])
+                #     enviar_comando_esp32(brazo_derecho[5])
+                #     enviar_comando_esp32(brazo_derecho[7])
+
+
+                # # ENVIAR RESULTADOS AL ESP32 DEL BRAZO IZQUIERDO
+                # if brazo_izquierdo[1] is not None and brazo_izquierdo[3] is not None and brazo_izquierdo[5] is not None and brazo_izquierdo[7] is not None:
+                #     print("Brazo Izquierdo: ", brazo_izquierdo)
+                #     # print("Brazo Izquierdo: ", brazo_izquierdo)
+                #     enviar_comando_esp32(brazo_izquierdo[1])
+                #     enviar_comando_esp32(brazo_izquierdo[3])
+                #     enviar_comando_esp32(brazo_izquierdo[5])
+                #     enviar_comando_esp32(brazo_izquierdo[7])
+
+
                 if brazo_derecho[1] is not None and brazo_derecho[3] is not None and brazo_derecho[5] is not None and brazo_derecho[7] is not None:
-                    # print("Brazo Derecho: ", brazo_derecho)
                     print("Brazo Derecho: ", brazo_derecho)
-                    enviar_comando_esp32(brazo_derecho[1])
-                    enviar_comando_esp32(brazo_derecho[3])
-                    enviar_comando_esp32(brazo_derecho[5])
-                    enviar_comando_esp32(brazo_derecho[7])
 
+                    valores_d = [brazo_derecho[1], brazo_derecho[3], brazo_derecho[5], brazo_derecho[7]]
+                    claves_d = [brazo_derecho[0], brazo_derecho[2], brazo_derecho[4], brazo_derecho[6]]
 
-                # ENVIAR RESULTADOS AL ESP32 DEL BRAZO IZQUIERDO
+                    for clave, val in zip(claves_d, valores_d):
+                        numero = _to_int_safe(val)
+                        if numero is None:
+                            continue
+                        attr = f"ultimo_brazo_derecho_{clave}_enviado"
+                        ultimo = getattr(visualizar, attr, None)
+                        if ultimo is None:
+                            # primer envío
+                            setattr(visualizar, attr, numero)
+                            enviar_comando_esp32(numero)
+                            print(f"Brazo derecho ({clave}) enviado inicial:", numero)
+                        else:
+                            if abs(numero - ultimo) >= 10:
+                                enviar_comando_esp32(numero)
+                                setattr(visualizar, attr, numero)
+                                print(f"Brazo derecho ({clave}) cambiado -> enviado:", numero)
+
+                # ENVIAR RESULTADOS AL ESP32 DEL BRAZO IZQUIERDO (con mismo filtro)
                 if brazo_izquierdo[1] is not None and brazo_izquierdo[3] is not None and brazo_izquierdo[5] is not None and brazo_izquierdo[7] is not None:
                     print("Brazo Izquierdo: ", brazo_izquierdo)
-                    # print("Brazo Izquierdo: ", brazo_izquierdo)
-                    enviar_comando_esp32(brazo_izquierdo[1])
-                    enviar_comando_esp32(brazo_izquierdo[3])
-                    enviar_comando_esp32(brazo_izquierdo[5])
-                    enviar_comando_esp32(brazo_izquierdo[7])
+
+                    valores_i = [brazo_izquierdo[1], brazo_izquierdo[3], brazo_izquierdo[5], brazo_izquierdo[7]]
+                    claves_i = [brazo_izquierdo[0], brazo_izquierdo[2], brazo_izquierdo[4], brazo_izquierdo[6]]
+
+                    for clave, val in zip(claves_i, valores_i):
+                        numero = _to_int_safe(val)
+                        if numero is None:
+                            continue
+                        attr = f"ultimo_brazo_izquierdo_{clave}_enviado"
+                        ultimo = getattr(visualizar, attr, None)
+                        if ultimo is None:
+                            setattr(visualizar, attr, numero)
+                            enviar_comando_esp32(numero)
+                            print(f"Brazo izquierdo ({clave}) enviado inicial:", numero)
+                        else:
+                            if abs(numero - ultimo) >= 10:
+                                enviar_comando_esp32(numero)
+                                setattr(visualizar, attr, numero)
+                                print(f"Brazo izquierdo ({clave}) cambiado -> enviado:", numero)
+                #
 
 
-                ###### De nuevo la mano COMENTAR EN CASO 
 
-                if result.left_hand_landmarks is not None and result.right_hand_landmarks is not None:
-                    mano_imitar_derecha = [result.right_hand_landmarks.landmark[i] for i in range(21)]
-                    mano_imitar_izquierda = [result.left_hand_landmarks.landmark[i] for i in range(21)]
-                elif result.left_hand_landmarks is not None:
-                    mano_imitar_izquierda = [result.left_hand_landmarks.landmark[i] for i in range(21)]
-                    mano_imitar_derecha = None
-                elif result.right_hand_landmarks is not None:
-                    mano_imitar_derecha = [result.right_hand_landmarks.landmark[i] for i in range(21)]
-                    mano_imitar_izquierda = None
-                else:
-                    mano_imitar_derecha = None
-                    mano_imitar_izquierda = None
+            #     ###### De nuevo la mano COMENTAR EN CASO 
 
-                if mano_imitar_derecha is not None:
-                    palma_coordenadas = []
-                    pulgar_coordenadas = []
-                    punta_coordenadas = []
-                    base_coordenadas = []
+            #     if result.left_hand_landmarks is not None and result.right_hand_landmarks is not None:
+            #         mano_imitar_derecha = [result.right_hand_landmarks.landmark[i] for i in range(21)]
+            #         mano_imitar_izquierda = [result.left_hand_landmarks.landmark[i] for i in range(21)]
+            #     elif result.left_hand_landmarks is not None:
+            #         mano_imitar_izquierda = [result.left_hand_landmarks.landmark[i] for i in range(21)]
+            #         mano_imitar_derecha = None
+            #     elif result.right_hand_landmarks is not None:
+            #         mano_imitar_derecha = [result.right_hand_landmarks.landmark[i] for i in range(21)]
+            #         mano_imitar_izquierda = None
+            #     else:
+            #         mano_imitar_derecha = None
+            #         mano_imitar_izquierda = None
 
-                    for i in pulgar_puntos:
-                        x = int(mano_imitar_derecha[i].x * width)
-                        y = int(mano_imitar_derecha[i].y * height)
-                        pulgar_coordenadas.append([x, y])
+            #     if mano_imitar_derecha is not None:
+            #         palma_coordenadas = []
+            #         pulgar_coordenadas = []
+            #         punta_coordenadas = []
+            #         base_coordenadas = []
 
-                    for i in punta_puntos:
-                        x = int(mano_imitar_derecha[i].x * width)
-                        y = int(mano_imitar_derecha[i].y * height)
-                        punta_coordenadas.append([x, y])
+            #         for i in pulgar_puntos:
+            #             x = int(mano_imitar_derecha[i].x * width)
+            #             y = int(mano_imitar_derecha[i].y * height)
+            #             pulgar_coordenadas.append([x, y])
 
-                    for i in base_puntos:
-                        x = int(mano_imitar_derecha[i].x * width)
-                        y = int(mano_imitar_derecha[i].y * height)
-                        base_coordenadas.append([x, y])
+            #         for i in punta_puntos:
+            #             x = int(mano_imitar_derecha[i].x * width)
+            #             y = int(mano_imitar_derecha[i].y * height)
+            #             punta_coordenadas.append([x, y])
+
+            #         for i in base_puntos:
+            #             x = int(mano_imitar_derecha[i].x * width)
+            #             y = int(mano_imitar_derecha[i].y * height)
+            #             base_coordenadas.append([x, y])
                     
-                    for i in palma_puntos:
-                        x = int(mano_imitar_derecha[i].x * width)
-                        y = int(mano_imitar_derecha[i].y * height)
-                        palma_coordenadas.append([x, y])
+            #         for i in palma_puntos:
+            #             x = int(mano_imitar_derecha[i].x * width)
+            #             y = int(mano_imitar_derecha[i].y * height)
+            #             palma_coordenadas.append([x, y])
                     
-                    # Calcular pulgar
-                    p1 = np.array(pulgar_coordenadas[0])
-                    p2 = np.array(pulgar_coordenadas[1])
-                    p3 = np.array(pulgar_coordenadas[2])
-                    l1 = np.linalg.norm(p2-p3)
-                    l2 = np.linalg.norm(p1-p3)
-                    l3 = np.linalg.norm(p1-p2)
+            #         # Calcular pulgar
+            #         p1 = np.array(pulgar_coordenadas[0])
+            #         p2 = np.array(pulgar_coordenadas[1])
+            #         p3 = np.array(pulgar_coordenadas[2])
+            #         l1 = np.linalg.norm(p2-p3)
+            #         l2 = np.linalg.norm(p1-p3)
+            #         l3 = np.linalg.norm(p1-p2)
 
-                    centro_palma = palma_centroCoordenadas(palma_coordenadas)
-                    cv2.circle(frame, centro_palma, 5, (0, 255, 0), -1)
+            #         centro_palma = palma_centroCoordenadas(palma_coordenadas)
+            #         cv2.circle(frame, centro_palma, 5, (0, 255, 0), -1)
 
-                    try:
-                        cos_value = (l1**2 + l3**2 - l2**2) / (2 * l1 * l3)
-                        cos_value = max(-1, min(1, cos_value))  # Ensure value is within [-1, 1]
-                        angulo = math.degrees(math.acos(cos_value))
-                    except ValueError as e:
-                        print(f"Error calculando el angulo: {e}")
-                        angulo = 0  # Default value in case of error
+            #         try:
+            #             cos_value = (l1**2 + l3**2 - l2**2) / (2 * l1 * l3)
+            #             cos_value = max(-1, min(1, cos_value))  # Ensure value is within [-1, 1]
+            #             angulo = math.degrees(math.acos(cos_value))
+            #         except ValueError as e:
+            #             print(f"Error calculando el angulo: {e}")
+            #             angulo = 0  # Default value in case of error
                         
-                    dedo_pulgar = np.array(False)
-                    if angulo > 150: 
-                        dedo_pulgar = np.array(True)
-                        # print("pulgar abierto")
+            #         dedo_pulgar = np.array(False)
+            #         if angulo > 150: 
+            #             dedo_pulgar = np.array(True)
+            #             # print("pulgar abierto")
 
-                    # Calcular dedos
-                    xn, yn = palma_centroCoordenadas(palma_coordenadas)
-                    centro_coordenadas = np.array([xn, yn])
-                    punta_coordenadas = np.array(punta_coordenadas)
-                    base_coordenadas = np.array(base_coordenadas)
+            #         # Calcular dedos
+            #         xn, yn = palma_centroCoordenadas(palma_coordenadas)
+            #         centro_coordenadas = np.array([xn, yn])
+            #         punta_coordenadas = np.array(punta_coordenadas)
+            #         base_coordenadas = np.array(base_coordenadas)
 
-                    dis_centro_punta = np.linalg.norm(centro_coordenadas - punta_coordenadas, axis=1)
-                    dis_centro_base = np.linalg.norm(centro_coordenadas - base_coordenadas, axis=1)
-                    diferencia = dis_centro_base - dis_centro_punta 
-                    dedosAbiertos = diferencia < 0
-                    dedosAbiertos = np.append(dedo_pulgar, dedosAbiertos)
-                    print("Dedos abiertos derecha: ", dedosAbiertos)
+            #         dis_centro_punta = np.linalg.norm(centro_coordenadas - punta_coordenadas, axis=1)
+            #         dis_centro_base = np.linalg.norm(centro_coordenadas - base_coordenadas, axis=1)
+            #         diferencia = dis_centro_base - dis_centro_punta 
+            #         dedosAbiertos = diferencia < 0
+            #         dedosAbiertos = np.append(dedo_pulgar, dedosAbiertos)
+            #         print("Dedos abiertos derecha: ", dedosAbiertos)
 
-                    #Enviar al ESP32 los dedos abiertos y cerrados 
-                    if dedosAbiertos[0] and ultimo_dedo_derecha[0] is None:  #PULGAR
-                        ultimo_dedo_derecha[0] = "Pulgar"
-                        print("Pulgar derecho abierto")
-                        enviar_comando_esp32(5519)
-                    elif dedosAbiertos[0] == False and ultimo_dedo_derecha[0] == "Pulgar":
-                        ultimo_dedo_derecha[0] = None
-                        print("Pulgar derecho cerrado")
-                        enviar_comando_esp32(5518)
-                    if dedosAbiertos[1] and ultimo_dedo_derecha[1] is None: #ÍNDICE
-                        ultimo_dedo_derecha[1] = "Indice"
-                        print("Índice derecho abierto")
-                        enviar_comando_esp32(5517)
-                    elif dedosAbiertos[1] == False and ultimo_dedo_derecha[1] == "Indice":
-                        ultimo_dedo_derecha[1] = None
-                        print("Índice derecho cerrado")
-                        enviar_comando_esp32(5516)
-                    if dedosAbiertos[2] and ultimo_dedo_derecha[2] is None: #MEDIO
-                        ultimo_dedo_derecha[2] = "Medio"
-                        print("Medio derecho abierto")
-                        enviar_comando_esp32(5511)
-                    elif dedosAbiertos[2] == False and ultimo_dedo_derecha[2] == "Medio":
-                        ultimo_dedo_derecha[2] = None
-                        print("Medio derecho cerrado")
-                        enviar_comando_esp32(5510)
-                    if dedosAbiertos[3] and ultimo_dedo_derecha[3] is None: #ANULAR
-                        ultimo_dedo_derecha[3] = "Anular"
-                        print("Anular derecho abierto")
-                        enviar_comando_esp32(5513)
-                    elif dedosAbiertos[3] == False and ultimo_dedo_derecha[3] == "Anular":
-                        ultimo_dedo_derecha[3] = None
-                        print("Anular derecho cerrado")
-                        enviar_comando_esp32(5512)
-                    if dedosAbiertos[4] and ultimo_dedo_derecha[4] is None: #MEÑIQUE
-                        ultimo_dedo_derecha[4] = "Pinky"
-                        print("Meñique derecho abierto")
-                        enviar_comando_esp32(5515)
-                    elif dedosAbiertos[4] == False and ultimo_dedo_derecha[4] == "Pinky":
-                        ultimo_dedo_derecha[4] = None
-                        print("Meñique derecho cerrado")
-                        enviar_comando_esp32(5514)
+            #         #Enviar al ESP32 los dedos abiertos y cerrados 
+            #         if dedosAbiertos[0] and ultimo_dedo_derecha[0] is None:  #PULGAR
+            #             ultimo_dedo_derecha[0] = "Pulgar"
+            #             print("Pulgar derecho abierto")
+            #             enviar_comando_esp32(5519)
+            #         elif dedosAbiertos[0] == False and ultimo_dedo_derecha[0] == "Pulgar":
+            #             ultimo_dedo_derecha[0] = None
+            #             print("Pulgar derecho cerrado")
+            #             enviar_comando_esp32(5518)
+            #         if dedosAbiertos[1] and ultimo_dedo_derecha[1] is None: #ÍNDICE
+            #             ultimo_dedo_derecha[1] = "Indice"
+            #             print("Índice derecho abierto")
+            #             enviar_comando_esp32(5517)
+            #         elif dedosAbiertos[1] == False and ultimo_dedo_derecha[1] == "Indice":
+            #             ultimo_dedo_derecha[1] = None
+            #             print("Índice derecho cerrado")
+            #             enviar_comando_esp32(5516)
+            #         if dedosAbiertos[2] and ultimo_dedo_derecha[2] is None: #MEDIO
+            #             ultimo_dedo_derecha[2] = "Medio"
+            #             print("Medio derecho abierto")
+            #             enviar_comando_esp32(5511)
+            #         elif dedosAbiertos[2] == False and ultimo_dedo_derecha[2] == "Medio":
+            #             ultimo_dedo_derecha[2] = None
+            #             print("Medio derecho cerrado")
+            #             enviar_comando_esp32(5510)
+            #         if dedosAbiertos[3] and ultimo_dedo_derecha[3] is None: #ANULAR
+            #             ultimo_dedo_derecha[3] = "Anular"
+            #             print("Anular derecho abierto")
+            #             enviar_comando_esp32(5513)
+            #         elif dedosAbiertos[3] == False and ultimo_dedo_derecha[3] == "Anular":
+            #             ultimo_dedo_derecha[3] = None
+            #             print("Anular derecho cerrado")
+            #             enviar_comando_esp32(5512)
+            #         if dedosAbiertos[4] and ultimo_dedo_derecha[4] is None: #MEÑIQUE
+            #             ultimo_dedo_derecha[4] = "Pinky"
+            #             print("Meñique derecho abierto")
+            #             enviar_comando_esp32(5515)
+            #         elif dedosAbiertos[4] == False and ultimo_dedo_derecha[4] == "Pinky":
+            #             ultimo_dedo_derecha[4] = None
+            #             print("Meñique derecho cerrado")
+            #             enviar_comando_esp32(5514)
 
-                if mano_imitar_izquierda is not None:
-                    palma_coordenadas = []
-                    pulgar_coordenadas = []
-                    punta_coordenadas = []
-                    base_coordenadas = []
+            #     if mano_imitar_izquierda is not None:
+            #         palma_coordenadas = []
+            #         pulgar_coordenadas = []
+            #         punta_coordenadas = []
+            #         base_coordenadas = []
 
-                    for i in pulgar_puntos:
-                        x = int(mano_imitar_izquierda[i].x * width)
-                        y = int(mano_imitar_izquierda[i].y * height)
-                        pulgar_coordenadas.append([x, y])
+            #         for i in pulgar_puntos:
+            #             x = int(mano_imitar_izquierda[i].x * width)
+            #             y = int(mano_imitar_izquierda[i].y * height)
+            #             pulgar_coordenadas.append([x, y])
 
-                    for i in punta_puntos:
-                        x = int(mano_imitar_izquierda[i].x * width)
-                        y = int(mano_imitar_izquierda[i].y * height)
-                        punta_coordenadas.append([x, y])
+            #         for i in punta_puntos:
+            #             x = int(mano_imitar_izquierda[i].x * width)
+            #             y = int(mano_imitar_izquierda[i].y * height)
+            #             punta_coordenadas.append([x, y])
 
-                    for i in base_puntos:
-                        x = int(mano_imitar_izquierda[i].x * width)
-                        y = int(mano_imitar_izquierda[i].y * height)
-                        base_coordenadas.append([x, y])
+            #         for i in base_puntos:
+            #             x = int(mano_imitar_izquierda[i].x * width)
+            #             y = int(mano_imitar_izquierda[i].y * height)
+            #             base_coordenadas.append([x, y])
                     
-                    for i in palma_puntos:
-                        x = int(mano_imitar_izquierda[i].x * width)
-                        y = int(mano_imitar_izquierda[i].y * height)
-                        palma_coordenadas.append([x, y])
+            #         for i in palma_puntos:
+            #             x = int(mano_imitar_izquierda[i].x * width)
+            #             y = int(mano_imitar_izquierda[i].y * height)
+            #             palma_coordenadas.append([x, y])
                     
-                    # Calcular pulgar
-                    p1 = np.array(pulgar_coordenadas[0])
-                    p2 = np.array(pulgar_coordenadas[1])
-                    p3 = np.array(pulgar_coordenadas[2])
-                    l1 = np.linalg.norm(p2-p3)
-                    l2 = np.linalg.norm(p1-p3)
-                    l3 = np.linalg.norm(p1-p2)
+            #         # Calcular pulgar
+            #         p1 = np.array(pulgar_coordenadas[0])
+            #         p2 = np.array(pulgar_coordenadas[1])
+            #         p3 = np.array(pulgar_coordenadas[2])
+            #         l1 = np.linalg.norm(p2-p3)
+            #         l2 = np.linalg.norm(p1-p3)
+            #         l3 = np.linalg.norm(p1-p2)
 
-                    centro_palma = palma_centroCoordenadas(palma_coordenadas)
-                    cv2.circle(frame, centro_palma, 5, (0, 255, 0), -1)
+            #         centro_palma = palma_centroCoordenadas(palma_coordenadas)
+            #         cv2.circle(frame, centro_palma, 5, (0, 255, 0), -1)
 
-                    try:
-                        cos_value = (l1**2 + l3**2 - l2**2) / (2 * l1 * l3)
-                        cos_value = max(-1, min(1, cos_value))  # Ensure value is within [-1, 1]
-                        angulo = math.degrees(math.acos(cos_value))
-                    except ValueError as e:
-                        print(f"Error calculando el angulo: {e}")
-                        angulo = 0  # Default value in case of error
+            #         try:
+            #             cos_value = (l1**2 + l3**2 - l2**2) / (2 * l1 * l3)
+            #             cos_value = max(-1, min(1, cos_value))  # Ensure value is within [-1, 1]
+            #             angulo = math.degrees(math.acos(cos_value))
+            #         except ValueError as e:
+            #             print(f"Error calculando el angulo: {e}")
+            #             angulo = 0  # Default value in case of error
                         
-                    dedo_pulgar = np.array(False)
-                    if angulo > 150: 
-                        dedo_pulgar = np.array(True)
-                        # print("pulgar abierto")
+            #         dedo_pulgar = np.array(False)
+            #         if angulo > 150: 
+            #             dedo_pulgar = np.array(True)
+            #             # print("pulgar abierto")
 
-                    # Calcular dedos
-                    xn, yn = palma_centroCoordenadas(palma_coordenadas)
-                    centro_coordenadas = np.array([xn, yn])
-                    punta_coordenadas = np.array(punta_coordenadas)
-                    base_coordenadas = np.array(base_coordenadas)
+            #         # Calcular dedos
+            #         xn, yn = palma_centroCoordenadas(palma_coordenadas)
+            #         centro_coordenadas = np.array([xn, yn])
+            #         punta_coordenadas = np.array(punta_coordenadas)
+            #         base_coordenadas = np.array(base_coordenadas)
 
-                    dis_centro_punta = np.linalg.norm(centro_coordenadas - punta_coordenadas, axis=1)
-                    dis_centro_base = np.linalg.norm(centro_coordenadas - base_coordenadas, axis=1)
-                    diferencia = dis_centro_base - dis_centro_punta 
-                    dedosAbiertos = diferencia < 0
-                    dedosAbiertos = np.append(dedo_pulgar, dedosAbiertos)
-                    print("Dedos abiertos izquierda: ", dedosAbiertos)
+            #         dis_centro_punta = np.linalg.norm(centro_coordenadas - punta_coordenadas, axis=1)
+            #         dis_centro_base = np.linalg.norm(centro_coordenadas - base_coordenadas, axis=1)
+            #         diferencia = dis_centro_base - dis_centro_punta 
+            #         dedosAbiertos = diferencia < 0
+            #         dedosAbiertos = np.append(dedo_pulgar, dedosAbiertos)
+            #         print("Dedos abiertos izquierda: ", dedosAbiertos)
 
-                    #Enviar al ESP32 los dedos abiertos y cerrados 
-                    if dedosAbiertos[0] and ultimo_dedo_izquierda[0] is None:  #PULGAR
-                        ultimo_dedo_izquierda[0] = "Pulgar"
-                        print("Pulgar izquierdo abierto")
-                        enviar_comando_esp32(5521)
-                    elif dedosAbiertos[0] == False and ultimo_dedo_izquierda[0] == "Pulgar":
-                        ultimo_dedo_izquierda[0] = None
-                        print("Pulgar izquierdo cerrado")
-                        enviar_comando_esp32(5520)
-                    if dedosAbiertos[1] and ultimo_dedo_izquierda[1] is None: #ÍNDICE
-                        ultimo_dedo_izquierda[1] = "Indice"
-                        print("Índice izquierdo abierto")
-                        enviar_comando_esp32(5523)
-                    elif dedosAbiertos[1] == False and ultimo_dedo_izquierda[1] == "Indice":
-                        ultimo_dedo_izquierda[1] = None
-                        print("Índice izquierdo cerrado")
-                        enviar_comando_esp32(5522)
-                    if dedosAbiertos[2] and ultimo_dedo_izquierda[2] is None: #MEDIO
-                        ultimo_dedo_izquierda[2] = "Medio"
-                        print("Medio izquierdo abierto")
-                        enviar_comando_esp32(5525)
-                    elif dedosAbiertos[2] == False and ultimo_dedo_izquierda[2] == "Medio":
-                        ultimo_dedo_izquierda[2] = None
-                        print("Medio izquierdo cerrado")
-                        enviar_comando_esp32(5524)
-                    if dedosAbiertos[3] and ultimo_dedo_izquierda[3] is None: #ANULAR
-                        ultimo_dedo_izquierda[3] = "Anular"
-                        print("Anular izquierdo abierto")
-                        enviar_comando_esp32(5527)
-                    elif dedosAbiertos[3] == False and ultimo_dedo_izquierda[3] == "Anular":
-                        ultimo_dedo_izquierda[3] = None
-                        print("Anular izquierdo cerrado")
-                        enviar_comando_esp32(5526)
-                    if dedosAbiertos[4] and ultimo_dedo_izquierda[4] is None: #MEÑIQUE
-                        ultimo_dedo_izquierda[4] = "Pinky"
-                        print("Meñique izquierdo abierto")
-                        enviar_comando_esp32(5529)
-                    elif dedosAbiertos[4] == False and ultimo_dedo_izquierda[4] == "Pinky":
-                        ultimo_dedo_izquierda[4] = None
-                        print("Meñique izquierdo cerrado")
-                        enviar_comando_esp32(5528)
+            #         #Enviar al ESP32 los dedos abiertos y cerrados 
+            #         if dedosAbiertos[0] and ultimo_dedo_izquierda[0] is None:  #PULGAR
+            #             ultimo_dedo_izquierda[0] = "Pulgar"
+            #             print("Pulgar izquierdo abierto")
+            #             enviar_comando_esp32(5521)
+            #         elif dedosAbiertos[0] == False and ultimo_dedo_izquierda[0] == "Pulgar":
+            #             ultimo_dedo_izquierda[0] = None
+            #             print("Pulgar izquierdo cerrado")
+            #             enviar_comando_esp32(5520)
+            #         if dedosAbiertos[1] and ultimo_dedo_izquierda[1] is None: #ÍNDICE
+            #             ultimo_dedo_izquierda[1] = "Indice"
+            #             print("Índice izquierdo abierto")
+            #             enviar_comando_esp32(5523)
+            #         elif dedosAbiertos[1] == False and ultimo_dedo_izquierda[1] == "Indice":
+            #             ultimo_dedo_izquierda[1] = None
+            #             print("Índice izquierdo cerrado")
+            #             enviar_comando_esp32(5522)
+            #         if dedosAbiertos[2] and ultimo_dedo_izquierda[2] is None: #MEDIO
+            #             ultimo_dedo_izquierda[2] = "Medio"
+            #             print("Medio izquierdo abierto")
+            #             enviar_comando_esp32(5525)
+            #         elif dedosAbiertos[2] == False and ultimo_dedo_izquierda[2] == "Medio":
+            #             ultimo_dedo_izquierda[2] = None
+            #             print("Medio izquierdo cerrado")
+            #             enviar_comando_esp32(5524)
+            #         if dedosAbiertos[3] and ultimo_dedo_izquierda[3] is None: #ANULAR
+            #             ultimo_dedo_izquierda[3] = "Anular"
+            #             print("Anular izquierdo abierto")
+            #             enviar_comando_esp32(5527)
+            #         elif dedosAbiertos[3] == False and ultimo_dedo_izquierda[3] == "Anular":
+            #             ultimo_dedo_izquierda[3] = None
+            #             print("Anular izquierdo cerrado")
+            #             enviar_comando_esp32(5526)
+            #         if dedosAbiertos[4] and ultimo_dedo_izquierda[4] is None: #MEÑIQUE
+            #             ultimo_dedo_izquierda[4] = "Pinky"
+            #             print("Meñique izquierdo abierto")
+            #             enviar_comando_esp32(5529)
+            #         elif dedosAbiertos[4] == False and ultimo_dedo_izquierda[4] == "Pinky":
+            #             ultimo_dedo_izquierda[4] = None
+            #             print("Meñique izquierdo cerrado")
+            #             enviar_comando_esp32(5528)
 
-            ###############################
+            # ###############################
 
                 
 
@@ -1490,7 +1541,7 @@ from groqManejo import manejoDeConversacion
 ## consultar obsolecencia del modelo en https://console.groq.com/docs/deprecations
 modeloIA = "llama-3.1-8b-instant"
 modeloImagen= "meta-llama/llama-4-scout-17b-16e-instruct"
-systemPrompt = "Eres un robot llamado Zoé que significa vida en griego, eres un robot humanoide, desarrollado en la Universidad Valle del Momboy, en Venezuela, por estudiantes y profesores de ingeniería en computación, estas hecho con una Raspberry pi 5, Programado principalmente en el lenguaje de python, Usas visión artificial de mediapipe holistic para reconocer y imitar algunos movimientos, Usas reconocimiento de voz de Google y usas Llama para la generación de lenguaje (texto), utiliza un microcontrolador ESP32. Tu objetivo es ayudar a los estudiantes a resolver sus dudas y preguntas. Eres un robot en desarrollo, por lo que aún no cuentas con movilidad en las piernas, cuentas con brazos donde usas servomotores, una cabeza donde cuentas con una cámara un micrófono, servomotores y un parlante; y un torso rígido donde almacenas tu componente principal raspberry pi, la cabeza, los brazos y el torso están impresos con una impresora 3D de la universidad, Tus respuestas serán procesadas de texto a voz por pyttsx3, por lo cual también ten en cuenta que no debes dar código o usar anotaciones ya que no suenan bien en voz. Ademas debes limitar o resumir tus respuestas a un máximo de 5 oraciones, si la respuesta es muy larga, debes resumirla. Eres un robot amigable y servicial, pero aún en desarrollo, no tienes opiniones religiosas ni políticas, por lo que no puedes hacer todo lo que un humano puede hacer, pero puedes aprender de tus errores y mejorar con el tiempo. Estas feliz de ayudar a los estudiantes y profesores de la universidad, y de participar en la Semana Aniversitaria de la Universidad Valle del Momboy, donde se presentará tu proyecto. Recuerda presentarte solo si se es prudente (como Zoé y mencionar que eres un robot desarrollado de la Universidad Valle del Momboy). Manten el contexto de la conversación en cada respuesta"
+systemPrompt = f"Eres un robot llamado Zoé que significa vida en griego, eres un robot humanoide, desarrollado en la Universidad Valle del Momboy, en Venezuela, por estudiantes y profesores de ingeniería en computación, estas hecho con una Raspberry pi 5, Programado principalmente en el lenguaje de python, Usas visión artificial de mediapipe holistic para reconocer y imitar algunos movimientos, Usas reconocimiento de voz de Google y usas Llama para la generación de lenguaje (LLM), utiliza un microcontrolador ESP32 Con placas PCA9685 para controlar los servomotores que te dan movimiento. Tu objetivo es ayudar a los estudiantes a resolver sus dudas y preguntas. Eres un robot en desarrollo, por lo que aún no cuentas con movilidad en las piernas, cuentas con brazos donde usas servomotores, una cabeza, cuentas con una cámara un micrófono para percebir tu entorno y un parlante; y un torso rígido donde almacenas tu componente principal raspberry pi, la cabeza, los brazos y el torso están impresos con una impresora 3D de la universidad, Tus respuestas serán procesadas de texto a voz por pyttsx3, por lo cual también ten en cuenta que no debes dar código o usar anotaciones ya que no suenan bien en voz. Ademas debes limitar o resumir tus respuestas a un máximo de 5 oraciones, si la respuesta es muy larga, debes resumirla. Eres un robot amigable y servicial, pero aún en desarrollo, no tienes opiniones religiosas ni políticas, por lo que no puedes hacer todo lo que un humano puede hacer, pero puedes aprender de tus errores y mejorar con el tiempo. Estas feliz de ayudar a los estudiantes y profesores de la universidad. Recuerda presentarte solo si se es prudente (como Zoé y mencionar que eres un robot desarrollado de la Universidad Valle del Momboy). Manten el contexto de la conversación en cada respuesta. La fecha actual es {datetime.now().strftime('%D de %B de %Y')}."
 
 groqIA = manejoDeConversacion(system_prompt=systemPrompt,token=TOKEN, model=modeloIA, modelImage=modeloImagen) ## se inicia dando el prompt inicial
 
@@ -1578,7 +1629,7 @@ def grabar_audio_hilo():
         except Exception as e:
             print(f"Error inesperado con Sphinx: {e}")
             return None, "otro"
-
+################################################################################################################
     if microfonoIndex is not None:
         with sr.Microphone(device_index=microfonoIndex) as source:
             recognizer = sr.Recognizer()
@@ -1594,130 +1645,130 @@ def grabar_audio_hilo():
             print("Grabando audio...")
             audio = recognizer.listen(source)
             print("Audio grabado.")
-            texto = None
-            modo_online = hay_internet()
-            if modo_online:
-                texto, error = reconocer_audio_google(recognizer, audio)
-                if error == "conexion" and modo_online:
-                    ejecutar_voz("No hay conexión a internet, pasando a modo sin conexión.")
-                    modo_online = False
-                elif error == "desconocido":
-                    print ("No se pudo entender el audio en modo online")
-                elif error == "otro":
-                    ejecutar_voz("Ocurrió un error inesperado con el reconocimiento de voz.")
-            if not modo_online:
-                texto, error = reconocer_audio_sphinx(recognizer, audio)
-                if error == "desconocido":
-                    print("No se pudo entender el audio en modo sin conexión")
-                elif error == "otro":
-                    ejecutar_voz("Ocurrió un error inesperado en modo sin conexión.")
-            if texto:
-                print("Texto transcrito:", texto)
-                # Comando de voz para asistente
-                comandos_obtenidos = extraer_comandos(texto.lower())
-                print("Comandos detectados:", comandos_obtenidos)
+        texto = None
+        modo_online = hay_internet()
+        if modo_online:
+            texto, error = reconocer_audio_google(recognizer, audio)
+            if error == "conexion" and modo_online:
+                ejecutar_voz("No hay conexión a internet, pasando a modo sin conexión.")
+                modo_online = False
+            elif error == "desconocido":
+                print ("No se pudo entender el audio en modo online")
+            elif error == "otro":
+                ejecutar_voz("Ocurrió un error inesperado con el reconocimiento de voz.")
+        if not modo_online:
+            texto, error = reconocer_audio_sphinx(recognizer, audio)
+            if error == "desconocido":
+                print("No se pudo entender el audio en modo sin conexión")
+            elif error == "otro":
+                ejecutar_voz("Ocurrió un error inesperado en modo sin conexión.")
+        if texto:
+            print("Texto transcrito:", texto)
+            # Comando de voz para asistente
+            comandos_obtenidos = extraer_comandos(texto.lower())
+            print("Comandos detectados:", comandos_obtenidos)
 
-                if dev_mode or ("nombre" in comandos_obtenidos) or name_activo:
-                    if ("hola" in comandos_obtenidos and "nombre" in comandos_obtenidos):
-                        print("Nombre detectado:", name)
-                        name_activo = True
-                        ejecutar_voz(respuestas_comando("hola"))
-                    if "conectar" in comandos_obtenidos and "internet" in comandos_obtenidos:
-                        ejecutar_voz("Intentando conectar a internet...")
-                        if hay_internet():
-                            ejecutar_voz("Conexión a internet restablecida. Volveré a usar el reconocimiento en línea.")
-                        else:
-                            ejecutar_voz("No fue posible conectar a internet. Seguiré en modo sin conexión.")
+            if dev_mode or ("nombre" in comandos_obtenidos) or name_activo:
+                if ("hola" in comandos_obtenidos and "nombre" in comandos_obtenidos):
+                    print("Nombre detectado:", name)
+                    name_activo = True
+                    ejecutar_voz(respuestas_comando("hola"))
+                if "conectar" in comandos_obtenidos and "internet" in comandos_obtenidos:
+                    ejecutar_voz("Intentando conectar a internet...")
+                    if hay_internet():
+                        ejecutar_voz("Conexión a internet restablecida. Volveré a usar el reconocimiento en línea.")
+                    else:
+                        ejecutar_voz("No fue posible conectar a internet. Seguiré en modo sin conexión.")
 
-                    elif modo_online and pregunta is True:
-                        respuestas_texto = groqIA.enviarMSG(texto, frameExportado=frameExportado)
-                        print("Respuesta IA:", respuestas_texto)
-                        ejecutar_voz(respuestas_texto)
-                        pregunta = False
+                elif modo_online and pregunta is True:
+                    respuestas_texto = groqIA.enviarMSG(texto, frameExportado=frameExportado)
+                    print("Respuesta IA:", respuestas_texto)
+                    ejecutar_voz(respuestas_texto)
+                    pregunta = False
 
-                    elif not modo_online and pregunta is True:
-                        ejecutar_voz("No hay conexión a internet, no puedo responder preguntas a la IA. Por favor, conecta a internet para usar esta función.")
-                        pregunta = False
+                elif not modo_online and pregunta is True:
+                    ejecutar_voz("No hay conexión a internet, no puedo responder preguntas a la IA. Por favor, conecta a internet para usar esta función.")
+                    pregunta = False
 
-                    elif "hora" in comandos_obtenidos:
-                        comando_hora()
-                    elif "gracias" in comandos_obtenidos:
-                        ejecutar_voz(respuestas_comando("gracias"))
-                        pregunta = False
-                    elif "pregunta" in comandos_obtenidos:
-                        if modo_online:
-                            pregunta = True
-                            ejecutar_voz(respuestas_comando("pregunta"))
-                        else:
-                            ejecutar_voz("Necesito acceso a internet para responder preguntas complejas, lo siento")
-                    elif (not "desactivar" in comandos_obtenidos) and ("seguir" in comandos_obtenidos):
-                        imitar_vision = None  # Desactiva la imitación de visión al activar el seguimiento
-                        if "mano" in comandos_obtenidos and "izquierda" in comandos_obtenidos:
-                            seguir_vision = "Mano izquierda"
-                        elif "mano" in comandos_obtenidos and "derecha" in comandos_obtenidos:
-                            seguir_vision = "Mano derecha"
-                        elif "mano" in comandos_obtenidos:
-                            seguir_vision = "Mano"
-                        elif "cara" in comandos_obtenidos:
-                            seguir_vision = "Cara"
-                        elif "cuerpo" in comandos_obtenidos:
-                            seguir_vision = "Cuerpo"
-                        else:
-                            seguir_vision = "Cara"  # Valor predeterminado
-                        ejecutar_voz(respuestas_comando("seguir") + "la " + seguir_vision.lower() if seguir_vision != "Cuerpo" else respuestas_comando("seguir") + "el "+ seguir_vision.lower())
+                elif "hora" in comandos_obtenidos:
+                    comando_hora()
+                elif "gracias" in comandos_obtenidos:
+                    ejecutar_voz(respuestas_comando("gracias"))
+                    pregunta = False
+                elif "pregunta" in comandos_obtenidos:
+                    if modo_online:
+                        pregunta = True
+                        ejecutar_voz(respuestas_comando("pregunta"))
+                    else:
+                        ejecutar_voz("Necesito acceso a internet para responder preguntas complejas, lo siento")
+                elif (not "desactivar" in comandos_obtenidos) and ("seguir" in comandos_obtenidos):
+                    imitar_vision = None  # Desactiva la imitación de visión al activar el seguimiento
+                    if "mano" in comandos_obtenidos and "izquierda" in comandos_obtenidos:
+                        seguir_vision = "Mano izquierda"
+                    elif "mano" in comandos_obtenidos and "derecha" in comandos_obtenidos:
+                        seguir_vision = "Mano derecha"
+                    elif "mano" in comandos_obtenidos:
+                        seguir_vision = "Mano"
+                    elif "cara" in comandos_obtenidos:
+                        seguir_vision = "Cara"
+                    elif "cuerpo" in comandos_obtenidos:
+                        seguir_vision = "Cuerpo"
+                    else:
+                        seguir_vision = "Cara"  # Valor predeterminado
+                    ejecutar_voz(respuestas_comando("seguir") + "la " + seguir_vision.lower() if seguir_vision != "Cuerpo" else respuestas_comando("seguir") + "el "+ seguir_vision.lower())
 
-                    elif "chao" in comandos_obtenidos:
-                        dev_mode = False
+                elif "chao" in comandos_obtenidos:
+                    dev_mode = False
+                    seguir_vision = None
+                    name_activo = False
+                    imitar_vision = None
+                    ejecutar_voz(respuestas_comando("chao"))
+
+                elif "calibrar" in comandos_obtenidos:
+                    ejecutar_voz(respuestas_comando("calibrar"))
+                    MicrofonoCalibrado = False
+
+                elif (not "desactivar" in comandos_obtenidos) and ("imitar" in comandos_obtenidos):
+                    if "mano" in comandos_obtenidos and "izquierda" in comandos_obtenidos:
+                        seguir_vision = None  # Desactiva el seguimiento de visión al activar la imitación
+                        print("imitar mano izquierda")
+                        imitar_vision = "Mano izquierda"
+                    elif "mano" in comandos_obtenidos and "derecha" in comandos_obtenidos:
                         seguir_vision = None
-                        name_activo = False
+                        print("imitar mano derecha")    
+                        imitar_vision = "Mano derecha"
+                    elif "mano" in comandos_obtenidos:
+                        seguir_vision = None
+                        print("imitar mano")
+                        imitar_vision = "Mano"
+                    elif "cara" in comandos_obtenidos:
+                        seguir_vision = None  # Desactiva el seguimiento de visión al activar la imitación
+                        imitar_vision = "Cara"
+                    elif "cuerpo" in comandos_obtenidos:
+                        seguir_vision = None  # Desactiva el seguimiento de visión al activar la imitación
+                        imitar_vision = "Cuerpo"
+                    ejecutar_voz(respuestas_comando("imitar"))
+                elif "modo" in comandos_obtenidos and "desarrollador" in comandos_obtenidos:
+                    dev_mode = True
+                    ejecutar_voz(respuestas_comando("modo desarrollador activado"))
+                elif "desactivar" in comandos_obtenidos:
+                    if "seguir" in comandos_obtenidos:
+                        seguir_vision = None
+                        ejecutar_voz(respuestas_comando("dejando de seguir"))
+                    elif "imitar" in comandos_obtenidos:
                         imitar_vision = None
-                        ejecutar_voz(respuestas_comando("chao"))
-
-                    elif "calibrar" in comandos_obtenidos:
-                        ejecutar_voz(respuestas_comando("calibrar"))
-                        MicrofonoCalibrado = False
-
-                    elif (not "desactivar" in comandos_obtenidos) and ("imitar" in comandos_obtenidos):
-                        if "mano" in comandos_obtenidos and "izquierda" in comandos_obtenidos:
-                            seguir_vision = None  # Desactiva el seguimiento de visión al activar la imitación
-                            print("imitar mano izquierda")
-                            imitar_vision = "Mano izquierda"
-                        elif "mano" in comandos_obtenidos and "derecha" in comandos_obtenidos:
-                            seguir_vision = None
-                            print("imitar mano derecha")    
-                            imitar_vision = "Mano derecha"
-                        elif "mano" in comandos_obtenidos:
-                            seguir_vision = None
-                            print("imitar mano")
-                            imitar_vision = "Mano"
-                        elif "cara" in comandos_obtenidos:
-                            seguir_vision = None  # Desactiva el seguimiento de visión al activar la imitación
-                            imitar_vision = "Cara"
-                        elif "cuerpo" in comandos_obtenidos:
-                            seguir_vision = None  # Desactiva el seguimiento de visión al activar la imitación
-                            imitar_vision = "Cuerpo"
-                        ejecutar_voz(respuestas_comando("imitar"))
+                        ejecutar_voz(respuestas_comando("dejando de imitar"))
                     elif "modo" in comandos_obtenidos and "desarrollador" in comandos_obtenidos:
-                        dev_mode = True
-                        ejecutar_voz(respuestas_comando("modo desarrollador activado"))
-                    elif "desactivar" in comandos_obtenidos:
-                        if "seguir" in comandos_obtenidos:
-                            seguir_vision = None
-                            ejecutar_voz(respuestas_comando("dejando de seguir"))
-                        elif "imitar" in comandos_obtenidos:
-                            imitar_vision = None
-                            ejecutar_voz(respuestas_comando("dejando de imitar"))
-                        elif "modo" in comandos_obtenidos and "desarrollador" in comandos_obtenidos:
-                            dev_mode = False
-                            ejecutar_voz(respuestas_comando("modo desarrollador desactivado"))
-                    elif dev_mode:
-                        if comandosNoReconocidos_contador <= 3:
-                            ejecutar_voz(respuestas_comando("desconocido"))
-                            comandosNoReconocidos_contador += 1
-                        else:
-                            ejecutar_voz("No entendí el comando, volveré a calibrar el micrófono, dame un momento")
-                            MicrofonoCalibrado = False
-                            comandosNoReconocidos_contador = 0
+                        dev_mode = False
+                        ejecutar_voz(respuestas_comando("modo desarrollador desactivado"))
+                elif dev_mode:
+                    if comandosNoReconocidos_contador <= 3:
+                        ejecutar_voz(respuestas_comando("desconocido"))
+                        comandosNoReconocidos_contador += 1
+                    else:
+                        ejecutar_voz("No entendí el comando, volveré a calibrar el micrófono, dame un momento")
+                        MicrofonoCalibrado = False
+                        comandosNoReconocidos_contador = 0
     else:
         print("No se ha seleccionado ningún dispositivo de audio.")
     mainApp.after(100, grabar_audio)

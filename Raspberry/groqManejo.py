@@ -49,9 +49,9 @@ class manejoDeConversacion:
             self.set_token(token)
         if self.client is None:
             raise RuntimeError("Groq client no inicializado. Pase TOKEN en __init__ o en enviar().")
-        entorno = self.imagenContexto(token=token, frameExportado=frameExportado)
-
-        self.agregar("user", f"{contexto}. \n Esto es una descripción del entorno del que te encuentras (La siguiente información es subministrada por una IA de reconocimiento de imagen, puede contener algún pequeño detalle que haya omitido) : {entorno} (Esta información es subministrada por IA de reconocimiento)")
+        # entorno = self.imagenContexto(token=token, frameExportado=frameExportado)
+        # \n Esto es una descripción del entorno del que te encuentras (La siguiente información es subministrada por una IA de reconocimiento de imagen, puede contener algún pequeño detalle que haya omitido) : {entorno} (Esta información es subministrada por IA de reconocimiento)
+        self.agregar("user", f"{contexto}. ")
 
         try:
             respuesta = self.client.chat.completions.create(

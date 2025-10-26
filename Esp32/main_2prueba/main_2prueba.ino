@@ -62,7 +62,7 @@ Servo ServoClaviculaIzq;
 Servo ServoClaviculaDer;
 
 // VARIABLES CABEZA
-int OjoEjeX_Pos = 90;
+int OjoEjeX_Pos = 135; // medio
 int CuelloEjeX_Pos = 90;
 int CuelloEjeY_Pos = 90;
 int OjoEjeY_Pos = 140;
@@ -178,12 +178,20 @@ void setup() {
   setServoPCA1(ServoBicepsDerechoPin, 40);
   setServoPCA2(ServoHombroFrontalDerechoPin, 50);  // 50 abajo
   setServoPCA2(ServoHombroSagitalDerechoPin, 20);
-  setServoPCA2(ServoHombroRotacionDerechoPin, 150); //150 medio
+  setServoPCA2(ServoHombroRotacionDerechoPin, 140); //150 medio
 
-  setServoPCA1(ServoBicepsIzquierdoPin, 40);
-  setServoPCA2(ServoHombroSagitalIzquierdoPin, 30);
+  setServoPCA1(ServoBicepsIzquierdoPin, 95); // maximo 100
+  setServoPCA2(ServoHombroSagitalIzquierdoPin, 90); // inicio 30
   setServoPCA2(ServoHombroFrontalIzquierdoPin, 40);
   setServoPCA2(ServoHombroRotacionIzquierdoPin, 150); //150 medio
+
+  // INICIAR MOTORES MANO IZQUIERDA EN POSICION
+  setServoPCA1(ServoPulgarIzquierdoPin, 180);
+  setServoPCA1(ServoIndiceIzquierdoPin, 180);
+  setServoPCA1(ServoMedioIzquierdoPin, 0);
+  setServoPCA1(ServoAnularIzquierdoPin, 0);
+  setServoPCA1(ServoMeniqueIzquierdoPin, 0);
+  // setServoPCA1(ServoMunecaIzquierdaPin, 0);
 
   // INICIAR MOTORES CABEZA EN POSICION
   setServoPCA2(ServoMandibulaPin, 90); // cerrar completamente
@@ -321,10 +329,10 @@ void loop() {
     }
 
         //DEDOS DE LA MANO DERECHA
-    if (codigo == 5510) { //  Numeros par cierra 
+    if (codigo == 5510) { //  Numeros par cierra  //5510
       Medio_Der_Pos_deseada = 180;
     }
-    if (codigo == 5511) { //  Numeros impar abre
+    if (codigo == 5511) { //  Numeros impar abre  //5511
       Medio_Der_Pos_deseada = 0;
     } 
     if (codigo == 5512) {
@@ -353,10 +361,10 @@ void loop() {
     }
 
         //DEDOS DE LA MANO izquierda
-    if (codigo == 5524) { //  Numeros par cierra 
+    if (codigo == 5524) { //  Numeros par cierra //5524
       Medio_Izq_Pos_deseada = 140;
     }
-    if (codigo == 5525) { //  Numeros impar abre
+    if (codigo == 5525) { //  Numeros impar abre //5525
       Medio_Izq_Pos_deseada = 0;
     } 
     if (codigo == 5526) {
@@ -391,34 +399,39 @@ void loop() {
       setServoPCA1(ServoBicepsDerechoPin, grados_biceps_derecho);
     }
 
-    // if (codigo > 4400 && codigo < 4580) { //  codigo de hombro frontal 
-    //   int grados_hombro_frontal_derecho = codigo - 4400;
-    //   grados_hombro_frontal_derecho = map(grados_hombro_frontal_derecho, 0, 180, 13, 55);
-    //   grados_seguridad_hombro_frontal_derecho = grados_hombro_frontal_derecho;
+    if (codigo > 4400 && codigo < 4580) { //  codigo de hombro frontal 
+      int grados_hombro_frontal_derecho = codigo - 4400;
+      grados_hombro_frontal_derecho = map(grados_hombro_frontal_derecho, 0, 180, 40, 90);
+      grados_seguridad_hombro_frontal_derecho = grados_hombro_frontal_derecho;
 
-    //   setServoPCA2(ServoHombroFrontalDerechoPin, grados_hombro_frontal_derecho);
-    // }
+      if (grados_seguridad_hombro_sagital_derecho > 70 && grados_hombro_frontal_derecho > 50){
+        grados_hombro_frontal_derecho = 40;
 
-    // if (codigo > 4800 && codigo < 4980) { //  codigo de hombro sagital 
-    //   int grados_hombro_sagital_derecho = codigo - 4800;
-    //   grados_hombro_sagital_derecho = map(grados_hombro_sagital_derecho, 180, 0, 230, 10);
-    //   if (grados_hombro_sagital_derecho > 160){
-    //     grados_hombro_sagital_derecho = 160;
-    //   }
-    //   grados_seguridad_hombro_sagital_derecho = grados_hombro_sagital_derecho;
-    //   setServoPCA2(ServoHombroSagitalDerechoPin, grados_hombro_sagital_derecho);
-    // }
+      }
 
-    // if (codigo >= 6200 && codigo <= 6380) { //  codigo de hombro rotacion
-    //   int grados_hombro_rotacion_derecho = codigo - 6200;
-    //   grados_hombro_rotacion_derecho = map(grados_hombro_rotacion_derecho, 180, 0, 10, 170);
-    //   if (grados_hombro_rotacion_derecho < 130){
-    //     if (grados_seguridad_hombro_frontal_derecho < 30 && grados_seguridad_hombro_sagital_derecho < 40){
-    //       grados_hombro_rotacion_derecho = 130;
-    //     }
-    //   }
-    //   setServoPCA2(ServoHombroRotacionDerechoPin, grados_hombro_rotacion_derecho);
-    // }
+      setServoPCA2(ServoHombroFrontalDerechoPin, grados_hombro_frontal_derecho);
+    }
+
+    if (codigo > 4800 && codigo < 4980) { //  codigo de hombro sagital 
+      int grados_hombro_sagital_derecho = codigo - 4800;
+      grados_hombro_sagital_derecho = map(grados_hombro_sagital_derecho, 0, 180, 10, 230);
+      if (grados_hombro_sagital_derecho > 160){
+        grados_hombro_sagital_derecho = 160;
+      }
+      grados_seguridad_hombro_sagital_derecho = grados_hombro_sagital_derecho;
+      setServoPCA2(ServoHombroSagitalDerechoPin, grados_hombro_sagital_derecho);
+    }
+
+    if (codigo >= 6200 && codigo <= 6380) { //  codigo de hombro rotacion
+      int grados_hombro_rotacion_derecho = codigo - 6200;
+      grados_hombro_rotacion_derecho = map(grados_hombro_rotacion_derecho, 0, 180, 110, 170);
+      if (grados_hombro_rotacion_derecho < 140){
+        if (grados_seguridad_hombro_frontal_derecho < 75 && grados_seguridad_hombro_sagital_derecho < 40){
+          grados_hombro_rotacion_derecho = 140;
+        }
+      }
+      setServoPCA2(ServoHombroRotacionDerechoPin, grados_hombro_rotacion_derecho);
+    }
 
     // BRAZO IZQUIERDO
     if (codigo > 4200 && codigo < 4380) { //  codigo de biceps 
@@ -769,6 +782,13 @@ void mover_mandibula() {
       if (mandibula_estado == 0) {
         // ServoMandibula.write(119); // abrir
         setServoPCA2(ServoMandibulaPin, 119); // abrir
+        
+        // setServoPCA1(ServoPulgarIzquierdoPin, 105);
+        // setServoPCA1(ServoIndiceIzquierdoPin, 180);
+        // setServoPCA1(ServoMedioIzquierdoPin, 0);
+        // setServoPCA1(ServoAnularIzquierdoPin, 0);
+        // setServoPCA1(ServoMeniqueIzquierdoPin, 0);
+
         mandibula_last_update = ahora;
         mandibula_estado = 1;
       } else if (mandibula_estado == 1 && (ahora - mandibula_last_update >= tiempo_espera)) {
@@ -790,7 +810,11 @@ void mover_mandibula() {
       // ServoMandibula.write(75); // cerrar completamente
       setServoPCA2(ServoMandibulaPin, 75); // cerrar completamente
       // una espera en millis() de medio segundo para devolver un grado y evitar que el motor se sobrecaliente
-      
+      // setServoPCA1(ServoPulgarIzquierdoPin, 180);
+      // setServoPCA1(ServoIndiceIzquierdoPin, 180);
+      // setServoPCA1(ServoMedioIzquierdoPin, 125);
+      // setServoPCA1(ServoAnularIzquierdoPin, 115);
+      // setServoPCA1(ServoMeniqueIzquierdoPin, 115);
       // mandibula_last_update = ahora;
       // if (ahora - mandibula_last_update >= 500) {
       //   ServoMandibula.write(95);
