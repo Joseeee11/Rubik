@@ -973,17 +973,21 @@ def visualizar():
                 if angulo_flexion_d is not None and len(grupo_angulo_flexion_d) <= 8:
                     grupo_angulo_flexion_d.append(angulo_flexion_d)
                 if len(grupo_angulo_flexion_d) > 8:
-                    media_angulo_flexion_d = sum(grupo_angulo_flexion_d) / len(grupo_angulo_flexion_d)
-                    grupo_angulo_flexion_d = []
-                    if media_angulo_flexion_d < 20:
-                    # Verificar alineación real
-                        producto_punto = np.dot(v_brazo_d, v_antebrazo_d)
-                        if producto_punto < 0.95:  # No están bien alineados (cos(18°) ≈ 0.95)
-                            # Recalcular el ángulo tomando el valor absoluto del producto punto
-                            media_angulo_flexion_d = np.degrees(np.arccos(np.abs(producto_punto)))
-                    # Segun el angulo defino la posicion
-                    brazo_derecho[0], brazo_derecho[1] = definir_flexion(media_angulo_flexion_d, "derecho")
-                    # brazo_derecho[0], brazo_derecho[1] = "flexion", round(media_angulo_flexion_d)
+                    filtro = abs(grupo_angulo_flexion_d[0] - grupo_angulo_flexion_d[-1])
+                    if filtro < 10: 
+                        media_angulo_flexion_d = sum(grupo_angulo_flexion_d) / len(grupo_angulo_flexion_d)
+                        grupo_angulo_flexion_d = []
+                        if media_angulo_flexion_d < 20:
+                        # Verificar alineación real
+                            producto_punto = np.dot(v_brazo_d, v_antebrazo_d)
+                            if producto_punto < 0.95:  # No están bien alineados (cos(18°) ≈ 0.95)
+                                # Recalcular el ángulo tomando el valor absoluto del producto punto
+                                media_angulo_flexion_d = np.degrees(np.arccos(np.abs(producto_punto)))
+                        # Segun el angulo defino la posicion
+                        brazo_derecho[0], brazo_derecho[1] = definir_flexion(media_angulo_flexion_d, "derecho")
+                        # brazo_derecho[0], brazo_derecho[1] = "flexion", round(media_angulo_flexion_d)
+                    else:
+                        grupo_angulo_flexion_d = []
 
                 #PLANO SAGITAL DE HOMBRO DERECHO
                     # Calculo de proyecciones escalares en el plano SAGITAL
@@ -994,11 +998,15 @@ def visualizar():
                 if angulo_sagital_d is not None and len(grupo_angulo_sagital_d) <= 8:
                     grupo_angulo_sagital_d.append(angulo_sagital_d)
                 if len(grupo_angulo_sagital_d) > 8:
-                    media_angulo_sagital_d = sum(grupo_angulo_sagital_d) / len(grupo_angulo_sagital_d)
-                        # Segun el angulo defino la posicion
-                    brazo_derecho[2] = "sagital"
-                    brazo_derecho[3] = definir_angulo_hombro_sagital("derecho", media_angulo_sagital_d)
-                    grupo_angulo_sagital_d = []
+                    filtro = abs(grupo_angulo_sagital_d[0] - grupo_angulo_sagital_d[-1])
+                    if filtro < 10:
+                        media_angulo_sagital_d = sum(grupo_angulo_sagital_d) / len(grupo_angulo_sagital_d)
+                            # Segun el angulo defino la posicion
+                        brazo_derecho[2] = "sagital"
+                        brazo_derecho[3] = definir_angulo_hombro_sagital("derecho", media_angulo_sagital_d)
+                        grupo_angulo_sagital_d = []
+                    else:
+                        grupo_angulo_sagital_d = []
 
                 #PLANO FRONTAL DE HOMBRO DERECHO
                     # Calculo de proyecciones escalares en el plano FRONTAL
@@ -1014,11 +1022,15 @@ def visualizar():
                 if angulo_frontal_d is not None and len(grupo_angulo_frontal_d) <= 8:
                     grupo_angulo_frontal_d.append(angulo_frontal_d)
                 if len(grupo_angulo_frontal_d) > 8:
-                    media_angulo_frontal_d = sum(grupo_angulo_frontal_d) / len(grupo_angulo_frontal_d)
-                        # Segun el angulo defino la posicion
-                    brazo_derecho[4] = "frontal"
-                    brazo_derecho[5] = definir_angulo_hombro_frontal("derecho", media_angulo_frontal_d)
-                    grupo_angulo_frontal_d = []
+                    filtro = abs(grupo_angulo_frontal_d[0] - grupo_angulo_frontal_d[-1])
+                    if filtro < 10:
+                        media_angulo_frontal_d = sum(grupo_angulo_frontal_d) / len(grupo_angulo_frontal_d)
+                            # Segun el angulo defino la posicion
+                        brazo_derecho[4] = "frontal"
+                        brazo_derecho[5] = definir_angulo_hombro_frontal("derecho", media_angulo_frontal_d)
+                        grupo_angulo_frontal_d = []
+                    else:
+                        grupo_angulo_frontal_d = []
 
                 #PLANO ROTACION DE HOMBRO DERECHO
                 if brazo_derecho[0] != "extendido" and brazo_derecho[0] is not None:
@@ -1033,11 +1045,15 @@ def visualizar():
                     if angulo_rotacion_d is not None and len(grupo_angulo_rotacion_d) <= 8:
                         grupo_angulo_rotacion_d.append(angulo_rotacion_d)  
                     if len(grupo_angulo_rotacion_d) > 8:
-                        media_angulo_rotacion_d = sum(grupo_angulo_rotacion_d) / len(grupo_angulo_rotacion_d)
-                        # brazo_derecho[6] = definir_rotacion(media_angulo_rotacion_d, "derecho")
-                        brazo_derecho[6] = "rotacion"
-                        brazo_derecho[7] = definir_angulo_hombro_rotacion("derecho", media_angulo_rotacion_d)
-                        grupo_angulo_rotacion_d = []
+                        filtro = abs(grupo_angulo_rotacion_d[0] - grupo_angulo_rotacion_d[-1])
+                        if filtro < 15:
+                            media_angulo_rotacion_d = sum(grupo_angulo_rotacion_d) / len(grupo_angulo_rotacion_d)
+                            # brazo_derecho[6] = definir_rotacion(media_angulo_rotacion_d, "derecho")
+                            brazo_derecho[6] = "rotacion"
+                            brazo_derecho[7] = definir_angulo_hombro_rotacion("derecho", media_angulo_rotacion_d)
+                            grupo_angulo_rotacion_d = []
+                        else:
+                            grupo_angulo_rotacion_d = []
                 else:
                     angulo_rotacion_d = 0
 
@@ -1050,17 +1066,21 @@ def visualizar():
                 if angulo_flexion_i is not None and len(grupo_angulo_flexion_i) <= 8:
                     grupo_angulo_flexion_i.append(angulo_flexion_i)
                 if len(grupo_angulo_flexion_i) > 8:
-                    media_angulo_flexion_i = sum(grupo_angulo_flexion_i) / len(grupo_angulo_flexion_i)
-                    grupo_angulo_flexion_i = []
-                    if media_angulo_flexion_i < 20:
-                    # Verificar alineación real
-                        producto_punto = np.dot(v_brazo_i, v_antebrazo_i)
-                        if producto_punto < 0.95:  # No están bien alineados (cos(18°) ≈ 0.95)
-                            # Recalcular el ángulo tomando el valor absoluto del producto punto
-                            media_angulo_flexion_i = np.degrees(np.arccos(np.abs(producto_punto)))
-                    # Segun el angulo defino la posicion
-                    brazo_izquierdo[0], brazo_izquierdo[1] = definir_flexion(media_angulo_flexion_i, "izquierdo")
-                    # brazo_izquierdo[0], brazo_izquierdo[1] = "flexion", round(media_angulo_flexion_i)
+                    filtro = abs(grupo_angulo_flexion_i[0] - grupo_angulo_flexion_i[-1])
+                    if filtro < 10:
+                        media_angulo_flexion_i = sum(grupo_angulo_flexion_i) / len(grupo_angulo_flexion_i)
+                        grupo_angulo_flexion_i = []
+                        if media_angulo_flexion_i < 20:
+                        # Verificar alineación real
+                            producto_punto = np.dot(v_brazo_i, v_antebrazo_i)
+                            if producto_punto < 0.95:  # No están bien alineados (cos(18°) ≈ 0.95)
+                                # Recalcular el ángulo tomando el valor absoluto del producto punto
+                                media_angulo_flexion_i = np.degrees(np.arccos(np.abs(producto_punto)))
+                        # Segun el angulo defino la posicion
+                        brazo_izquierdo[0], brazo_izquierdo[1] = definir_flexion(media_angulo_flexion_i, "izquierdo")
+                        # brazo_izquierdo[0], brazo_izquierdo[1] = "flexion", round(media_angulo_flexion_i)
+                    else:
+                        grupo_angulo_flexion_i = []
 
                 #PLANO SAGITAL DE HOMBRO IZQUIERDO
                     # Calculo de proyecciones escalares en el plano SAGITAL
@@ -1071,12 +1091,16 @@ def visualizar():
                 if angulo_sagital_i is not None and len(grupo_angulo_sagital_i) <= 8:
                     grupo_angulo_sagital_i.append(angulo_sagital_i)
                 if len(grupo_angulo_sagital_i) > 8:
-                    media_angulo_sagital_i = sum(grupo_angulo_sagital_i) / len(grupo_angulo_sagital_i)
-                        # Segun el angulo defino la posicion
-                    brazo_izquierdo[2] = "sagital"
-                    brazo_izquierdo[3] = definir_angulo_hombro_sagital("izquierdo", media_angulo_sagital_i)
-                    # brazo_izquierdo[3] = round(media_angulo_sagital_i)
-                    grupo_angulo_sagital_i = []
+                    filtro = abs(grupo_angulo_sagital_i[0] - grupo_angulo_sagital_i[-1])
+                    if filtro < 10:
+                        media_angulo_sagital_i = sum(grupo_angulo_sagital_i) / len(grupo_angulo_sagital_i)
+                            # Segun el angulo defino la posicion
+                        brazo_izquierdo[2] = "sagital"
+                        brazo_izquierdo[3] = definir_angulo_hombro_sagital("izquierdo", media_angulo_sagital_i)
+                        # brazo_izquierdo[3] = round(media_angulo_sagital_i)
+                        grupo_angulo_sagital_i = []
+                    else:
+                        grupo_angulo_sagital_i = []
 
                 #PLANO FRONTAL DE HOMBRO IZQUIERDO
                     # Calculo de proyecciones escalares en el plano FRONTAL
@@ -1092,13 +1116,17 @@ def visualizar():
                 if angulo_frontal_i is not None and len(grupo_angulo_frontal_i) <= 8:
                     grupo_angulo_frontal_i.append(angulo_frontal_i)
                 if len(grupo_angulo_frontal_i) > 8:
-                    media_angulo_frontal_i = sum(grupo_angulo_frontal_i) / len(grupo_angulo_frontal_i)
-                    # Segun el angulo defino la posicion
-                    brazo_izquierdo[4] = "frontal"
-                    # brazo_izquierdo[5] = round(media_angulo_frontal_i)
-                    # O si tienes función de definición:
-                    brazo_izquierdo[5] = definir_angulo_hombro_frontal("izquierdo", media_angulo_frontal_i)
-                    grupo_angulo_frontal_i = []
+                    filtro = abs(grupo_angulo_frontal_i[0] - grupo_angulo_frontal_i[-1])
+                    if filtro < 10:
+                        media_angulo_frontal_i = sum(grupo_angulo_frontal_i) / len(grupo_angulo_frontal_i)
+                        # Segun el angulo defino la posicion
+                        brazo_izquierdo[4] = "frontal"
+                        # brazo_izquierdo[5] = round(media_angulo_frontal_i)
+                        # O si tienes función de definición:
+                        brazo_izquierdo[5] = definir_angulo_hombro_frontal("izquierdo", media_angulo_frontal_i)
+                        grupo_angulo_frontal_i = []
+                    else:
+                        grupo_angulo_frontal_i = []
 
 ## Rubik
                 #PLANO ROTACION DE HOMBRO IZQUIERDO
@@ -1114,11 +1142,15 @@ def visualizar():
                     if angulo_rotacion_i is not None and len(grupo_angulo_rotacion_i) <= 8:
                         grupo_angulo_rotacion_i.append(angulo_rotacion_i)  
                     if len(grupo_angulo_rotacion_i) > 8:
-                        media_angulo_rotacion_i = sum(grupo_angulo_rotacion_i) / len(grupo_angulo_rotacion_i)
-                        brazo_izquierdo[6] = "rotacion"
-                        brazo_izquierdo[7] = definir_angulo_hombro_rotacion("izquierdo", media_angulo_rotacion_i)
-                        # brazo_izquierdo[7] = round(media_angulo_rotacion_i)
-                        grupo_angulo_rotacion_i = []
+                        filtro = abs(grupo_angulo_rotacion_i[0] - grupo_angulo_rotacion_i[-1])
+                        if filtro < 15:
+                            media_angulo_rotacion_i = sum(grupo_angulo_rotacion_i) / len(grupo_angulo_rotacion_i)
+                            brazo_izquierdo[6] = "rotacion"
+                            brazo_izquierdo[7] = definir_angulo_hombro_rotacion("izquierdo", media_angulo_rotacion_i)
+                            # brazo_izquierdo[7] = round(media_angulo_rotacion_i)
+                            grupo_angulo_rotacion_i = []
+                        else:
+                            grupo_angulo_rotacion_i = []
                 else:
                     angulo_rotacion_i = 0
 
