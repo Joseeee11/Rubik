@@ -19,18 +19,21 @@ import math
 import os
 from dotenv import load_dotenv
 import json
+from pathlib import Path
 ## pyinstaller --icon=icono.ico --add-data "icono.ico;." main.py
 ## al compilar recordar que se deben incluir los archivos de modelo y los recursos necesarios
 
 ## importar modulos personalizados
 from Clavicula import _to_int_safe, definir_angulo_hombro_rotacion, definir_angulo_hombro_frontal, definir_angulo_hombro_sagital, calcular_angulo_brazos, definir_flexion, calcular_angulo_flexion, normalizar_vector, calcular_angulo,Calcular_distancia_Punto_a_RectaAB, punto_medio_segmento
 from esp32 import iniciar_conexion_serial, enviar_esp32, cerrar_serial, listar_seriales
+from yammetModel import YammetModel
+# from Raspberry.yammetModel import YammetModel
 # para la hora actual quitar si se hace de otra manera
 from datetime import datetime
 
 
 ## importar json de diccionario
-with open('comandos.json', 'r', encoding='utf-8') as f:
+with open('Raspberry/comandos.json', 'r', encoding='utf-8') as f:
     diccionario = json.load(f)
 
 ## funciones de respuesta a voz
@@ -1557,7 +1560,373 @@ cap= None
 
 
 # --- Funciones de Lógica para Audio ---
+def ejecutar_comando_hora():
+    """Comando para decir la hora actual"""
+    ahora = datetime.now()
+    hora = ahora.strftime("%I")
+    minutos = ahora.strftime("%M")
+    am_pm = ahora.strftime("%p").lower()
+    texto_hora = f"Tengo información de que son las {hora}:{minutos} {am_pm}"
+    ejecutar_voz(texto_hora)
 
+def ejecutar_comando_seguir(comandos_obtenidos):
+    """Activa el seguimiento de visión"""
+    global seguir_vision, imitar_vision
+    imitar_vision = None
+    
+    if "mano" in comandos_obtenidos and "izquierda" in comandos_obtenidos:
+        seguir_vision = "Mano izquierda"
+    elif "mano" in comandos_obtenidos and "derecha" in comandos_obtenidos:
+        seguir_vision = "Mano derecha"
+    elif "mano" in comandos_obtenidos:
+        seguir_vision = "Mano"
+    elif "cara" in comandos_obtenidos:
+        seguir_vision = "Cara"
+    elif "cuerpo" in comandos_obtenidos:
+        seguir_vision = "Cuerpo"
+    else:
+        seguir_vision = "Cara"
+    
+    mensaje = respuestas_comando("seguir") + ("la " + seguir_vision.lower() if seguir_vision != "Cuerpo" 
+                                               else " el " + seguir_vision.lower())
+    ejecutar_voz(mensaje)
+
+def ejecutar_comando_imitar(comandos_obtenidos):
+    """Activa la imitación de visión"""
+    global seguir_vision, imitar_vision
+    seguir_vision = None
+    
+    if "mano" in comandos_obtenidos and "izquierda" in comandos_obtenidos:
+        imitar_vision = "Mano izquierda"
+    elif "mano" in comandos_obtenidos and "derecha" in comandos_obtenidos:
+        imitar_vision = "Mano derecha"
+    elif "mano" in comandos_obtenidos:
+        imitar_vision = "Mano"
+    elif "cara" in comandos_obtenidos:
+        imitar_vision = "Cara"
+    elif "cuerpo" in comandos_obtenidos:
+        imitar_vision = "Cuerpo"
+    else:
+        return
+    
+    ejecutar_voz(respuestas_comando("imitar"))
+
+def ejecutar_comando_desactivar(comandos_obtenidos):
+    """Desactiva funciones según el comando"""
+    global seguir_vision, imitar_vision, dev_mode
+    
+    if "seguir" in comandos_obtenidos:
+        seguir_vision = None
+        ejecutar_voz(respuestas_comando("dejando de seguir"))
+    elif "imitar" in comandos_obtenidos:
+        imitar_vision = None
+        ejecutar_voz(respuestas_comando("dejando de imitar"))
+    elif "modo" in comandos_obtenidos and "desarrollador" in comandos_obtenidos:
+        dev_mode = False
+        ejecutar_voz(respuestas_comando("modo desarrollador desactivado"))
+
+def ejecutar_comandos_lectura(comandos_obtenidos):
+    """Maneja los comandos del modo lectura (presentación)"""
+    global bienvenida_lectura, presentacion_javier, presentacion_rosimar
+    global demostracion, demostracion_fase
+    global sigue_javier_lectura, sigue_rosimar_lectura
+    global rondas_PyR_Cristian_lectura, rondas_PyR_Javier_lectura, rondas_PyR_Rosimar_lectura
+    global desalojo_de_la_sala_lectura
+    
+    # Mapeo de comandos de lectura
+    estados_lectura = [
+        ("bienvenida", not bienvenida_lectura, 
+         lambda: setattr_and_speak('bienvenida_lectura', True, 
+         'buenos dias bienvenidos')),
+        
+        ("presentar_javier_tesista", bienvenida_lectura and not presentacion_javier,
+         lambda: setattr_and_speak('presentacion_javier', True,
+         'A continuación procedera la defensa del trabajo de grado del bachiller Javier José Olivar Valero. Le deseamos mucho éxito en su exposición.')),
+        
+        ("presentar_rosimar_tesista", presentacion_javier and not presentacion_rosimar,
+         lambda: setattr_and_speak('presentacion_rosimar', True,
+         'A continuación procedera la defensa del trabajo de grado de la bachiller Rosimar Joselyn Barrios Maldonado. Le deseamos mucho éxito en su exposición.')),
+        
+        ("demostracion", presentacion_rosimar and not demostracion_fase,
+         lambda: setattr_and_speak('demostracion', True,
+         'A continuación procederemos a la demostración del robot.')),
+        
+        ("presentar_javier_tesista", demostracion_fase and not sigue_javier_lectura,
+         lambda: setattr_and_speak('sigue_javier_lectura', True,
+         'Ahora continuamos con las conclusiones del bachiller Javier José Olivar Valero.')),
+        
+        ("presentar_rosimar_tesista", sigue_javier_lectura and not sigue_rosimar_lectura,
+         lambda: setattr_and_speak('sigue_rosimar_lectura', True,
+         'Ahora continuamos con las conclusiones de la bachiller Rosimar Joselyn Barrios Maldonado.')),
+        
+        ("rondas_PyR_Cristian_lectura", sigue_rosimar_lectura and not rondas_PyR_Cristian_lectura,
+         lambda: setattr_and_speak('rondas_PyR_Cristian_lectura', True,
+         'Finalizada la presentación. Procederemos ahora con las rondas de preguntas y respuestas para los bachilleres Cristian José Rangel Briceño, Rosimar Joselyn Barrios Maldonado y Javier José Olivar Valero.')),
+        
+        ("desalojo_de_la_sala_lectura", rondas_PyR_Cristian_lectura and not desalojo_de_la_sala_lectura,
+         lambda: setattr_and_speak('desalojo_de_la_sala_lectura', True,
+         'Finalizando la presentación y defensa de los trabajos de grado. Procedemos al desalojo de la sala. Para darle espacios a los jueces, por favor, abandonen el lugar de manera ordenada. Les avisaremos cuando puedan regresar.'))
+    ]
+    
+    for comando, condicion, accion in estados_lectura:
+        if comando in comandos_obtenidos and condicion:
+            accion()
+            return True
+    
+    return False
+
+def ejecutar_comandos_veredicto(comandos_obtenidos):
+    global nota_veredicto, veredicto_lectura, lectura_veredicto_activada, veredicto_activado
+    
+    if "probar" in comandos_obtenidos and "veredicto" in comandos_obtenidos:
+        ejecutar_voz("Iniciando fase de veredicto. Por favor, procedan a evaluar el desempeño del robot.")
+        for i, nota in enumerate(nota_veredicto):
+            if i == 0:
+                nombre = "Cristian José Rangel Briceño"
+            elif i == 1:
+                nombre = "Javier José Olivar Valero"
+            else:
+                nombre = "Rosimar Joselyn Barrios Maldonado"
+            ejecutar_voz(f"Nota para {nombre}: {nota} puntos")
+        return True
+    
+    if "leer" in comandos_obtenidos and "veredicto" in comandos_obtenidos:
+
+        ejecutar_voz("Iniciando la lectura del veredicto de los Trabajos de Grado de los bachilleres.")
+        if veredicto_lectura == []:
+            for i, nota in enumerate(nota_veredicto):
+                if i == 0:
+                    nombre = "Cristian José Rangel Briceño"
+                    titulo = "Desarrollo de robot humanoide desde la perspectiva de la innovación social (torso)"
+                elif i == 1:
+                    nombre = "Javier José Olivar Valero"
+                    titulo = "Desarrollo de la cabeza de un robot humanoide desde la perspectiva de la innovación social"
+                else:
+                    nombre = "Rosimar Joselyn Barrios Maldonado"
+                    titulo = "Desarrollo de un robot humanoide desde la perspectiva de la innovación social (brazo)"
+                
+                veredicto_texto = f"valera, noviembre, {titulo}, {nombre}, {nota} puntos."
+                veredicto_lectura.append(veredicto_texto)
+
+        lectura_veredicto_activada = True
+
+
+
+
+
+        return True
+    return False
+
+def ejecutar_comandos_veredicto_lectura(comandos_obtenidos):
+    global veredicto_cristian_lectura, veredicto_javier_lectura, veredicto_rosimar_lectura, finalizar_veredicto
+    global veredicto_lectura
+
+    estados_veredicto_lectura = [
+            ("veredicto_lectura", not veredicto_cristian_lectura, 
+            lambda: setattr_and_speak('veredicto_cristian_lectura', True, 
+            veredicto_lectura[0])),
+
+            ("veredicto_siguiente_lectura", veredicto_cristian_lectura and not veredicto_javier_lectura,
+            lambda: setattr_and_speak('veredicto_javier_lectura', True,
+            veredicto_lectura[1])),
+
+            ("veredicto_siguiente_lectura", veredicto_javier_lectura and not veredicto_rosimar_lectura,
+            lambda: setattr_and_speak('veredicto_rosimar_lectura', True,
+            veredicto_lectura[2])),
+
+            ("finalizar_veredicto_lectura", veredicto_rosimar_lectura and not finalizar_veredicto,
+            lambda: setattr_and_speak('finalizar_veredicto', True,
+            'Terminado el veredicto, felicitamos a los bachilleres por su desempeño.')),
+        ]
+        
+    for comando, condicion, accion in estados_veredicto_lectura:
+        if comando in comandos_obtenidos and condicion:
+            accion()
+            return True
+    
+    return False
+
+
+def setattr_and_speak(var_name, value, text):
+    """Helper para actualizar variable global y hablar"""
+    globals()[var_name] = value
+    ejecutar_voz(text)
+
+def procesar_comandos_modo_demostracion(comandos_obtenidos, modo_online, texto):
+    """Procesa comandos durante la demostración"""
+    global pregunta, seguir_vision, imitar_vision, dev_mode, demostracion, demostracion_fase
+    
+    # Diccionario de comandos simples
+    comandos_simples = {
+        "hora": ejecutar_comando_hora,
+        "gracias": lambda: (ejecutar_voz(respuestas_comando("gracias")), setattr(globals(), 'pregunta', False)),
+        "calibrar": lambda: (ejecutar_voz(respuestas_comando("calibrar")), setattr(globals(), 'MicrofonoCalibrado', False)),
+    }
+    
+    # Comandos simples
+    for comando, accion in comandos_simples.items():
+        if comando in comandos_obtenidos:
+            accion()
+            return True
+    
+    # Comando de pregunta
+    if "pregunta" in comandos_obtenidos:
+        if modo_online:
+            pregunta = True
+            ejecutar_voz(respuestas_comando("pregunta"))
+        else:
+            ejecutar_voz("Necesito acceso a internet para responder preguntas complejas, lo siento")
+        return True
+    
+    # Responder pregunta con IA
+    if modo_online and pregunta:
+        respuestas_texto = groqIA.enviarMSG(texto, frameExportado=frameExportado)
+        print("Respuesta IA:", respuestas_texto)
+        ejecutar_voz(respuestas_texto)
+        pregunta = False
+        return True
+    
+    # Comando seguir
+    if "seguir" in comandos_obtenidos and "desactivar" not in comandos_obtenidos:
+        ejecutar_comando_seguir(comandos_obtenidos)
+        return True
+    
+    # Comando imitar
+    if "imitar" in comandos_obtenidos and "desactivar" not in comandos_obtenidos:
+        ejecutar_comando_imitar(comandos_obtenidos)
+        return True
+    
+    # Comando desactivar
+    if "desactivar" in comandos_obtenidos:
+        ejecutar_comando_desactivar(comandos_obtenidos)
+        return True
+    
+    # Comando modo desarrollador
+    if "modo" in comandos_obtenidos and "desarrollador" in comandos_obtenidos:
+        dev_mode = True
+        ejecutar_voz(respuestas_comando("modo desarrollador activado"))
+        return True
+    
+    # Comando chao (salir de demostración)
+    if "chao" in comandos_obtenidos:
+        dev_mode = False
+        seguir_vision = None
+        demostracion = False
+        demostracion_fase = True
+        imitar_vision = None
+        ejecutar_voz("Seguimos con las conclusiones del el bachiller Cristian Jose Rangel Briceño.")
+        return True
+    
+    return False
+
+def procesar_comandos_generales(comandos_obtenidos, modo_online, texto):
+    """Procesa comandos cuando el nombre está activo (fuera de modo lectura y demostración)"""
+    global pregunta, seguir_vision, imitar_vision, dev_mode, name_activo
+    global comandosNoReconocidos_contador, MicrofonoCalibrado, modo_lectura
+    
+    # Saludo inicial
+    if "hola" in comandos_obtenidos and "nombre" in comandos_obtenidos:
+        name_activo = True
+        ejecutar_voz(respuestas_comando("hola"))
+        return True
+    
+    # Conectar a internet
+    if "conectar" in comandos_obtenidos and "internet" in comandos_obtenidos:
+        ejecutar_voz("Intentando conectar a internet...")
+        if hay_internet():
+            ejecutar_voz("Conexión a internet restablecida. Volveré a usar el reconocimiento en línea.")
+        else:
+            ejecutar_voz("No fue posible conectar a internet. Seguiré en modo sin conexión.")
+        return True
+    
+    # Cambiar a modo lectura
+    if "cambiar" in comandos_obtenidos and "lectura" in comandos_obtenidos:
+        modo_lectura = True
+        ejecutar_voz("Modo de lectura activado.")
+        return True
+    
+    # Responder pregunta con IA
+    if modo_online and pregunta:
+        respuestas_texto = groqIA.enviarMSG(texto, frameExportado=frameExportado)
+        print("Respuesta IA:", respuestas_texto)
+        ejecutar_voz(respuestas_texto)
+        pregunta = False
+        return True
+    
+    if not modo_online and pregunta:
+        ejecutar_voz("No hay conexión a internet, no puedo responder preguntas a la IA. Por favor, conecta a internet para usar esta función.")
+        pregunta = False
+        return True
+    
+    # Comandos básicos
+    if "hora" in comandos_obtenidos:
+        ejecutar_comando_hora()
+        return True
+    
+    if "gracias" in comandos_obtenidos:
+        ejecutar_voz(respuestas_comando("gracias"))
+        pregunta = False
+        return True
+    
+    if "pregunta" in comandos_obtenidos:
+        if modo_online:
+            pregunta = True
+            ejecutar_voz(respuestas_comando("pregunta"))
+        else:
+            ejecutar_voz("Necesito acceso a internet para responder preguntas complejas, lo siento")
+        return True
+    
+    if "seguir" in comandos_obtenidos and "desactivar" not in comandos_obtenidos:
+        ejecutar_comando_seguir(comandos_obtenidos)
+        return True
+    
+    if "imitar" in comandos_obtenidos and "desactivar" not in comandos_obtenidos:
+        ejecutar_comando_imitar(comandos_obtenidos)
+        return True
+    
+    if "chao" in comandos_obtenidos:
+        dev_mode = False
+        seguir_vision = None
+        name_activo = False
+        imitar_vision = None
+        ejecutar_voz(respuestas_comando("chao"))
+        return True
+    
+    if "calibrar" in comandos_obtenidos:
+        ejecutar_voz(respuestas_comando("calibrar"))
+        MicrofonoCalibrado = False
+        return True
+    
+    if "modo" in comandos_obtenidos and "desarrollador" in comandos_obtenidos:
+        dev_mode = True
+        ejecutar_voz(respuestas_comando("modo desarrollador activado"))
+        return True
+    
+    if "desactivar" in comandos_obtenidos:
+        ejecutar_comando_desactivar(comandos_obtenidos)
+        return True
+    
+    # Comando no reconocido en modo desarrollador
+    if dev_mode:
+        if comandosNoReconocidos_contador <= 3:
+            ejecutar_voz(respuestas_comando("desconocido"))
+            comandosNoReconocidos_contador += 1
+        else:
+            ejecutar_voz("No entendí el comando, volveré a calibrar el micrófono, dame un momento")
+            MicrofonoCalibrado = False
+            comandosNoReconocidos_contador = 0
+        return True
+    
+    return False
+
+def hay_internet():
+    """Verifica si hay conexión a internet"""
+    import socket
+    try:
+        socket.create_connection(("8.8.8.8", 53), timeout=2)
+        return True
+    except OSError:
+        return False
 # Respuestas con voz 
 
 
@@ -1584,6 +1953,32 @@ dev_mode = False #True si "Zoé" está activo siempre
 comando_activo = False #True si algún comando está activo
 pregunta = False
 hablando = False
+titulo_de_TG = ""
+nombre_de_autor = ""
+lectura_bienvenida = ''
+checklist_lectura = []
+demostracion = False
+demostracion_fase = False
+modo_lectura = False
+bienvenida_lectura = False
+presentacion_rosimar = False
+presentacion_javier = False
+sigue_javier_lectura = False
+sigue_rosimar_lectura = False
+rondas_PyR_Cristian_lectura = False
+rondas_PyR_Javier_lectura = False
+rondas_PyR_Rosimar_lectura = False
+desalojo_de_la_sala_lectura = False
+veredicto_activado = False
+lectura_veredicto_activada = False
+veredicto_cristian_lectura = False
+veredicto_javier_lectura = False
+veredicto_rosimar_lectura = False
+finalizar_veredicto = False
+nota_veredicto = [20, 20, 20]
+veredicto_lectura = []
+veredicto_activado
+
 
 def listar_dispositivos_audio():
     dispositivos= []
@@ -1607,14 +2002,64 @@ comandosNoReconocidos_contador = 0
 MicrofonoCalibrado = False
 name_activo = False
 import random
+FORMAT = pyaudio.paInt16  # Corresponds to 16-bit audio
+CHANNELS = 1 # Mono audio
+RATE = 16000  # Sample rate (Hz) - Needs to match MediaPipe's expected rate
+CHUNK = 1024  # Number of frames per buffer
+timestamp_ms = int(time.time() * 1000)
+chunk_ms = int((CHUNK / RATE) * 1000)  # ms por fragmento
+audio_instance = pyaudio.PyAudio()
+recognizer = sr.Recognizer()
+
+
+script_dir = Path(__file__).resolve().parent
+os.chdir(script_dir)  # <- importante: cambia el working dir al folder Raspberry
+
+model_path = os.path.join(script_dir, "models", "yamnet.tflite")
+
+# Lee el archivo del modelo
+script_dir = Path(__file__).resolve().parent
+os.chdir(script_dir)
+
+model_path = os.path.join(script_dir, "models", "yamnet.tflite")
+
+try:
+    # Lee el archivo del modelo
+    with open(model_path, 'rb') as f:
+        model_content = f.read()
+    
+    print(f"Modelo cargado: {len(model_content)} bytes")
+    yammetRecording = YammetModel(model_buffer=model_content)
+    
+    # VALIDAR que se creó correctamente
+    if yammetRecording.classifier is None:
+        raise RuntimeError("No se pudo crear el classifier de YammetModel")
+    
+    print("YammetModel inicializado correctamente")
+    
+except FileNotFoundError:
+    print(f"ERROR: No se encontró el archivo del modelo en {model_path}")
+    yammetRecording = None
+except Exception as e:
+    print(f"ERROR inicializando YammetModel: {e}")
+    import traceback
+    traceback.print_exc()
+    yammetRecording = None
+
 def grabar_audio_hilo():
     global pregunta, menssage_history
-    global name, dev_mode, name_activo
+    global name, dev_mode, name_activo, modo_lectura, bienvenida_lectura, presentacion_rosimar, presentacion_javier, demostracion_fase, demostracion, sigue_javier_lectura,sigue_rosimar_lectura,rondas_PyR_Cristian_lectura,rondas_PyR_Javier_lectura,rondas_PyR_Rosimar_lectura,desalojo_de_la_sala_lectura,bienvenida_lectura, veredicto_activado, lectura_veredicto_activada
     global microfonoIndex, MicrofonoCalibrado, hablando
     global seguir_vision, imitar_vision
     global comandosNoReconocidos_contador
     global client, frameExportado
-
+    global FORMAT,CHANNELS,RATE,CHUNK, timestamp_ms,chunk_ms,audio_instance,recognizer,yammetRecording
+    
+    # yammetRecording = YammetModel(model_buffer=model_content)
+    if yammetRecording is None or yammetRecording.classifier is None:
+        print("ERROR: yammetRecording no está inicializado correctamente")
+        mainApp.after(1000, grabar_audio)  # Reintentar en 1 segundo
+        return
     # Variable para saber si hay conexión a internet
     def hay_internet():
         import socket
@@ -1624,10 +2069,11 @@ def grabar_audio_hilo():
             return True
         except OSError:
             return False
-
+    
     # Espera a que no esté hablando
     while hablando:
         time.sleep(0.1)
+        #############################################################
 
     def comando_hora():
         ahora = datetime.now()
@@ -1663,20 +2109,62 @@ def grabar_audio_hilo():
             return None, "otro"
 ################################################################################################################
     if microfonoIndex is not None:
-        with sr.Microphone(device_index=microfonoIndex) as source:
-            recognizer = sr.Recognizer()
-            if not MicrofonoCalibrado:
-                print("Calibrando para el ruido ambiente, guarda silencio...")
-                recognizer.adjust_for_ambient_noise(source, duration=4)
-                recognizer.dynamic_energy_threshold = False
-                recognizer.energy_threshold = recognizer.energy_threshold + 200
-                recognizer.pause_threshold = 0.8
-                recognizer.operation_timeout = 20
-                print(f"Umbral de energía ajustado a: {recognizer.energy_threshold}")
-                MicrofonoCalibrado = True
-            print("Grabando audio...")
-            audio = recognizer.listen(source)
-            print("Audio grabado.")
+        if False:
+            with sr.Microphone(device_index=microfonoIndex) as source:
+                if not MicrofonoCalibrado:
+                    print("Calibrando para el ruido ambiente, guarda silencio...")
+                    recognizer.adjust_for_ambient_noise(source, duration=4)
+                    recognizer.dynamic_energy_threshold = False
+                    recognizer.energy_threshold = recognizer.energy_threshold + 200
+                    recognizer.pause_threshold = 0.8
+                    recognizer.operation_timeout = 20
+                    print(f"Umbral de energía ajustado a: {recognizer.energy_threshold}")
+                    MicrofonoCalibrado = True
+                print("Grabando audio...")
+                audio = recognizer.listen(source)
+                print("Audio grabado.")
+        else:
+            stream = None
+            try: 
+                local_timestamp_ms = int(time.time() * 1000)
+                # with yammetRecording if hasattr(yammetRecording, "__enter__") else nullcontext():
+                stream = audio_instance.open(format=FORMAT,
+                                            channels=CHANNELS,
+                                            rate=RATE,
+                                            input=True,
+                                            input_device_index=microfonoIndex,
+                                            frames_per_buffer=CHUNK)
+                while yammetRecording.grabacionDeVoz is None:
+                    if yammetRecording.classifier is None:
+                        print("ERROR: Classifier se volvió None durante la grabación")
+                        break
+                    audio_streaming = stream.read(CHUNK, exception_on_overflow=False)
+                    yammetRecording.streamingClassification(audio_streaming= audio_streaming, timestamp_ms = timestamp_ms)
+                    timestamp_ms += chunk_ms
+                print("en teroria se grabó")
+                if stream is not None:
+                    stream.stop_stream()
+                    stream.close()
+                    stream = None
+                if yammetRecording.grabacionDeVoz is not None:
+                    audio= sr.AudioData(frame_data=yammetRecording.grabacionDeVoz,  # ¡Le pasamos el WAV completo!
+                                        sample_rate=yammetRecording.sample_rate,
+                                        sample_width=yammetRecording.sample_width_bytes)
+                    
+                    yammetRecording.grabacionDeVoz = None
+            except Exception as e:
+                print(f"Error en grabar_audio_hilo: {e}")
+                import traceback
+                traceback.print_exc()
+            finally:
+            # Asegurar que el stream se cierre
+                if stream is not None:
+                    try:
+                        stream.stop_stream()
+                        stream.close()
+                        yammetRecording.close()
+                    except Exception as e:
+                        print(f"Error cerrando stream: {e}")
         texto = None
         modo_online = hay_internet()
         if modo_online:
@@ -1701,106 +2189,35 @@ def grabar_audio_hilo():
             print("Comandos detectados:", comandos_obtenidos)
 
             if dev_mode or ("nombre" in comandos_obtenidos) or name_activo:
-                if ("hola" in comandos_obtenidos and "nombre" in comandos_obtenidos):
-                    print("Nombre detectado:", name)
-                    name_activo = True
-                    ejecutar_voz(respuestas_comando("hola"))
-                if "conectar" in comandos_obtenidos and "internet" in comandos_obtenidos:
-                    ejecutar_voz("Intentando conectar a internet...")
-                    if hay_internet():
-                        ejecutar_voz("Conexión a internet restablecida. Volveré a usar el reconocimiento en línea.")
+                # MODO LECTURA (PRESENTACIÓN)
+                if modo_lectura:
+                    # Dentro de la demostración
+                    if demostracion:
+                        procesar_comandos_modo_demostracion(comandos_obtenidos, modo_online,texto)
+                    
+                    # Comandos de lectura del protocolo
                     else:
-                        ejecutar_voz("No fue posible conectar a internet. Seguiré en modo sin conexión.")
-
-                elif modo_online and pregunta is True:
-                    respuestas_texto = groqIA.enviarMSG(texto, frameExportado=frameExportado)
-                    print("Respuesta IA:", respuestas_texto)
-                    ejecutar_voz(respuestas_texto)
-                    pregunta = False
-
-                elif not modo_online and pregunta is True:
-                    ejecutar_voz("No hay conexión a internet, no puedo responder preguntas a la IA. Por favor, conecta a internet para usar esta función.")
-                    pregunta = False
-
-                elif "hora" in comandos_obtenidos:
-                    comando_hora()
-                elif "gracias" in comandos_obtenidos:
-                    ejecutar_voz(respuestas_comando("gracias"))
-                    pregunta = False
-                elif "pregunta" in comandos_obtenidos:
-                    if modo_online:
-                        pregunta = True
-                        ejecutar_voz(respuestas_comando("pregunta"))
+                        ejecutar_comandos_lectura(comandos_obtenidos)
+                    
+                    # Desactivar modo lectura
+                    if "desactivar" in comandos_obtenidos and "lectura" in comandos_obtenidos:
+                        modo_lectura = False
+                        veredicto_activado = True
+                        ejecutar_voz("Modo de lectura desactivado, modo de veredicto activado.")
+            
+                elif veredicto_activado:
+                    if lectura_veredicto_activada:
+                        ejecutar_comandos_veredicto_lectura(comandos_obtenidos)
                     else:
-                        ejecutar_voz("Necesito acceso a internet para responder preguntas complejas, lo siento")
-                elif (not "desactivar" in comandos_obtenidos) and ("seguir" in comandos_obtenidos):
-                    imitar_vision = None  # Desactiva la imitación de visión al activar el seguimiento
-                    if "mano" in comandos_obtenidos and "izquierda" in comandos_obtenidos:
-                        seguir_vision = "Mano izquierda"
-                    elif "mano" in comandos_obtenidos and "derecha" in comandos_obtenidos:
-                        seguir_vision = "Mano derecha"
-                    elif "mano" in comandos_obtenidos:
-                        seguir_vision = "Mano"
-                    elif "cara" in comandos_obtenidos:
-                        seguir_vision = "Cara"
-                    elif "cuerpo" in comandos_obtenidos:
-                        seguir_vision = "Cuerpo"
-                    else:
-                        seguir_vision = "Cara"  # Valor predeterminado
-                    ejecutar_voz(respuestas_comando("seguir") + "la " + seguir_vision.lower() if seguir_vision != "Cuerpo" else respuestas_comando("seguir") + "el "+ seguir_vision.lower())
-
-                elif "chao" in comandos_obtenidos:
-                    dev_mode = False
-                    seguir_vision = None
-                    name_activo = False
-                    imitar_vision = None
-                    ejecutar_voz(respuestas_comando("chao"))
-
-                elif "calibrar" in comandos_obtenidos:
-                    ejecutar_voz(respuestas_comando("calibrar"))
-                    MicrofonoCalibrado = False
-
-                elif (not "desactivar" in comandos_obtenidos) and ("imitar" in comandos_obtenidos):
-                    if "mano" in comandos_obtenidos and "izquierda" in comandos_obtenidos:
-                        seguir_vision = None  # Desactiva el seguimiento de visión al activar la imitación
-                        print("imitar mano izquierda")
-                        imitar_vision = "Mano izquierda"
-                    elif "mano" in comandos_obtenidos and "derecha" in comandos_obtenidos:
-                        seguir_vision = None
-                        print("imitar mano derecha")    
-                        imitar_vision = "Mano derecha"
-                    elif "mano" in comandos_obtenidos:
-                        seguir_vision = None
-                        print("imitar mano")
-                        imitar_vision = "Mano"
-                    elif "cara" in comandos_obtenidos:
-                        seguir_vision = None  # Desactiva el seguimiento de visión al activar la imitación
-                        imitar_vision = "Cara"
-                    elif "cuerpo" in comandos_obtenidos:
-                        seguir_vision = None  # Desactiva el seguimiento de visión al activar la imitación
-                        imitar_vision = "Cuerpo"
-                    ejecutar_voz(respuestas_comando("imitar"))
-                elif "modo" in comandos_obtenidos and "desarrollador" in comandos_obtenidos:
-                    dev_mode = True
-                    ejecutar_voz(respuestas_comando("modo desarrollador activado"))
-                elif "desactivar" in comandos_obtenidos:
-                    if "seguir" in comandos_obtenidos:
-                        seguir_vision = None
-                        ejecutar_voz(respuestas_comando("dejando de seguir"))
-                    elif "imitar" in comandos_obtenidos:
-                        imitar_vision = None
-                        ejecutar_voz(respuestas_comando("dejando de imitar"))
-                    elif "modo" in comandos_obtenidos and "desarrollador" in comandos_obtenidos:
-                        dev_mode = False
-                        ejecutar_voz(respuestas_comando("modo desarrollador desactivado"))
-                elif dev_mode:
-                    if comandosNoReconocidos_contador <= 3:
-                        ejecutar_voz(respuestas_comando("desconocido"))
-                        comandosNoReconocidos_contador += 1
-                    else:
-                        ejecutar_voz("No entendí el comando, volveré a calibrar el micrófono, dame un momento")
-                        MicrofonoCalibrado = False
-                        comandosNoReconocidos_contador = 0
+                        ejecutar_comandos_veredicto(comandos_obtenidos)
+                    if "desactivar" in comandos_obtenidos and "veredicto" in comandos_obtenidos:
+                        veredicto_activado = False
+                        ejecutar_voz("Modo de veredicto desactivado.")
+                        
+                
+                # MODO NORMAL (FUERA DE LECTURA)
+                else:
+                    procesar_comandos_generales(comandos_obtenidos, modo_online, texto)
     else:
         print("No se ha seleccionado ningún dispositivo de audio.")
     mainApp.after(100, grabar_audio)
@@ -1939,9 +2356,21 @@ import signal
 
 def on_closing():
     print("Cerrando la aplicación...")
-    cerrar_conexion_serial()  # Cerrar la conexión serial al cerrar la aplicación
-    mainApp.destroy()  # Cerrar la ventana principal
-    sys.exit(0)  # Salir del programa
+    
+    # Limpiar el modelo copiado
+    try:
+        import site
+        site_pkgs = site.getsitepackages()[0]
+        modelo_temp = Path(site_pkgs) / "yamnet_rubik.tflite"
+        if modelo_temp.exists():
+            modelo_temp.unlink()
+            print("Modelo temporal eliminado")
+    except Exception as e:
+        print(f"Error limpiando modelo temporal: {e}")
+    
+    cerrar_conexion_serial()
+    mainApp.destroy()
+    sys.exit(0)
     
 def signal_handler(sig, frame):
     print("Se recibió una señal de interrupción (SIGINT). Cerrando la aplicación...")
@@ -1953,3 +2382,6 @@ signal.signal(signal.SIGINT, signal_handler)
 
 mainApp.protocol("WM_DELETE_WINDOW", on_closing)
 mainApp.mainloop()
+
+
+

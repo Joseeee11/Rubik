@@ -5,7 +5,7 @@
             "palabras":["apagar", "desactivar", "cerrar", "terminar", "finalizar", "detener", "dejar", "para","parar","deja","desactiva","desactivado"]
         },
         {   "comando": "nombre",
-            "palabras":["Zoé", "Zoe", "zoe", "zoé", "sooe", "sóe", "sóe", "sóee", "sóee", "zooe", "zóe", "zóee", "zóee","noe","noé","noee","noée","nóe","nóee","nóée","joe","joé","joee","joée","jóe","jóee","jóée", "soy", "soi", "soui","sui","sóei","suoi"]
+            "palabras":["Zoé", "Zoe", "zoe", "zoé", "sooe", "sóe", "sóe","sofi", "sóee", "sóee", "zooe", "zóe", "zóee", "zóee","noe","noé","noee","noée","nóe","nóee","nóée","joe","joé","joee","joée","jóe","jóee","jóée", "soy", "soi", "soui","sui","sóei","suoi"]
         },
         { "comando": "imitar",
             "palabras": ["imitar", "imita", "espejo"]
@@ -17,7 +17,7 @@
             "palabras": ["chao", "adiós", "adios", "hasta luego", "nos vemos", "nos vemos luego", "nos vemos pronto", "hasta pronto"]
         },
         { "comando": "calibrar",
-            "palabras": ["calibrar", "calibra", "ajustar", "ajusta", "configurar", "configura"]
+            "palabras": ["calibrar", "calibra", "ajustar", "ajusta"]
         },
         {
             "comando": "hola",
@@ -33,7 +33,7 @@
         },
         {
             "comando":"hora",
-            "palabras": ["horario", "hora","ora","horas"]
+            "palabras": ["horario", "hora","horas"]
         },
         {
             "comando":"gracias",
@@ -59,11 +59,73 @@
             "palabras": ["cara", "rostro", "faz","cabeza","nariz","carita","face","carota","caras","rostros","cabezas"]
         },{
             "comando":"modo",
-            "palabras": ["modo", "modos", "configuración", "configurar","configurate", "configura"]
+            "palabras": ["modo", "modos", "configuración"]
         },{
             "comando":"desarrollo",
-            "palabras": ["desarrollo", "desarrollar", "programación", "programar",      "siempre activo","siempre escucha"]
+            "palabras": ["desarrollo", "programación", "programar",      "siempre activo","siempre escucha"]
+        },{
+            "comando": "cambiar",
+            "palabras": ["cambiar", "cambia", "modificar", "modifica", "ajustar", "ajusta"]
+        },{
+            "comando": "usuario",
+            "palabras": ["usuario", "estudiante"]
+        },{
+            "comando": "javier",
+            "palabras": ["javier","jabier","xavier","xabier","gavier","gabier", "olivar"]
+        },{
+            "comando": "rosimar",
+            "palabras": ["rosimar", "roximar","rocimar","rossimar","barrios"]
+        },
+        {
+            "comando": "cristian",
+            "palabras": ["cristian","christian","critian","rangel"]
+        },
+        {
+            "comando": "bienvenida",
+            "palabras": ["bienvenida", "bienvenido", "introducción", "introduce","presenta","presentacion"]
+        },
+        {
+            "comando": "leer",
+            "palabras": ["leer", "lee", "leeré", "leeme","léeme","léeme"]
+        },
+        {
+            "comando": "lectura",
+            "palabras": ["lectura", "dictado"]
+        },{
+            "comando": "probar",
+            "palabras": ["probar", "prueba", "ensayar", "ensayo"]
+        },{
+            "comando": "veredicto",
+            "palabras": ["veredicto", "veredictos"]
+        },
+        {
+            "comando": "presentar_javier_tesista",
+            "palabras": ["le doy la palabra a mi compañero", "continuación mi compañero", "presentar a javier"]
+        },
+        {
+            "comando": "presentar_rosimar_tesista",
+            "palabras": ["le doy la palabra a mi compañera", "continuación mi compañera", "presentar a rosimar"]
+        },{
+            "comando": "demostracion",
+            "palabras": ["procedemos a la demostración del robot"]
+        },{
+            "comando": "rondas_PyR_Cristian_lectura",
+            "palabras": ["rondas de preguntas y respuestas", "ronda de preguntas y respuestas", "vamos con las preguntas y respuestas"]
+        },
+        {
+            "comando": "desalojo_de_la_sala_lectura",
+            "palabras": ["finaliza la defensa por favor"]
+        },{
+            "comando": "veredicto_lectura",
+            "palabras": ["lee el veredicto", "leer el veredicto","procedamos con el veredicto", "vamos con el veredicto", "iniciar leer veredicto","comenzar leer veredicto"]
+        },{
+            "comando": "veredicto_siguiente_lectura",
+            "palabras": ["siguiente veredicto", "continua veredicto ", "proximo veredicto"]
+        },{
+            "comando": "finalizar_veredicto_lectura",
+            "palabras": ["finalizar veredicto", "terminar veredicto", "concluir veredicto", "cerrar veredicto"]
         }
+
     ],
     "Respuestas":[
         {

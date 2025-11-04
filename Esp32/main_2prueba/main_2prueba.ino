@@ -180,10 +180,10 @@ void setup() {
   setServoPCA2(ServoHombroSagitalDerechoPin, 20);
   setServoPCA2(ServoHombroRotacionDerechoPin, 140); //150 medio
 
-  setServoPCA1(ServoBicepsIzquierdoPin, 95); // maximo 100
-  setServoPCA2(ServoHombroSagitalIzquierdoPin, 90); // inicio 30
-  setServoPCA2(ServoHombroFrontalIzquierdoPin, 40);
-  setServoPCA2(ServoHombroRotacionIzquierdoPin, 150); //150 medio
+  setServoPCA1(ServoBicepsIzquierdoPin, 60); // maximo 100
+  setServoPCA2(ServoHombroSagitalIzquierdoPin, 30); // inicio 30 - 100
+  setServoPCA2(ServoHombroFrontalIzquierdoPin, 20);
+  setServoPCA2(ServoHombroRotacionIzquierdoPin, 95); //150 medio
 
   // INICIAR MOTORES MANO IZQUIERDA EN POSICION
   setServoPCA1(ServoPulgarIzquierdoPin, 180);
