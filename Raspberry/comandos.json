@@ -65,7 +65,7 @@
             "palabras": ["desarrollo", "programación", "programar",      "siempre activo","siempre escucha"]
         },{
             "comando": "cambiar",
-            "palabras": ["cambiar", "cambia", "modificar", "modifica", "ajustar", "ajusta"]
+            "palabras": ["cambiar", "cambia", "modificar", "modifica"]
         },{
             "comando": "usuario",
             "palabras": ["usuario", "estudiante"]
@@ -124,6 +124,30 @@
         },{
             "comando": "finalizar_veredicto_lectura",
             "palabras": ["finalizar veredicto", "terminar veredicto", "concluir veredicto", "cerrar veredicto"]
+        },{
+            "comando": "editar",
+            "palabras": ["editar", "edita"]
+        },{
+            "comando": "veinte",
+            "palabras": ["veinte", "20", "veinti", "veintí", "beinte puntos", "20 puntos", "veinti puntos", "veintí puntos", "veinte puntos"]
+        },{
+            "comando": "diecinueve",
+            "palabras": ["diecinueve", "19", "diecinueve puntos", "19 puntos", "diez y nueve", "diez y nueve puntos"]
+        },{
+            "comando": "dieciocho",
+            "palabras": ["dieciocho", "18", "dieciocho puntos", "18 puntos", "diez y ocho", "diez y ocho puntos"]
+        },{
+            "comando": "diecisiete",
+            "palabras": ["diecisiete", "17", "diecisiete puntos", "17 puntos", "diez y siete", "diez y siete puntos"]
+        },{
+            "comando": "dieciseis",
+            "palabras": ["dieciseis", "16", "dieciseis puntos", "16 puntos", "diez y seis", "diez y seis puntos"]
+        },{
+            "comando": "quince",
+            "palabras": ["quince", "15", "quince puntos", "15 puntos", "diez y cinco", "diez y cinco puntos"]
+        },{
+            "comando": "crear",
+            "palabras": ["crear", "crea", "generar", "genera","cree"]
         }
 
     ],

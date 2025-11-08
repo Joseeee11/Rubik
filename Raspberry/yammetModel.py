@@ -65,7 +65,7 @@ class YammetModel:
                         print("guardar grabado")
                         # self.guardar_grabacion(f'grabacion{self.last_speech_time}.wav')
             # imprimir resultado formateado
-            print("\n".join(lines))
+            # print("\n".join(lines)) ############################################## salida desactivada
         except Exception as e:
             print('Error printing result: {}'.format(e))
 
@@ -346,7 +346,7 @@ class YammetModel:
             except Exception as e:
                 print(f"Error al guardar la grabación: {e}")
         else:
-            print("No hay grabación para guardar.")
+            print("No hay grabación para guardar.") ## reales
 
     
     # ---------- Conversión frames -> WAV bytes ----------

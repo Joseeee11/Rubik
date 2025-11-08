@@ -12,7 +12,7 @@ Adafruit_PWMServoDriver pca2 = Adafruit_PWMServoDriver(0x41);
 // int ServoMandibulaPin = 21;
 // int ServoOjoEjeXPin = 23;
 // int ServoOjoEjeYPin = 22;
-// int ServoCuelloEjeXPin = 19;
+// int ServoCuelloEjeXPin = 19; 
 
 int ServoMandibulaPin = 8; // --- pca2
 int ServoOjoEjeXPin = 10; // --- pca2
@@ -78,6 +78,7 @@ int min_Y_cuello = 60;
 int max_Y_cuello = 120;
 
 int Mover_cuello_lento = 0;
+int grados_cuello = 90;
 unsigned long cuello_last_update = 0;
 int Mover_cuello_lento_vertical = 0;
 unsigned long cuello_last_update_vertical = 0;
@@ -177,12 +178,12 @@ void setup() {
   // INICIAR MOTORES BRAZO EN POSICION
   setServoPCA1(ServoBicepsDerechoPin, 40);
   setServoPCA2(ServoHombroFrontalDerechoPin, 50);  // 50 abajo
-  setServoPCA2(ServoHombroSagitalDerechoPin, 20);
+  setServoPCA2(ServoHombroSagitalDerechoPin, 30);
   setServoPCA2(ServoHombroRotacionDerechoPin, 140); //150 medio
 
-  setServoPCA1(ServoBicepsIzquierdoPin, 60); // maximo 100
+  setServoPCA1(ServoBicepsIzquierdoPin, 40); // maximo 100
   setServoPCA2(ServoHombroSagitalIzquierdoPin, 30); // inicio 30 - 100
-  setServoPCA2(ServoHombroFrontalIzquierdoPin, 20);
+  setServoPCA2(ServoHombroFrontalIzquierdoPin, 30);
   setServoPCA2(ServoHombroRotacionIzquierdoPin, 95); //150 medio
 
   // INICIAR MOTORES MANO IZQUIERDA EN POSICION
@@ -265,7 +266,14 @@ void loop() {
     // } else if(!(codigo >= 2500 && codigo <=2999)){
     //   Mover_cuello_lento_vertical = 0;
     // }
-    
+
+    // Mover cuello de 0 a 180°
+    if (codigo >= 2200 && codigo <= 2380) {  // rango de movimiento cuello horizontal 2290 medio
+      grados_cuello = codigo - 2200;
+      CuelloEjeX_Pos = map(grados_cuello, 0, 180, min_X_cuello, max_X_cuello);
+      Mover_cuello_lento = 0;
+      setServoPCA2(ServoCuelloEjeXPin, CuelloEjeX_Pos);
+    }
     // MOVER OJOS
     if (codigo == 1005) { //izquierda
       OjoEjeX_Pos = min_X_ojo;
@@ -295,6 +303,19 @@ void loop() {
     }
     if (CuelloEjeX_Pos <= min_X_cuello){
       CuelloEjeX_Pos = min_X_cuello;
+    }
+    //// ojos de 0 180°
+    // Horizontal
+    if (codigo >= 1100 && codigo <= 1280) {  // rango de movimiento ojos horizontal 1190 medio (135°)
+      int grados_ojo_horizontal = codigo - 1100;
+      grados_ojo_horizontal = map(grados_ojo_horizontal, 0, 180, min_X_ojo, max_X_ojo);
+      OjoEjeX_Pos = grados_ojo_horizontal;
+    }
+    // Vertical
+    if (codigo >= 1300 && codigo <= 1480) {  // rango de movimiento ojos vertical 1390 medio (140°)
+      int grados_ojo_vertical = codigo - 1300;
+      grados_ojo_vertical = map(grados_ojo_vertical, 0, 180, max_Y_ojo, min_Y_ojo);
+      OjoEjeY_Pos = grados_ojo_vertical;
     }
 
     setServoPCA2(ServoOjoEjeYPin, OjoEjeY_Pos);
@@ -440,34 +461,34 @@ void loop() {
       setServoPCA1(ServoBicepsIzquierdoPin, grados_biceps_izquierdo);
     }
 
-    // if (codigo > 6000 && codigo < 6180) { //  codigo de hombro sagital 
-    //   int grados_hombro_sagital_izquierdo = codigo - 6000;
-    //   grados_hombro_sagital_izquierdo = map(grados_hombro_sagital_izquierdo, 180, 0, 170, 30);
-    //   if (grados_hombro_sagital_izquierdo > 160){
-    //     grados_hombro_sagital_izquierdo = 160;
-    //   }
-    //   grados_seguridad_hombro_sagital_izquierdo = grados_hombro_sagital_izquierdo;
-    //   setServoPCA2(ServoHombroSagitalIzquierdoPin, grados_hombro_sagital_izquierdo);
-    // }
+    if (codigo > 6000 && codigo < 6180) { //  codigo de hombro sagital 
+      int grados_hombro_sagital_izquierdo = codigo - 6000;
+      grados_hombro_sagital_izquierdo = map(grados_hombro_sagital_izquierdo, 0, 180, 30, 180);
+      if (grados_hombro_sagital_izquierdo > 100){
+        grados_hombro_sagital_izquierdo = 100;
+      }
+      grados_seguridad_hombro_sagital_izquierdo = grados_hombro_sagital_izquierdo;
+      setServoPCA2(ServoHombroSagitalIzquierdoPin, grados_hombro_sagital_izquierdo);
+    }
 
-    // if (codigo > 4600 && codigo < 4780) { //  codigo de hombro frontal 
-    //   int grados_hombro_frontal_izquierdo = codigo - 4600;
-    //   grados_hombro_frontal_izquierdo = map(grados_hombro_frontal_izquierdo, 0, 180, 13, 55);
-    //   grados_seguridad_hombro_frontal_izquierdo = grados_hombro_frontal_izquierdo;
+    if (codigo > 4600 && codigo < 4780) { //  codigo de hombro frontal 
+      int grados_hombro_frontal_izquierdo = codigo - 4600;
+      grados_hombro_frontal_izquierdo = map(grados_hombro_frontal_izquierdo, 0, 180, 20, 50); //13 - 55
+      grados_seguridad_hombro_frontal_izquierdo = grados_hombro_frontal_izquierdo;
 
-    //   setServoPCA2(ServoHombroFrontalIzquierdoPin, grados_hombro_frontal_izquierdo);
-    // }
+      setServoPCA2(ServoHombroFrontalIzquierdoPin, grados_hombro_frontal_izquierdo);
+    }
 
-    // if (codigo >= 6400 && codigo <= 6580) { //  codigo de hombro rotacion
-    //   int grados_hombro_rotacion_izquierdo = codigo - 6400;
-    //   grados_hombro_rotacion_izquierdo = map(grados_hombro_rotacion_izquierdo, 180, 0, 10, 170);
-    //   if (grados_hombro_rotacion_izquierdo < 50){
-    //     if (grados_seguridad_hombro_frontal_izquierdo < 20 && grados_seguridad_hombro_sagital_izquierdo < 40){
-    //       grados_hombro_rotacion_izquierdo = 50;
-    //     }
-    //   }
-    //   setServoPCA2(ServoHombroRotacionIzquierdoPin, grados_hombro_rotacion_izquierdo);
-    // }
+    if (codigo >= 6400 && codigo <= 6580) { //  codigo de hombro rotacion
+      int grados_hombro_rotacion_izquierdo = codigo - 6400;
+      grados_hombro_rotacion_izquierdo = map(grados_hombro_rotacion_izquierdo, 0, 180, 65, 125);
+      if (grados_hombro_rotacion_izquierdo < 80){
+        if (grados_seguridad_hombro_frontal_izquierdo < 25 && grados_seguridad_hombro_sagital_izquierdo < 40){
+          grados_hombro_rotacion_izquierdo = 80;
+        }
+      }
+      setServoPCA2(ServoHombroRotacionIzquierdoPin, grados_hombro_rotacion_izquierdo);
+    }
 
     delay(10);
   }

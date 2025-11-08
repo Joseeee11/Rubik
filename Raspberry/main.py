@@ -27,6 +27,7 @@ from pathlib import Path
 from Clavicula import _to_int_safe, definir_angulo_hombro_rotacion, definir_angulo_hombro_frontal, definir_angulo_hombro_sagital, calcular_angulo_brazos, definir_flexion, calcular_angulo_flexion, normalizar_vector, calcular_angulo,Calcular_distancia_Punto_a_RectaAB, punto_medio_segmento
 from esp32 import iniciar_conexion_serial, enviar_esp32, cerrar_serial, listar_seriales
 from yammetModel import YammetModel
+from grabar_posicion import GrabarPosicion
 # from Raspberry.yammetModel import YammetModel
 # para la hora actual quitar si se hace de otra manera
 from datetime import datetime
@@ -152,6 +153,62 @@ grupo_angulo_sagital_i = []
 grupo_angulo_flexion_i = []
 grupo_angulo_rotacion_i = []
 
+posiciones_grabadas = {
+    "posicion_cabeza_horizontal": None,
+    "posicion_ojos_horizontal": None,
+    "posicion_ojos_vertical": None,
+
+    "posicion_dedo_pulgar_derecho": None,
+    "posicion_dedo_indice_derecho": None,
+    "posicion_dedo_medio_derecho": None,
+    "posicion_dedo_anular_derecho": None,
+    "posicion_dedo_menique_derecho": None,
+    "posicion_muneca_derecho": None,
+
+    "posicion_dedo_pulgar_izquierdo": None,
+    "posicion_dedo_indice_izquierdo": None,
+    "posicion_dedo_medio_izquierdo": None,
+    "posicion_dedo_anular_izquierdo": None,
+    "posicion_dedo_menique_izquierdo": None,
+    "posicion_muneca_izquierdo": None,
+
+    "posicion_hombro_sagital_derecho": None,
+    "posicion_hombro_frontal_derecho": None,
+    "posicion_hombro_rotacion_derecho": None,
+    "posicion_bicep_derecho": None,
+
+    "posicion_hombro_sagital_izquierdo": None,
+    "posicion_hombro_frontal_izquierdo": None,
+    "posicion_hombro_rotacion_izquierdo": None,
+    "posicion_bicep_izquierdo": None
+}
+
+estado_posicion = None  
+
+posiciones_saludar = {'posicion_cabeza_horizontal': 2290, 'posicion_ojos_horizontal': 1000, 'posicion_ojos_vertical': 1030, 'posicion_dedo_pulgar_derecho': 5519, 'posicion_dedo_indice_derecho': 5517, 'posicion_dedo_medio_derecho': 5510, 'posicion_dedo_anular_derecho': 5512, 'posicion_dedo_menique_derecho': 5514, 'posicion_muneca_derecho': 5001, 'posicion_dedo_pulgar_izquierdo': 5521, 'posicion_dedo_indice_izquierdo': 5523, 'posicion_dedo_medio_izquierdo': 5525, 'posicion_dedo_anular_izquierdo': 5527, 'posicion_dedo_menique_izquierdo': 5529, 'posicion_muneca_izquierdo': 5003, 'posicion_hombro_sagital_derecho': 4814, 'posicion_hombro_frontal_derecho': 4431, 'posicion_hombro_rotacion_derecho': 6380, 'posicion_bicep_derecho': 4032, 'posicion_hombro_sagital_izquierdo': 6058, 'posicion_hombro_frontal_izquierdo': 4708, 'posicion_hombro_rotacion_izquierdo': 6578, 'posicion_bicep_izquierdo': 4370}
+
+posiciones_inicial = {'posicion_cabeza_horizontal': 2290, 'posicion_ojos_horizontal': 1000, 'posicion_ojos_vertical': 1030, 'posicion_dedo_pulgar_derecho': 5519, 'posicion_dedo_indice_derecho': 5517, 'posicion_dedo_medio_derecho': 5511, 'posicion_dedo_anular_derecho': 5513, 'posicion_dedo_menique_derecho': 5515, 'posicion_muneca_derecho': 5001, 'posicion_dedo_pulgar_izquierdo': 5521, 'posicion_dedo_indice_izquierdo': 5523, 'posicion_dedo_medio_izquierdo': 5525, 'posicion_dedo_anular_izquierdo': 5527, 'posicion_dedo_menique_izquierdo': 5529, 'posicion_muneca_izquierdo': 5003, 'posicion_hombro_sagital_derecho': 4820, 'posicion_hombro_frontal_derecho': 4350, 'posicion_hombro_rotacion_derecho': 6340, 'posicion_bicep_derecho': 4040, 'posicion_hombro_sagital_izquierdo': 6010, 'posicion_hombro_frontal_izquierdo': 4630, 'posicion_hombro_rotacion_izquierdo': 6495, 'posicion_bicep_izquierdo': 4240}
+
+posiciones_action_1 = {'posicion_cabeza_horizontal': 2310, 'posicion_ojos_horizontal': 1160}
+posiciones_action_2 = {'posicion_cabeza_horizontal': 2270, 'posicion_ojos_horizontal': 1230}
+posiciones_action_3 = {'posicion_cabeza_horizontal': 2290, 'posicion_ojos_horizontal': 1190}
+
+posicion_hablar_1_1 = {'posicion_cabeza_horizontal': 2290, 'posicion_ojos_horizontal': 1190,'posicion_dedo_pulgar_derecho': 5519, 'posicion_dedo_indice_derecho': 5517, 'posicion_dedo_medio_derecho': 5511, 'posicion_dedo_anular_derecho': 5513, 'posicion_dedo_menique_derecho': 5515, 'posicion_muneca_derecho': 5000, 'posicion_dedo_pulgar_izquierdo': 5521, 'posicion_dedo_indice_izquierdo': 5523, 'posicion_dedo_medio_izquierdo': 5525, 'posicion_dedo_anular_izquierdo': 5526, 'posicion_dedo_menique_izquierdo': 5528, 'posicion_muneca_izquierdo': 5003, 'posicion_hombro_sagital_derecho': 4858, 'posicion_hombro_frontal_derecho': 4434, 'posicion_hombro_rotacion_derecho': 6318, 'posicion_bicep_derecho': 4175, 'posicion_hombro_sagital_izquierdo': 6045, 'posicion_hombro_frontal_izquierdo': 4683, 'posicion_hombro_rotacion_izquierdo': 6532, 'posicion_bicep_izquierdo': 4375}
+posicion_hablar_1_2 = {'posicion_cabeza_horizontal': 2270, 'posicion_ojos_horizontal': 1230,'posicion_dedo_pulgar_derecho': 5518, 'posicion_dedo_indice_derecho': 5516, 'posicion_dedo_medio_derecho': 5511, 'posicion_dedo_anular_derecho': 5513, 'posicion_dedo_menique_derecho': 5515, 'posicion_muneca_derecho': 5000, 'posicion_dedo_pulgar_izquierdo': 5521, 'posicion_dedo_indice_izquierdo': 5523, 'posicion_dedo_medio_izquierdo': 5525, 'posicion_dedo_anular_izquierdo': 5527, 'posicion_dedo_menique_izquierdo': 5529, 'posicion_muneca_izquierdo': 5003, 'posicion_hombro_sagital_derecho': 4868, 'posicion_hombro_frontal_derecho': 4434, 'posicion_hombro_rotacion_derecho': 6318, 'posicion_bicep_derecho': 4120, 'posicion_hombro_sagital_izquierdo': 6055, 'posicion_hombro_frontal_izquierdo': 4683, 'posicion_hombro_rotacion_izquierdo': 6532, 'posicion_bicep_izquierdo': 4340}
+posicion_hablar_1_3 = {'posicion_cabeza_horizontal': 2290, 'posicion_ojos_horizontal': 1190,'posicion_dedo_pulgar_derecho': 5518, 'posicion_dedo_indice_derecho': 5516, 'posicion_dedo_medio_derecho': 5510, 'posicion_dedo_anular_derecho': 5512, 'posicion_dedo_menique_derecho': 5514, 'posicion_muneca_derecho': 5000, 'posicion_dedo_pulgar_izquierdo': 5521, 'posicion_dedo_indice_izquierdo': 5523, 'posicion_dedo_medio_izquierdo': 5525, 'posicion_dedo_anular_izquierdo': 5527, 'posicion_dedo_menique_izquierdo': 5529, 'posicion_muneca_izquierdo': 5003, 'posicion_hombro_sagital_derecho': 4858, 'posicion_hombro_frontal_derecho': 4434, 'posicion_hombro_rotacion_derecho': 6318, 'posicion_bicep_derecho': 4175, 'posicion_hombro_sagital_izquierdo': 6045, 'posicion_hombro_frontal_izquierdo': 4683, 'posicion_hombro_rotacion_izquierdo': 6532, 'posicion_bicep_izquierdo': 4375}
+posicion_hablar_1_4 = {'posicion_cabeza_horizontal': 2310, 'posicion_ojos_horizontal': 1160,'posicion_dedo_pulgar_derecho': 5518, 'posicion_dedo_indice_derecho': 5516, 'posicion_dedo_medio_derecho': 5511, 'posicion_dedo_anular_derecho': 5513, 'posicion_dedo_menique_derecho': 5515, 'posicion_muneca_derecho': 5000, 'posicion_dedo_pulgar_izquierdo': 5521, 'posicion_dedo_indice_izquierdo': 5523, 'posicion_dedo_medio_izquierdo': 5525, 'posicion_dedo_anular_izquierdo': 5527, 'posicion_dedo_menique_izquierdo': 5529, 'posicion_muneca_izquierdo': 5003, 'posicion_hombro_sagital_derecho': 4863, 'posicion_hombro_frontal_derecho': 4434, 'posicion_hombro_rotacion_derecho': 6318, 'posicion_bicep_derecho': 4120, 'posicion_hombro_sagital_izquierdo': 6050, 'posicion_hombro_frontal_izquierdo': 4683, 'posicion_hombro_rotacion_izquierdo': 6532, 'posicion_bicep_izquierdo': 4340}
+
+posicion_hablar_2_1 = {'posicion_cabeza_horizontal': 2270, 'posicion_ojos_horizontal': 1230, 'posicion_dedo_pulgar_derecho': 5519, 'posicion_dedo_indice_derecho': 5517, 'posicion_dedo_medio_derecho': 5511, 'posicion_dedo_anular_derecho': 5513, 'posicion_dedo_menique_derecho': 5515, 'posicion_muneca_derecho': 5000, 'posicion_dedo_pulgar_izquierdo': 5521, 'posicion_dedo_indice_izquierdo': 5523, 'posicion_dedo_medio_izquierdo': 5525, 'posicion_dedo_anular_izquierdo': 5527, 'posicion_dedo_menique_izquierdo': 5529, 'posicion_muneca_izquierdo': 5003, 'posicion_hombro_sagital_derecho': 4841, 'posicion_hombro_frontal_derecho': 4427, 'posicion_hombro_rotacion_derecho': 6380, 'posicion_bicep_derecho': 4175, 'posicion_hombro_sagital_izquierdo': 6017, 'posicion_hombro_frontal_izquierdo': 4643, 'posicion_hombro_rotacion_izquierdo': 6580, 'posicion_bicep_izquierdo': 4375}
+posicion_hablar_2_2 = {'posicion_cabeza_horizontal': 2290, 'posicion_ojos_horizontal': 1190, 'posicion_dedo_pulgar_derecho': 5519, 'posicion_dedo_indice_derecho': 5517, 'posicion_dedo_medio_derecho': 5511, 'posicion_dedo_anular_derecho': 5513, 'posicion_dedo_menique_derecho': 5515, 'posicion_muneca_derecho': 5000, 'posicion_dedo_pulgar_izquierdo': 5521, 'posicion_dedo_indice_izquierdo': 5523, 'posicion_dedo_medio_izquierdo': 5525, 'posicion_dedo_anular_izquierdo': 5527, 'posicion_dedo_menique_izquierdo': 5529, 'posicion_muneca_izquierdo': 5003, 'posicion_hombro_sagital_derecho': 4841, 'posicion_hombro_frontal_derecho': 4427, 'posicion_hombro_rotacion_derecho': 6380, 'posicion_bicep_derecho': 4075, 'posicion_hombro_sagital_izquierdo': 6017, 'posicion_hombro_frontal_izquierdo': 4643, 'posicion_hombro_rotacion_izquierdo': 6580, 'posicion_bicep_izquierdo': 4290}
+posicion_hablar_2_3 = {'posicion_cabeza_horizontal': 2310, 'posicion_ojos_horizontal': 1160,'posicion_dedo_pulgar_derecho': 5519, 'posicion_dedo_indice_derecho': 5517, 'posicion_dedo_medio_derecho': 5511, 'posicion_dedo_anular_derecho': 5513, 'posicion_dedo_menique_derecho': 5515, 'posicion_muneca_derecho': 5000, 'posicion_dedo_pulgar_izquierdo': 5521, 'posicion_dedo_indice_izquierdo': 5523, 'posicion_dedo_medio_izquierdo': 5525, 'posicion_dedo_anular_izquierdo': 5527, 'posicion_dedo_menique_izquierdo': 5529, 'posicion_muneca_izquierdo': 5003, 'posicion_hombro_sagital_derecho': 4841, 'posicion_hombro_frontal_derecho': 4427, 'posicion_hombro_rotacion_derecho': 6380, 'posicion_bicep_derecho': 4130, 'posicion_hombro_sagital_izquierdo': 6017, 'posicion_hombro_frontal_izquierdo': 4643, 'posicion_hombro_rotacion_izquierdo': 6580, 'posicion_bicep_izquierdo': 4310}
+posicion_hablar_2_4 = {'posicion_cabeza_horizontal': 2290, 'posicion_ojos_horizontal': 1190 ,'posicion_dedo_pulgar_derecho': 5519, 'posicion_dedo_indice_derecho': 5517, 'posicion_dedo_medio_derecho': 5511, 'posicion_dedo_anular_derecho': 5513, 'posicion_dedo_menique_derecho': 5515, 'posicion_muneca_derecho': 5000, 'posicion_dedo_pulgar_izquierdo': 5521, 'posicion_dedo_indice_izquierdo': 5523, 'posicion_dedo_medio_izquierdo': 5525, 'posicion_dedo_anular_izquierdo': 5527, 'posicion_dedo_menique_izquierdo': 5529, 'posicion_muneca_izquierdo': 5003, 'posicion_hombro_sagital_derecho': 4841, 'posicion_hombro_frontal_derecho': 4427, 'posicion_hombro_rotacion_derecho': 6380, 'posicion_bicep_derecho': 4150, 'posicion_hombro_sagital_izquierdo': 6017, 'posicion_hombro_frontal_izquierdo': 4643, 'posicion_hombro_rotacion_izquierdo': 6580, 'posicion_bicep_izquierdo': 4290}
+posicion_hablar_2_5 = {'posicion_cabeza_horizontal': 2270, 'posicion_ojos_horizontal': 1230, 'posicion_dedo_pulgar_derecho': 5519, 'posicion_dedo_indice_derecho': 5517, 'posicion_dedo_medio_derecho': 5511, 'posicion_dedo_anular_derecho': 5513, 'posicion_dedo_menique_derecho': 5515, 'posicion_muneca_derecho': 5000, 'posicion_dedo_pulgar_izquierdo': 5521, 'posicion_dedo_indice_izquierdo': 5523, 'posicion_dedo_medio_izquierdo': 5525, 'posicion_dedo_anular_izquierdo': 5527, 'posicion_dedo_menique_izquierdo': 5529, 'posicion_muneca_izquierdo': 5003, 'posicion_hombro_sagital_derecho': 4841, 'posicion_hombro_frontal_derecho': 4427, 'posicion_hombro_rotacion_derecho': 6380, 'posicion_bicep_derecho': 4175, 'posicion_hombro_sagital_izquierdo': 6017, 'posicion_hombro_frontal_izquierdo': 4643, 'posicion_hombro_rotacion_izquierdo': 6580, 'posicion_bicep_izquierdo': 4310}
+
+posicion_hablar_3_1 = {'posicion_cabeza_horizontal': 2290, 'posicion_ojos_horizontal': 1190, 'posicion_dedo_pulgar_derecho': 5519, 'posicion_dedo_indice_derecho': 5517, 'posicion_dedo_medio_derecho': 5510, 'posicion_dedo_anular_derecho': 5512, 'posicion_dedo_menique_derecho': 5514, 'posicion_muneca_derecho': 5001, 'posicion_dedo_pulgar_izquierdo': 5521, 'posicion_dedo_indice_izquierdo': 5523, 'posicion_dedo_medio_izquierdo': 5525, 'posicion_dedo_anular_izquierdo': 5527, 'posicion_dedo_menique_izquierdo': 5529, 'posicion_muneca_izquierdo': 5002, 'posicion_hombro_sagital_derecho': 4850, 'posicion_hombro_frontal_derecho': 4418, 'posicion_hombro_rotacion_derecho': 6376, 'posicion_bicep_derecho': 4175, 'posicion_hombro_sagital_izquierdo': 6027, 'posicion_hombro_frontal_izquierdo': 4643, 'posicion_hombro_rotacion_izquierdo': 6579, 'posicion_bicep_izquierdo': 4375}
+posicion_hablar_3_2 = {'posicion_cabeza_horizontal': 2270, 'posicion_ojos_horizontal': 1230, 'posicion_dedo_pulgar_derecho': 5518, 'posicion_dedo_indice_derecho': 5517, 'posicion_dedo_medio_derecho': 5510, 'posicion_dedo_anular_derecho': 5512, 'posicion_dedo_menique_derecho': 5514, 'posicion_muneca_derecho': 5000, 'posicion_dedo_pulgar_izquierdo': 5521, 'posicion_dedo_indice_izquierdo': 5523, 'posicion_dedo_medio_izquierdo': 5525, 'posicion_dedo_anular_izquierdo': 5527, 'posicion_dedo_menique_izquierdo': 5529, 'posicion_muneca_izquierdo': 5003, 'posicion_hombro_sagital_derecho': 4865, 'posicion_hombro_frontal_derecho': 4418, 'posicion_hombro_rotacion_derecho': 6355, 'posicion_bicep_derecho': 4175, 'posicion_hombro_sagital_izquierdo': 6027, 'posicion_hombro_frontal_izquierdo': 4643, 'posicion_hombro_rotacion_izquierdo': 6579, 'posicion_bicep_izquierdo': 4350}
+posicion_hablar_3_3 = {'posicion_cabeza_horizontal': 2290, 'posicion_ojos_horizontal': 1190, 'posicion_dedo_pulgar_derecho': 5519, 'posicion_dedo_indice_derecho': 5517, 'posicion_dedo_medio_derecho': 5511, 'posicion_dedo_anular_derecho': 5513, 'posicion_dedo_menique_derecho': 5515, 'posicion_muneca_derecho': 5000, 'posicion_dedo_pulgar_izquierdo': 5521, 'posicion_dedo_indice_izquierdo': 5523, 'posicion_dedo_medio_izquierdo': 5525, 'posicion_dedo_anular_izquierdo': 5527, 'posicion_dedo_menique_izquierdo': 5529, 'posicion_muneca_izquierdo': 5002, 'posicion_hombro_sagital_derecho': 4865, 'posicion_hombro_frontal_derecho': 4418, 'posicion_hombro_rotacion_derecho': 6350, 'posicion_bicep_derecho': 4175, 'posicion_hombro_sagital_izquierdo': 6027, 'posicion_hombro_frontal_izquierdo': 4643, 'posicion_hombro_rotacion_izquierdo': 6559, 'posicion_bicep_izquierdo': 4330}
+posicion_hablar_3_4 = {'posicion_cabeza_horizontal': 2310, 'posicion_ojos_horizontal': 1160, 'posicion_dedo_pulgar_derecho': 5519, 'posicion_dedo_indice_derecho': 5517, 'posicion_dedo_medio_derecho': 5510, 'posicion_dedo_anular_derecho': 5512, 'posicion_dedo_menique_derecho': 5514, 'posicion_muneca_derecho': 5001, 'posicion_dedo_pulgar_izquierdo': 5520, 'posicion_dedo_indice_izquierdo': 5522, 'posicion_dedo_medio_izquierdo': 5525, 'posicion_dedo_anular_izquierdo': 5527, 'posicion_dedo_menique_izquierdo': 5529, 'posicion_muneca_izquierdo': 5002, 'posicion_hombro_sagital_derecho': 4850, 'posicion_hombro_frontal_derecho': 4418, 'posicion_hombro_rotacion_derecho': 6350, 'posicion_bicep_derecho': 4175, 'posicion_hombro_sagital_izquierdo': 6027, 'posicion_hombro_frontal_izquierdo': 4643, 'posicion_hombro_rotacion_izquierdo': 6559, 'posicion_bicep_izquierdo': 4375}
+
 
 frameExportado= None
 def visualizar():
@@ -164,6 +221,7 @@ def visualizar():
     global ultimo_dedo_izquierda, estado_muneca_izquierda, media_estado_muneca_izquierda, mano_imitar_izquierda
     global brazo_derecho, grupo_angulo_frontal_d, grupo_angulo_flexion_d, grupo_angulo_sagital_d, grupo_angulo_rotacion_d
     global brazo_izquierdo, grupo_angulo_frontal_i, grupo_angulo_flexion_i, grupo_angulo_sagital_i, grupo_angulo_rotacion_i
+    global posiciones_grabadas
     # Lee un fotograma de la cámara
     if cap is not None:
         ret, frame = cap.read()
@@ -301,7 +359,7 @@ def visualizar():
                             EjeY = "Centro"
                         print("Centro Y")
 
-            if imitar_vision in ["Cara"] and result.face_landmarks is not None:
+            if (imitar_vision == "Cara" or imitar_vision == "Todo") and result.face_landmarks is not None:
                 # Inicializa el punto a seguir como None
                 # if imitar_vision == "Cara": #para que es esto??
                 landmarks = result.face_landmarks.landmark
@@ -357,14 +415,28 @@ def visualizar():
                             # Enviar comando al ESP32 según la zona media
                             if zona_media == "Muy izquierda":
                                 enviar_comando_esp32(2505)
+
+                                if posiciones_grabadas["posicion_cabeza_horizontal"] is None or posiciones_grabadas["posicion_cabeza_horizontal"] != 2505:
+                                    posiciones_grabadas["posicion_cabeza_horizontal"] = 2505
                             elif zona_media == "Izquierda":
                                 enviar_comando_esp32(2510)
+
+                                if posiciones_grabadas["posicion_cabeza_horizontal"] is None or posiciones_grabadas["posicion_cabeza_horizontal"] != 2510:
+                                    posiciones_grabadas["posicion_cabeza_horizontal"] = 2510
                             elif zona_media == "Centro":
                                 enviar_comando_esp32(2515)
+
+                                if posiciones_grabadas["posicion_cabeza_horizontal"] is None or posiciones_grabadas["posicion_cabeza_horizontal"] != 2515:
+                                    posiciones_grabadas["posicion_cabeza_horizontal"] = 2515
                             elif zona_media == "Derecha":
                                 enviar_comando_esp32(2520)
+
+                                if posiciones_grabadas["posicion_cabeza_horizontal"] is None or posiciones_grabadas["posicion_cabeza_horizontal"] != 2520:
+                                    posiciones_grabadas["posicion_cabeza_horizontal"] = 2520
                             elif zona_media == "Muy derecha":
                                 enviar_comando_esp32(2525)
+                                if posiciones_grabadas["posicion_cabeza_horizontal"] is None or posiciones_grabadas["posicion_cabeza_horizontal"] != 2525:
+                                    posiciones_grabadas["posicion_cabeza_horizontal"] = 2525
                             # Guardar la última zona media para comparar en la próxima iteración
                             visualizar.ultima_zona_media = zona_media
                 else:
@@ -501,7 +573,7 @@ def visualizar():
                 
                 else:
                     media_imitar_cara_vertical = []
-            if imitar_vision in ["Mano"] or imitar_vision in ["Mano izquierda"] or imitar_vision in ["Mano derecha"]:
+            if imitar_vision in ["Mano"] or imitar_vision in ["Mano izquierda"] or imitar_vision in ["Mano derecha"] or imitar_vision in ["Todo"]:
 
                 if (result.left_hand_landmarks is not None or result.right_hand_landmarks is not None):
                     # Obtener las coordenadas de la palma de la mano
@@ -520,7 +592,7 @@ def visualizar():
                         else:
                             mano_imitar_izquierda = None
                             mano_imitar_derecha = None
-                    elif imitar_vision in ["Mano"]:
+                    elif imitar_vision in ["Mano"] or imitar_vision in ["Todo"]:
                         if result.left_hand_landmarks is not None and result.right_hand_landmarks is not None:
                             mano_imitar_derecha = [result.right_hand_landmarks.landmark[i] for i in range(21)]
                             mano_imitar_izquierda = [result.left_hand_landmarks.landmark[i] for i in range(21)]
@@ -602,43 +674,63 @@ def visualizar():
                             ultimo_dedo_derecha[0] = "Pulgar"
                             print("Pulgar derecho abierto")
                             enviar_comando_esp32(5519)
+                            if posiciones_grabadas["posicion_dedo_pulgar_derecho"] is None or posiciones_grabadas["posicion_dedo_pulgar_derecho"] != 5519:
+                                posiciones_grabadas["posicion_dedo_pulgar_derecho"] = 5519
                         elif dedosAbiertos[0] == False and ultimo_dedo_derecha[0] == "Pulgar":
                             ultimo_dedo_derecha[0] = None
                             print("Pulgar derecho cerrado")
                             enviar_comando_esp32(5518)
+                            if posiciones_grabadas["posicion_dedo_pulgar_derecho"] is None or posiciones_grabadas["posicion_dedo_pulgar_derecho"] != 5518:
+                                posiciones_grabadas["posicion_dedo_pulgar_derecho"] = 5518
                         if dedosAbiertos[1] and ultimo_dedo_derecha[1] is None: #ÍNDICE
                             ultimo_dedo_derecha[1] = "Indice"
                             print("Índice derecho abierto")
                             enviar_comando_esp32(5517)
+                            if posiciones_grabadas["posicion_dedo_indice_derecho"] is None or posiciones_grabadas["posicion_dedo_indice_derecho"] != 5517:
+                                posiciones_grabadas["posicion_dedo_indice_derecho"] = 5517
                         elif dedosAbiertos[1] == False and ultimo_dedo_derecha[1] == "Indice":
                             ultimo_dedo_derecha[1] = None
                             print("Índice derecho cerrado")
                             enviar_comando_esp32(5516)
+                            if posiciones_grabadas["posicion_dedo_indice_derecho"] is None or posiciones_grabadas["posicion_dedo_indice_derecho"] != 5516:
+                                posiciones_grabadas["posicion_dedo_indice_derecho"] = 5516
                         if dedosAbiertos[2] and ultimo_dedo_derecha[2] is None: #MEDIO
                             ultimo_dedo_derecha[2] = "Medio"
                             print("Medio derecho abierto")
                             enviar_comando_esp32(5511)
+                            if posiciones_grabadas["posicion_dedo_medio_derecho"] is None or posiciones_grabadas["posicion_dedo_medio_derecho"] != 5511:
+                                posiciones_grabadas["posicion_dedo_medio_derecho"] = 5511
                         elif dedosAbiertos[2] == False and ultimo_dedo_derecha[2] == "Medio":
                             ultimo_dedo_derecha[2] = None
                             print("Medio derecho cerrado")
                             enviar_comando_esp32(5510)
+                            if posiciones_grabadas["posicion_dedo_medio_derecho"] is None or posiciones_grabadas["posicion_dedo_medio_derecho"] != 5510:
+                                posiciones_grabadas["posicion_dedo_medio_derecho"] = 5510
                         if dedosAbiertos[3] and ultimo_dedo_derecha[3] is None: #ANULAR
                             ultimo_dedo_derecha[3] = "Anular"
                             print("Anular derecho abierto")
                             enviar_comando_esp32(5513)
+                            if posiciones_grabadas["posicion_dedo_anular_derecho"] is None or posiciones_grabadas["posicion_dedo_anular_derecho"] != 5513:
+                                posiciones_grabadas["posicion_dedo_anular_derecho"] = 5513
                         elif dedosAbiertos[3] == False and ultimo_dedo_derecha[3] == "Anular":
                             ultimo_dedo_derecha[3] = None
                             print("Anular derecho cerrado")
                             enviar_comando_esp32(5512)
+                            if posiciones_grabadas["posicion_dedo_anular_derecho"] is None or posiciones_grabadas["posicion_dedo_anular_derecho"] != 5512:
+                                posiciones_grabadas["posicion_dedo_anular_derecho"] = 5512
                         if dedosAbiertos[4] and ultimo_dedo_derecha[4] is None: #MEÑIQUE
                             ultimo_dedo_derecha[4] = "Pinky"
                             print("Meñique derecho abierto")
                             enviar_comando_esp32(5515)
+                            if posiciones_grabadas["posicion_dedo_menique_derecho"] is None or posiciones_grabadas["posicion_dedo_menique_derecho"] != 5515:
+                                posiciones_grabadas["posicion_dedo_menique_derecho"] = 5515
                         elif dedosAbiertos[4] == False and ultimo_dedo_derecha[4] == "Pinky":
                             ultimo_dedo_derecha[4] = None
                             print("Meñique derecho cerrado")
                             enviar_comando_esp32(5514)
-                        
+                            if posiciones_grabadas["posicion_dedo_menique_derecho"] is None or posiciones_grabadas["posicion_dedo_menique_derecho"] != 5514:
+                                posiciones_grabadas["posicion_dedo_menique_derecho"] = 5514
+
                         # IMITAR MUÑECA DE LA MANO
                         # para mano derecha invertir el codigo 
                         punta_pulgar = pulgar_coordenadas[2]
@@ -671,8 +763,12 @@ def visualizar():
                                     print("Muñeca derecha oficial:", estado_muneca_derecha_oficial)
                                     if estado_muneca_derecha_oficial == "palma":
                                         enviar_comando_esp32(5001)
+                                        if posiciones_grabadas["posicion_muneca_derecho"] is None or posiciones_grabadas["posicion_muneca_derecho"] != 5001:
+                                            posiciones_grabadas["posicion_muneca_derecho"] = 5001
                                     elif estado_muneca_derecha_oficial == "dorso":
                                         enviar_comando_esp32(5000)
+                                        if posiciones_grabadas["posicion_muneca_derecho"] is None or posiciones_grabadas["posicion_muneca_derecho"] != 5000:
+                                            posiciones_grabadas["posicion_muneca_derecho"] = 5000
                                     visualizar.ultimo_estado_muneca_derecha_oficial = estado_muneca_derecha_oficial
                         else:
                             punta_nariz = None
@@ -746,43 +842,64 @@ def visualizar():
                             ultimo_dedo_izquierda[0] = "Pulgar"
                             print("Pulgar izquierdo abierto")
                             enviar_comando_esp32(5521)
+
+                            if posiciones_grabadas["posicion_dedo_pulgar_izquierdo"] is None or posiciones_grabadas["posicion_dedo_pulgar_izquierdo"] != 5521:
+                                posiciones_grabadas["posicion_dedo_pulgar_izquierdo"] = 5521
                         elif dedosAbiertos[0] == False and ultimo_dedo_izquierda[0] == "Pulgar":
                             ultimo_dedo_izquierda[0] = None
                             print("Pulgar izquierdo cerrado")
                             enviar_comando_esp32(5520)
+                            if posiciones_grabadas["posicion_dedo_pulgar_izquierdo"] is None or posiciones_grabadas["posicion_dedo_pulgar_izquierdo"] != 5520:
+                                posiciones_grabadas["posicion_dedo_pulgar_izquierdo"] = 5520
                         if dedosAbiertos[1] and ultimo_dedo_izquierda[1] is None: #ÍNDICE
                             ultimo_dedo_izquierda[1] = "Indice"
                             print("Índice izquierdo abierto")
                             enviar_comando_esp32(5523)
+                            if posiciones_grabadas["posicion_dedo_indice_izquierdo"] is None or posiciones_grabadas["posicion_dedo_indice_izquierdo"] != 5523:
+                                posiciones_grabadas["posicion_dedo_indice_izquierdo"] = 5523
                         elif dedosAbiertos[1] == False and ultimo_dedo_izquierda[1] == "Indice":
                             ultimo_dedo_izquierda[1] = None
                             print("Índice izquierdo cerrado")
                             enviar_comando_esp32(5522)
+                            if posiciones_grabadas["posicion_dedo_indice_izquierdo"] is None or posiciones_grabadas["posicion_dedo_indice_izquierdo"] != 5522:
+                                posiciones_grabadas["posicion_dedo_indice_izquierdo"] = 5522
                         if dedosAbiertos[2] and ultimo_dedo_izquierda[2] is None: #MEDIO
                             ultimo_dedo_izquierda[2] = "Medio"
                             print("Medio izquierdo abierto")
                             enviar_comando_esp32(5525)
+                            if posiciones_grabadas["posicion_dedo_medio_izquierdo"] is None or posiciones_grabadas["posicion_dedo_medio_izquierdo"] != 5525:
+                                posiciones_grabadas["posicion_dedo_medio_izquierdo"] = 5525
                         elif dedosAbiertos[2] == False and ultimo_dedo_izquierda[2] == "Medio":
                             ultimo_dedo_izquierda[2] = None
                             print("Medio izquierdo cerrado")
                             enviar_comando_esp32(5524)
+                            if posiciones_grabadas["posicion_dedo_medio_izquierdo"] is None or posiciones_grabadas["posicion_dedo_medio_izquierdo"] != 5524:
+                                posiciones_grabadas["posicion_dedo_medio_izquierdo"] = 5524
                         if dedosAbiertos[3] and ultimo_dedo_izquierda[3] is None: #ANULAR
                             ultimo_dedo_izquierda[3] = "Anular"
                             print("Anular izquierdo abierto")
                             enviar_comando_esp32(5527)
+                            if posiciones_grabadas["posicion_dedo_anular_izquierdo"] is None or posiciones_grabadas["posicion_dedo_anular_izquierdo"] != 5527:
+                                posiciones_grabadas["posicion_dedo_anular_izquierdo"] = 5527
                         elif dedosAbiertos[3] == False and ultimo_dedo_izquierda[3] == "Anular":
                             ultimo_dedo_izquierda[3] = None
                             print("Anular izquierdo cerrado")
                             enviar_comando_esp32(5526)
+                            if posiciones_grabadas["posicion_dedo_anular_izquierdo"] is None or posiciones_grabadas["posicion_dedo_anular_izquierdo"] != 5526:
+                                posiciones_grabadas["posicion_dedo_anular_izquierdo"] = 5526
                         if dedosAbiertos[4] and ultimo_dedo_izquierda[4] is None: #MEÑIQUE
                             ultimo_dedo_izquierda[4] = "Pinky"
                             print("Meñique izquierdo abierto")
                             enviar_comando_esp32(5529)
+                            if posiciones_grabadas["posicion_dedo_menique_izquierdo"] is None or posiciones_grabadas["posicion_dedo_menique_izquierdo"] != 5529:
+                                posiciones_grabadas["posicion_dedo_menique_izquierdo"] = 5529
                         elif dedosAbiertos[4] == False and ultimo_dedo_izquierda[4] == "Pinky":
                             ultimo_dedo_izquierda[4] = None
                             print("Meñique izquierdo cerrado")
                             enviar_comando_esp32(5528)
-                        
+                            if posiciones_grabadas["posicion_dedo_menique_izquierdo"] is None or posiciones_grabadas["posicion_dedo_menique_izquierdo"] != 5528:
+                                posiciones_grabadas["posicion_dedo_menique_izquierdo"] = 5528
+
                         # IMITAR MUÑECA DE LA MANO
                         # para mano derecha invertir el codigo 
                         punta_pulgar = pulgar_coordenadas[2]
@@ -815,8 +932,12 @@ def visualizar():
                                     print("Muñeca izquierda oficial:", estado_muneca_izquierda_oficial)
                                     if estado_muneca_izquierda_oficial == "palma":
                                         enviar_comando_esp32(5003)
+                                        if posiciones_grabadas["posicion_muneca_izquierdo"] is None or posiciones_grabadas["posicion_muneca_izquierdo"] != 5520:
+                                            posiciones_grabadas["posicion_muneca_izquierdo"] = 5003
                                     elif estado_muneca_izquierda_oficial == "dorso":
                                         enviar_comando_esp32(5002)
+                                        if posiciones_grabadas["posicion_muneca_izquierdo"] is None or posiciones_grabadas["posicion_muneca_izquierdo"] != 5522:
+                                            posiciones_grabadas["posicion_muneca_izquierdo"] = 5002
                                     visualizar.ultimo_estado_muneca_izquierda_oficial = estado_muneca_izquierda_oficial
                         else:
                             punta_nariz = None
@@ -830,74 +951,82 @@ def visualizar():
                     punto_codo_d = np.array([puntos_cuerpo[14].x, puntos_cuerpo[14].y, puntos_cuerpo[14].z])
                     punto_codo_i = np.array([puntos_cuerpo[13].x, puntos_cuerpo[13].y, puntos_cuerpo[13].z])
 
-                        #FLEXION DEL BRAZO DERECHO
-                    # Defino los vectores necesarios para FLEXIÓN
-                    v_antebrazo_d = normalizar_vector(punto_muneca_d - punto_codo_d)
-                    v_brazo_d = normalizar_vector(punto_codo_d - punto_hombro_d)
-                        # Calculo el angulo de flexion 0 = extendido, 180 = flexionado
-                    angulo_flexion_d = calcular_angulo_flexion(v_brazo_d, v_antebrazo_d)
-                    if angulo_flexion_d is not None and len(grupo_angulo_flexion_d) <= 8:
-                        grupo_angulo_flexion_d.append(angulo_flexion_d)
-                    if len(grupo_angulo_flexion_d) > 8:
-                        media_angulo_flexion_d = sum(grupo_angulo_flexion_d) / len(grupo_angulo_flexion_d)
-                        grupo_angulo_flexion_d = []
-                        if media_angulo_flexion_d < 20:
-                        # Verificar alineación real
-                            producto_punto = np.dot(v_brazo_d, v_antebrazo_d)
-                            if producto_punto < 0.95:  # No están bien alineados (cos(18°) ≈ 0.95)
-                                # Recalcular el ángulo tomando el valor absoluto del producto punto
-                                media_angulo_flexion_d = np.degrees(np.arccos(np.abs(producto_punto)))
-                        # Segun el angulo defino la posicion
-                        brazo_derecho[0], brazo_derecho[1] = definir_flexion(media_angulo_flexion_d, "derecho")
-                        if brazo_derecho[1] is not None:
-                            # Convertir a entero si es necesario
-                            valor_bicep_derecho = int(float(brazo_derecho[1]))
-                            # Comprobar si ya existe el atributo
-                            if not hasattr(visualizar, "ultimo_biceps_derecho_enviado"):
-                                visualizar.ultimo_biceps_derecho_enviado = valor_bicep_derecho
-                                enviar_comando_esp32(valor_bicep_derecho)
-                                print("Bíceps derecho:", valor_bicep_derecho)
-                            else:
-                                if abs(valor_bicep_derecho - visualizar.ultimo_biceps_derecho_enviado) >= 10:
-                                    enviar_comando_esp32(valor_bicep_derecho)
-                                    print("Bíceps derecho:", valor_bicep_derecho)
-                                    visualizar.ultimo_biceps_derecho_enviado = valor_bicep_derecho
+                    #     #FLEXION DEL BRAZO DERECHO
+                    # # Defino los vectores necesarios para FLEXIÓN
+                    # v_antebrazo_d = normalizar_vector(punto_muneca_d - punto_codo_d)
+                    # v_brazo_d = normalizar_vector(punto_codo_d - punto_hombro_d)
+                    #     # Calculo el angulo de flexion 0 = extendido, 180 = flexionado
+                    # angulo_flexion_d = calcular_angulo_flexion(v_brazo_d, v_antebrazo_d)
+                    # if angulo_flexion_d is not None and len(grupo_angulo_flexion_d) <= 8:
+                    #     grupo_angulo_flexion_d.append(angulo_flexion_d)
+                    # if len(grupo_angulo_flexion_d) > 8:
+                    #     media_angulo_flexion_d = sum(grupo_angulo_flexion_d) / len(grupo_angulo_flexion_d)
+                    #     grupo_angulo_flexion_d = []
+                    #     if media_angulo_flexion_d < 20:
+                    #     # Verificar alineación real
+                    #         producto_punto = np.dot(v_brazo_d, v_antebrazo_d)
+                    #         if producto_punto < 0.95:  # No están bien alineados (cos(18°) ≈ 0.95)
+                    #             # Recalcular el ángulo tomando el valor absoluto del producto punto
+                    #             media_angulo_flexion_d = np.degrees(np.arccos(np.abs(producto_punto)))
+                    #     # Segun el angulo defino la posicion
+                    #     brazo_derecho[0], brazo_derecho[1] = definir_flexion(media_angulo_flexion_d, "derecho")
+                    #     if brazo_derecho[1] is not None:
+                    #         # Convertir a entero si es necesario
+                    #         valor_bicep_derecho = int(float(brazo_derecho[1]))
+                    #         # Comprobar si ya existe el atributo
+                    #         if not hasattr(visualizar, "ultimo_biceps_derecho_enviado"):
+                    #             visualizar.ultimo_biceps_derecho_enviado = valor_bicep_derecho
+                    #             enviar_comando_esp32(valor_bicep_derecho)
+                    #             if posiciones_grabadas.posicion_bicep_derecho is None and posiciones_grabadas.posicion_bicep_derecho != valor_bicep_derecho:
+                    #                 posiciones_grabadas.posicion_bicep_derecho = valor_bicep_derecho
+                    #                 # print("Bíceps derecho:", valor_bicep_derecho)
+                    #         else:
+                    #             if abs(valor_bicep_derecho - visualizar.ultimo_biceps_derecho_enviado) >= 10:
+                    #                 enviar_comando_esp32(valor_bicep_derecho)
+                    #                 if posiciones_grabadas.posicion_bicep_derecho is None and posiciones_grabadas.posicion_bicep_derecho != valor_bicep_derecho:
+                    #                     posiciones_grabadas.posicion_bicep_derecho = valor_bicep_derecho
+                    #                 # print("Bíceps derecho:", valor_bicep_derecho)
+                    #                 visualizar.ultimo_biceps_derecho_enviado = valor_bicep_derecho
 
-                        # enviar_comando_esp32(brazo_derecho[1])
+                    #     # enviar_comando_esp32(brazo_derecho[1])
 
-                    #FLEXION DEL BRAZO IZQUIERDO
-                        # Defino los vectores necesarios para FLEXIÓN
-                    v_antebrazo_i = normalizar_vector(punto_muneca_i - punto_codo_i)
-                    v_brazo_i = normalizar_vector(punto_codo_i - punto_hombro_i)
-                        # Calculo el angulo de flexion 0 = extendido, 180 = flexionado
-                    angulo_flexion_i = calcular_angulo_flexion(v_brazo_i, v_antebrazo_i)
-                    if angulo_flexion_i is not None and len(grupo_angulo_flexion_i) <= 8:
-                        grupo_angulo_flexion_i.append(angulo_flexion_i)
-                    if len(grupo_angulo_flexion_i) > 8:
-                        media_angulo_flexion_i = sum(grupo_angulo_flexion_i) / len(grupo_angulo_flexion_i)
-                        grupo_angulo_flexion_i = []
-                        if media_angulo_flexion_i < 20:
-                        # Verificar alineación real
-                            producto_punto = np.dot(v_brazo_i, v_antebrazo_i)
-                            if producto_punto < 0.95:  # No están bien alineados (cos(18°) ≈ 0.95)
-                                # Recalcular el ángulo tomando el valor absoluto del producto punto
-                                media_angulo_flexion_i = np.degrees(np.arccos(np.abs(producto_punto)))
-                        # Segun el angulo defino la posicion
-                        brazo_izquierdo[0], brazo_izquierdo[1] = definir_flexion(media_angulo_flexion_i, "izquierdo")
-                        # brazo_izquierdo[0], brazo_izquierdo[1] = "flexion", round(media_angulo_flexion_i)
-                        if brazo_izquierdo[1] is not None:
-                            # Convertir a entero si es necesario
-                            valor_bicep_izquierdo = int(float(brazo_izquierdo[1]))
-                            # Comprobar si ya existe el atributo
-                            if not hasattr(visualizar, "ultimo_biceps_izquierdo_enviado"):
-                                visualizar.ultimo_biceps_izquierdo_enviado = valor_bicep_izquierdo
-                                enviar_comando_esp32(valor_bicep_izquierdo)
-                                print("Bíceps izquierdo:", valor_bicep_izquierdo)
-                            else:
-                                if abs(valor_bicep_izquierdo - visualizar.ultimo_biceps_izquierdo_enviado) >= 10:
-                                    enviar_comando_esp32(valor_bicep_izquierdo)
-                                    print("Bíceps izquierdo:", valor_bicep_izquierdo)
-                                    visualizar.ultimo_biceps_izquierdo_enviado = valor_bicep_izquierdo
+                    # #FLEXION DEL BRAZO IZQUIERDO
+                    #     # Defino los vectores necesarios para FLEXIÓN
+                    # v_antebrazo_i = normalizar_vector(punto_muneca_i - punto_codo_i)
+                    # v_brazo_i = normalizar_vector(punto_codo_i - punto_hombro_i)
+                    #     # Calculo el angulo de flexion 0 = extendido, 180 = flexionado
+                    # angulo_flexion_i = calcular_angulo_flexion(v_brazo_i, v_antebrazo_i)
+                    # if angulo_flexion_i is not None and len(grupo_angulo_flexion_i) <= 8:
+                    #     grupo_angulo_flexion_i.append(angulo_flexion_i)
+                    # if len(grupo_angulo_flexion_i) > 8:
+                    #     media_angulo_flexion_i = sum(grupo_angulo_flexion_i) / len(grupo_angulo_flexion_i)
+                    #     grupo_angulo_flexion_i = []
+                    #     if media_angulo_flexion_i < 20:
+                    #     # Verificar alineación real
+                    #         producto_punto = np.dot(v_brazo_i, v_antebrazo_i)
+                    #         if producto_punto < 0.95:  # No están bien alineados (cos(18°) ≈ 0.95)
+                    #             # Recalcular el ángulo tomando el valor absoluto del producto punto
+                    #             media_angulo_flexion_i = np.degrees(np.arccos(np.abs(producto_punto)))
+                    #     # Segun el angulo defino la posicion
+                    #     brazo_izquierdo[0], brazo_izquierdo[1] = definir_flexion(media_angulo_flexion_i, "izquierdo")
+                    #     # brazo_izquierdo[0], brazo_izquierdo[1] = "flexion", round(media_angulo_flexion_i)
+                    #     if brazo_izquierdo[1] is not None:
+                    #         # Convertir a entero si es necesario
+                    #         valor_bicep_izquierdo = int(float(brazo_izquierdo[1]))
+                    #         # Comprobar si ya existe el atributo
+                    #         if not hasattr(visualizar, "ultimo_biceps_izquierdo_enviado"):
+                    #             visualizar.ultimo_biceps_izquierdo_enviado = valor_bicep_izquierdo
+                    #             enviar_comando_esp32(valor_bicep_izquierdo)
+                    #             if posiciones_grabadas.posicion_bicep_izquierdo is None and posiciones_grabadas.posicion_bicep_izquierdo != valor_bicep_izquierdo:
+                    #                 posiciones_grabadas.posicion_bicep_izquierdo = valor_bicep_izquierdo
+                    #             # print("Bíceps izquierdo:", valor_bicep_izquierdo)
+                    #         else:
+                    #             if abs(valor_bicep_izquierdo - visualizar.ultimo_biceps_izquierdo_enviado) >= 10:
+                    #                 enviar_comando_esp32(valor_bicep_izquierdo)
+                    #                 if posiciones_grabadas.posicion_bicep_izquierdo is None and posiciones_grabadas.posicion_bicep_izquierdo != valor_bicep_izquierdo:
+                    #                     posiciones_grabadas.posicion_bicep_izquierdo = valor_bicep_izquierdo
+                    #                 # print("Bíceps izquierdo:", valor_bicep_izquierdo)
+                    #                 visualizar.ultimo_biceps_izquierdo_enviado = valor_bicep_izquierdo
 
 
 
@@ -924,7 +1053,7 @@ def visualizar():
                     #         enviar_comando_esp32(angulo_muneca_derecha_esp32)
                     #         visualizar.ultimo_angulo_muneca_derecha = angulo_muneca_derecha
 
-            if imitar_vision in ["Cuerpo"] and result.pose_world_landmarks is not None:
+            if (imitar_vision == "Cuerpo" or imitar_vision == "Todo") and result.pose_world_landmarks is not None:
                 puntos_cuerpo = result.pose_world_landmarks.landmark
                 # coordenas x,y,z de cada parte del cuerpo
                 punto_hombro_d = np.array([puntos_cuerpo[12].x, puntos_cuerpo[12].y, puntos_cuerpo[12].z])
@@ -988,6 +1117,8 @@ def visualizar():
                                 media_angulo_flexion_d = np.degrees(np.arccos(np.abs(producto_punto)))
                         # Segun el angulo defino la posicion
                         brazo_derecho[0], brazo_derecho[1] = definir_flexion(media_angulo_flexion_d, "derecho")
+                        if posiciones_grabadas["posicion_bicep_derecho"] is None or posiciones_grabadas["posicion_bicep_derecho"] != brazo_derecho[1]:
+                            posiciones_grabadas["posicion_bicep_derecho"] = brazo_derecho[1]
                         # brazo_derecho[0], brazo_derecho[1] = "flexion", round(media_angulo_flexion_d)
                     else:
                         grupo_angulo_flexion_d = []
@@ -1008,6 +1139,8 @@ def visualizar():
                         brazo_derecho[2] = "sagital"
                         brazo_derecho[3] = definir_angulo_hombro_sagital("derecho", media_angulo_sagital_d)
                         grupo_angulo_sagital_d = []
+                        if posiciones_grabadas["posicion_hombro_sagital_derecho"] is None or posiciones_grabadas["posicion_hombro_sagital_derecho"] != brazo_derecho[3]:
+                            posiciones_grabadas["posicion_hombro_sagital_derecho"] = brazo_derecho[3]
                     else:
                         grupo_angulo_sagital_d = []
 
@@ -1032,6 +1165,8 @@ def visualizar():
                         brazo_derecho[4] = "frontal"
                         brazo_derecho[5] = definir_angulo_hombro_frontal("derecho", media_angulo_frontal_d)
                         grupo_angulo_frontal_d = []
+                        if posiciones_grabadas["posicion_hombro_frontal_derecho"] is None or posiciones_grabadas["posicion_hombro_frontal_derecho"] != brazo_derecho[5]:
+                            posiciones_grabadas["posicion_hombro_frontal_derecho"] = brazo_derecho[5]
                     else:
                         grupo_angulo_frontal_d = []
 
@@ -1055,6 +1190,8 @@ def visualizar():
                             brazo_derecho[6] = "rotacion"
                             brazo_derecho[7] = definir_angulo_hombro_rotacion("derecho", media_angulo_rotacion_d)
                             grupo_angulo_rotacion_d = []
+                            if posiciones_grabadas["posicion_hombro_rotacion_derecho"] is None or posiciones_grabadas["posicion_hombro_rotacion_derecho"] != brazo_derecho[7]:
+                                posiciones_grabadas["posicion_hombro_rotacion_derecho"] = brazo_derecho[7]
                         else:
                             grupo_angulo_rotacion_d = []
                 else:
@@ -1082,6 +1219,8 @@ def visualizar():
                         # Segun el angulo defino la posicion
                         brazo_izquierdo[0], brazo_izquierdo[1] = definir_flexion(media_angulo_flexion_i, "izquierdo")
                         # brazo_izquierdo[0], brazo_izquierdo[1] = "flexion", round(media_angulo_flexion_i)
+                        if posiciones_grabadas["posicion_bicep_izquierdo"] is None or posiciones_grabadas["posicion_bicep_izquierdo"] != brazo_izquierdo[1]:
+                            posiciones_grabadas["posicion_bicep_izquierdo"] = brazo_izquierdo[1]
                     else:
                         grupo_angulo_flexion_i = []
 
@@ -1102,6 +1241,8 @@ def visualizar():
                         brazo_izquierdo[3] = definir_angulo_hombro_sagital("izquierdo", media_angulo_sagital_i)
                         # brazo_izquierdo[3] = round(media_angulo_sagital_i)
                         grupo_angulo_sagital_i = []
+                        if posiciones_grabadas["posicion_hombro_sagital_izquierdo"] is None or posiciones_grabadas["posicion_hombro_sagital_izquierdo"] != brazo_izquierdo[3]:
+                            posiciones_grabadas["posicion_hombro_sagital_izquierdo"] = brazo_izquierdo[3]
                     else:
                         grupo_angulo_sagital_i = []
 
@@ -1128,6 +1269,8 @@ def visualizar():
                         # O si tienes función de definición:
                         brazo_izquierdo[5] = definir_angulo_hombro_frontal("izquierdo", media_angulo_frontal_i)
                         grupo_angulo_frontal_i = []
+                        if posiciones_grabadas["posicion_hombro_frontal_izquierdo"] is None or posiciones_grabadas["posicion_hombro_frontal_izquierdo"] != brazo_izquierdo[5]:
+                            posiciones_grabadas["posicion_hombro_frontal_izquierdo"] = brazo_izquierdo[5]
                     else:
                         grupo_angulo_frontal_i = []
 
@@ -1152,6 +1295,8 @@ def visualizar():
                             brazo_izquierdo[7] = definir_angulo_hombro_rotacion("izquierdo", media_angulo_rotacion_i)
                             # brazo_izquierdo[7] = round(media_angulo_rotacion_i)
                             grupo_angulo_rotacion_i = []
+                            if posiciones_grabadas["posicion_hombro_rotacion_izquierdo"] is None or posiciones_grabadas["posicion_hombro_rotacion_izquierdo"] != brazo_izquierdo[7]:
+                                posiciones_grabadas["posicion_hombro_rotacion_izquierdo"] = brazo_izquierdo[7]
                         else:
                             grupo_angulo_rotacion_i = []
                 else:
@@ -1485,33 +1630,33 @@ def visualizar():
 
             # ###############################
 
-                
+            # print("Posiciones grabadas:", posiciones_grabadas)    
 
             if pintar:
-                # drawing.draw_landmarks(
-                # frame,
-                # result.pose_landmarks,
-                # mediaPipe.POSE_CONNECTIONS,
-                # landmark_drawing_spec=drawing_styles.get_default_pose_landmarks_style())
-                # drawing.draw_landmarks(
-                # frame,
-                # result.left_hand_landmarks,
-                # mediaPipe.HAND_CONNECTIONS,
-                # landmark_drawing_spec=drawing_styles.get_default_hand_landmarks_style())
-                # drawing.draw_landmarks(
-                # frame,
-                # result.right_hand_landmarks,
-                # mediaPipe.HAND_CONNECTIONS,
-                # landmark_drawing_spec=drawing_styles.get_default_hand_landmarks_style())
-                # # Reducir el tamaño de los puntos y conexiones de la cara
-                # face_landmark_style = drawing_styles.get_default_face_mesh_tesselation_style()
-                # face_landmark_style.circle_radius = 1
-                # face_landmark_style.thickness = 1
-                # drawing.draw_landmarks(
-                # frame,
-                # result.face_landmarks,
-                # mediaPipe.FACEMESH_TESSELATION,
-                # landmark_drawing_spec=face_landmark_style)
+                drawing.draw_landmarks(
+                frame,
+                result.pose_landmarks,
+                mediaPipe.POSE_CONNECTIONS,
+                landmark_drawing_spec=drawing_styles.get_default_pose_landmarks_style())
+                drawing.draw_landmarks(
+                frame,
+                result.left_hand_landmarks,
+                mediaPipe.HAND_CONNECTIONS,
+                landmark_drawing_spec=drawing_styles.get_default_hand_landmarks_style())
+                drawing.draw_landmarks(
+                frame,
+                result.right_hand_landmarks,
+                mediaPipe.HAND_CONNECTIONS,
+                landmark_drawing_spec=drawing_styles.get_default_hand_landmarks_style())
+                # Reducir el tamaño de los puntos y conexiones de la cara
+                face_landmark_style = drawing_styles.get_default_face_mesh_tesselation_style()
+                face_landmark_style.circle_radius = 1
+                face_landmark_style.thickness = 1
+                drawing.draw_landmarks(
+                frame,
+                result.face_landmarks,
+                mediaPipe.FACEMESH_TESSELATION,
+                landmark_drawing_spec=face_landmark_style)
                 # Convertir el fotograma a RGB para PIL
                 frameIA = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
                 # Convierte el fotograma a una imagen de PIL
@@ -1560,6 +1705,24 @@ cap= None
 
 
 # --- Funciones de Lógica para Audio ---
+def editar_nota_veredicto(comandos_obtenidos):
+    """Edita la nota del veredicto según el comando"""
+    if "veinte" in comandos_obtenidos:
+        nota_veredicto = 20
+    elif "diecinueve" in comandos_obtenidos:
+        nota_veredicto = 19
+    elif "dieciocho" in comandos_obtenidos:
+        nota_veredicto = 18
+    elif "diecisiete" in comandos_obtenidos:
+        nota_veredicto = 17
+    elif "dieciseis" in comandos_obtenidos:
+        nota_veredicto = 16
+    elif "quince" in comandos_obtenidos:
+        nota_veredicto = 15
+    else:
+        nota_veredicto = None
+    return nota_veredicto
+
 def ejecutar_comando_hora():
     """Comando para decir la hora actual"""
     ahora = datetime.now()
@@ -1607,20 +1770,22 @@ def ejecutar_comando_imitar(comandos_obtenidos):
     elif "cuerpo" in comandos_obtenidos:
         imitar_vision = "Cuerpo"
     else:
-        return
+        imitar_vision = "Todo"
     
     ejecutar_voz(respuestas_comando("imitar"))
 
 def ejecutar_comando_desactivar(comandos_obtenidos):
     """Desactiva funciones según el comando"""
-    global seguir_vision, imitar_vision, dev_mode
+    global seguir_vision, imitar_vision, dev_mode, estado_posicion
     
     if "seguir" in comandos_obtenidos:
         seguir_vision = None
         ejecutar_voz(respuestas_comando("dejando de seguir"))
+        estado_posicion = "action_1"
     elif "imitar" in comandos_obtenidos:
         imitar_vision = None
         ejecutar_voz(respuestas_comando("dejando de imitar"))
+        estado_posicion = "action_1"
     elif "modo" in comandos_obtenidos and "desarrollador" in comandos_obtenidos:
         dev_mode = False
         ejecutar_voz(respuestas_comando("modo desarrollador desactivado"))
@@ -1637,7 +1802,7 @@ def ejecutar_comandos_lectura(comandos_obtenidos):
     estados_lectura = [
         ("bienvenida", not bienvenida_lectura, 
          lambda: setattr_and_speak('bienvenida_lectura', True, 
-         'buenos dias bienvenidos')),
+         'Buenos dí­as a todos los presentes. Hoy, 5 de noviembre de 2025, nos reunimos para presenciar un momento trascendental en la vida académica de tres jóvenes investigadores que han llegado a la etapa final de su formación como bachilleres. Es un honor para mí­ dar la bienvenida a esta ceremonia de presentación y defensa de trabajo de grado, donde tendremos el privilegio de conocer los resultados de la investigación desarrollada por: Cristian José Rangel Briceño, titular de la cédula de identidad treinta y un millones, ochocientos noventa y ocho mil, setenta y cinco, que presenta el Trabajo de Grado Titulado "DESARROLLO DE ROBOT HUMANOIDE DESDE LA PERSPECTIVA DE LA INNOVACIÓN SOCIAL (TORSO)"; Javier José Olivar Valero, titular de la cédula de identidad treinta millones, setecientos treinta y siete mil, seiscientos cuarenta y ocho, que presenta el Trabajo de Grado Titulado "DESARROLLO DE LA CABEZA DE UN ROBOT HUMANOIDE DESDE LA PERSPECTIVA DE LA INNOVACIÓN SOCIAL"; y Rosimar Lloselín Barrios Maldonado, titular de la cédula de identidad treinta millones, novecientos setenta y seis mil, doscientos diecisiete, que presenta el Trabajo de Grado Titulado "DESARROLLO DE UN ROBOT HUMANOIDE DESDE LA PERSPECTIVA DE LA INNOVACIÓN SOCIAL (BRAZO)". Extendemos un cordial saludo y agradecimiento a los distinguidos miembros del jurado evaluador que nos acompañan: Profesor Héctor Antúnez, Profesora Cristina Vieraz, y Profesor Edgar Omaña. De manera especial, expresamos nuestro reconocimiento al Profesor Edgardo Paolini, tutor de esta investigación. El protocolo del acto será el siguiente: Los bachilleres dispondrán de 25 minutos para la presentación de su trabajo de investigación. Finalizada la exposición, se procederá con el ciclo de preguntas y respuestas, donde el jurado evaluador podrá realizar las interrogantes que considere pertinentes. Posteriormente, se dará el espacio al jurado para la deliberación y finalmente se dará lectura al veredicto. Sin más preámbulos apaguemos los telefonos, invitamos a los bachilleres a dar inicio a su presentación, comenzando con la defensa del Bachiller Cristian José Rangel Briceño. Muchos éxitos para todos.')),
         
         ("presentar_javier_tesista", bienvenida_lectura and not presentacion_javier,
          lambda: setattr_and_speak('presentacion_javier', True,
@@ -1645,7 +1810,7 @@ def ejecutar_comandos_lectura(comandos_obtenidos):
         
         ("presentar_rosimar_tesista", presentacion_javier and not presentacion_rosimar,
          lambda: setattr_and_speak('presentacion_rosimar', True,
-         'A continuación procedera la defensa del trabajo de grado de la bachiller Rosimar Joselyn Barrios Maldonado. Le deseamos mucho éxito en su exposición.')),
+         'A continuación procedera la defensa del trabajo de grado de la bachiller Rosimar Lloselín Barrios Maldonado. Le deseamos mucho éxito en su exposición.')),
         
         ("demostracion", presentacion_rosimar and not demostracion_fase,
          lambda: setattr_and_speak('demostracion', True,
@@ -1657,11 +1822,11 @@ def ejecutar_comandos_lectura(comandos_obtenidos):
         
         ("presentar_rosimar_tesista", sigue_javier_lectura and not sigue_rosimar_lectura,
          lambda: setattr_and_speak('sigue_rosimar_lectura', True,
-         'Ahora continuamos con las conclusiones de la bachiller Rosimar Joselyn Barrios Maldonado.')),
+         'Ahora continuamos con las conclusiones de la bachiller Rosimar Lloselín Barrios Maldonado.')),
         
         ("rondas_PyR_Cristian_lectura", sigue_rosimar_lectura and not rondas_PyR_Cristian_lectura,
          lambda: setattr_and_speak('rondas_PyR_Cristian_lectura', True,
-         'Finalizada la presentación. Procederemos ahora con las rondas de preguntas y respuestas para los bachilleres Cristian José Rangel Briceño, Rosimar Joselyn Barrios Maldonado y Javier José Olivar Valero.')),
+         'Finalizada la presentación. Procederemos ahora con las rondas de preguntas y respuestas para los bachilleres Cristian José Rangel Briceño, Rosimar Lloselín Barrios Maldonado y Javier José Olivar Valero.')),
         
         ("desalojo_de_la_sala_lectura", rondas_PyR_Cristian_lectura and not desalojo_de_la_sala_lectura,
          lambda: setattr_and_speak('desalojo_de_la_sala_lectura', True,
@@ -1675,8 +1840,20 @@ def ejecutar_comandos_lectura(comandos_obtenidos):
     
     return False
 
+veredicto_editar_activado = False
+editar_nota_javier = False
+editar_nota_rosimar = False
+editar_nota_cristian = False
+jueces = None
+cedula= None
+tutor = "El tutor: Profesor Edgardo Paolini"
+decano = "La decano: Profesora Yumary Valecillos"
+vicerrectora = "La vicerrectora académica: Valebska López"
+
 def ejecutar_comandos_veredicto(comandos_obtenidos):
     global nota_veredicto, veredicto_lectura, lectura_veredicto_activada, veredicto_activado
+    global veredicto_editar_activado, editar_nota_javier, editar_nota_rosimar, editar_nota_cristian, estado_posicion
+    global jueces, cedula, tutor, decano, vicerrectora
     
     if "probar" in comandos_obtenidos and "veredicto" in comandos_obtenidos:
         ejecutar_voz("Iniciando fase de veredicto. Por favor, procedan a evaluar el desempeño del robot.")
@@ -1686,31 +1863,81 @@ def ejecutar_comandos_veredicto(comandos_obtenidos):
             elif i == 1:
                 nombre = "Javier José Olivar Valero"
             else:
-                nombre = "Rosimar Joselyn Barrios Maldonado"
+                nombre = "Rosimar Lloselín Barrios Maldonado"
             ejecutar_voz(f"Nota para {nombre}: {nota} puntos")
         return True
     
-    if "leer" in comandos_obtenidos and "veredicto" in comandos_obtenidos:
+    if "crear" in comandos_obtenidos and "veredicto" in comandos_obtenidos:
 
-        ejecutar_voz("Iniciando la lectura del veredicto de los Trabajos de Grado de los bachilleres.")
+        ejecutar_voz("Estoy lista para iniciar la lectura del veredicto de los Trabajos de Grado de los bachilleres. Por favor indique cuando empiece.")
         if veredicto_lectura == []:
             for i, nota in enumerate(nota_veredicto):
                 if i == 0:
-                    nombre = "Cristian José Rangel Briceño"
+                    nombre = "el bachiller Cristian José Rangel Briceño, portador"
+                    cedula = "treinta y un millones, ochocientos noventa y ocho mil, setenta y cinco"
                     titulo = "Desarrollo de robot humanoide desde la perspectiva de la innovación social (torso)"
+                    jueces = "Profesor Héctor Antúnez, Profesora Cristina Vieras, y Profesor Edgardo Paolini"
+                    presidente = "El presidente del jurado: Profesor Héctor Antúnez"
+                    principal = "El jurado: Profesora Cristina Vieras"
                 elif i == 1:
-                    nombre = "Javier José Olivar Valero"
+                    nombre = "el bachiller Javier José Olivar Valero, portador"
+                    cedula = "treinta millones, setecientos treinta y siete mil, seiscientos cuarenta y ocho"
                     titulo = "Desarrollo de la cabeza de un robot humanoide desde la perspectiva de la innovación social"
+                    jueces = "Profesora Cristina Vieras, Profesor Edgar Omaña, y Profesor Edgardo Paolini"
+                    presidente = "El presidente del jurado: Profesora Cristina Vieras"
+                    principal = "El jurado: Profesor Edgar Omaña" 
                 else:
-                    nombre = "Rosimar Joselyn Barrios Maldonado"
+                    nombre = "la bachiller Rosimar Lloselín Barrios Maldonado, portadora"
+                    cedula = "treinta millones, novecientos setenta y seis mil, doscientos diecisiete"
                     titulo = "Desarrollo de un robot humanoide desde la perspectiva de la innovación social (brazo)"
-                
-                veredicto_texto = f"valera, noviembre, {titulo}, {nombre}, {nota} puntos."
+                    jueces = "Profesora Cristina Vieras, Profesor Edgar Omaña, y Profesor Edgardo Paolini"
+                    presidente = "El presidente del jurado: Profesor Edgar Omaña"
+                    principal = "El jurado: Profesor Héctor Antúnes" 
+                # veredicto_texto = f"valera, noviembre, {titulo}, {nombre}, {nota} puntos."
+
+                veredicto_texto = f"Vicerrectorado Académico. Facultad de Ingeniería. Veredicto. Nosotros, {jueces}, designados como miembros del Jurado Examinador del Trabajo de Grado titulado, {titulo}, que presenta {nombre} de la cédula de identidad {cedula}; nos hemos reunido para revisar dicho trabajo y después de la presentación, defensa e interrogatorio correspondiente le hemos calificado con: {nota} puntos, de acuerdo con las normas vigentes dictadas por el Consejo Universitario de la Universidad Valle del Momboy, referente a la evaluación de los Trabajos de Grado para optar por el Título de Ingeniero en Computación. En fe de lo cual firmamos en Carvajal a los once días del mes de noviembre del dos mil veinticinco. Firmado y Sellado por {presidente}, {principal}, {tutor}, {decano}, y {vicerrectora}."
                 veredicto_lectura.append(veredicto_texto)
 
         lectura_veredicto_activada = True
-
-
+    if ("editar" in comandos_obtenidos or "cambiar" in comandos_obtenidos) and "veredicto" in comandos_obtenidos or veredicto_editar_activado:
+        if not veredicto_editar_activado:
+            ejecutar_voz("Modo edición de veredicto activado. Por favor, indique a que autor desea modificar y la nota.")
+        veredicto_editar_activado = True
+        if "javier" in comandos_obtenidos or editar_nota_javier:
+            nueva_nota = editar_nota_veredicto(comandos_obtenidos)
+            if nueva_nota is None:
+                estado_posicion = "hablar_1_1"
+                ejecutar_voz("No he podido entender la nueva nota para el bachiller Javier José Olivar Valero. Por favor, inténtelo de nuevo.")
+                # estado_posicion = "inicial"
+                editar_nota_javier = True
+                return
+            nota_veredicto[1] = nueva_nota
+            editar_nota_javier = False
+            ejecutar_voz(f"La nota para el bachiller Javier José Olivar Valero ha sido actualizada a {nueva_nota} puntos.")
+            veredicto_editar_activado = False
+        if "rosimar" in comandos_obtenidos or editar_nota_rosimar:
+            # Aquí se debería implementar la lógica para capturar la nueva nota
+            nueva_nota = editar_nota_veredicto(comandos_obtenidos)
+            if nueva_nota is None:
+                ejecutar_voz("No he podido entender la nueva nota para la bachiller Rosimar Lloselín Barrios Maldonado. Por favor, inténtelo de nuevo.") # Joselyn
+                editar_nota_rosimar = True
+                return
+            nota_veredicto[2] = nueva_nota
+            editar_nota_rosimar = False
+            ejecutar_voz(f"La nota para la bachiller Rosimar Lloselín Barrios Maldonado ha sido actualizada a {nueva_nota} puntos.")
+            veredicto_editar_activado = False
+        if "cristian" in comandos_obtenidos or editar_nota_cristian:
+            # ejecutar_voz("Por favor, indique la nueva nota para el bachiller Cristian José Rangel Briceño.")
+            # Aquí se debería implementar la lógica para capturar la nueva nota
+            nueva_nota = editar_nota_veredicto(comandos_obtenidos)
+            if nueva_nota is None:
+                ejecutar_voz("No he podido entender la nueva nota para el bachiller Cristian José Rangel Briceño. Por favor, inténtelo de nuevo.")
+                editar_nota_cristian = True
+                return
+            nota_veredicto[0] = nueva_nota
+            editar_nota_cristian = False
+            ejecutar_voz(f"La nota para el bachiller Cristian José Rangel Briceño ha sido actualizada a {nueva_nota} puntos.")
+            veredicto_editar_activado = False
 
 
 
@@ -1749,12 +1976,16 @@ def ejecutar_comandos_veredicto_lectura(comandos_obtenidos):
 
 def setattr_and_speak(var_name, value, text):
     """Helper para actualizar variable global y hablar"""
+    global estado_posicion
     globals()[var_name] = value
+    estado_posicion = "hablar_1_1"
     ejecutar_voz(text)
+    # estado_posicion = "inicial"
 
 def procesar_comandos_modo_demostracion(comandos_obtenidos, modo_online, texto):
     """Procesa comandos durante la demostración"""
     global pregunta, seguir_vision, imitar_vision, dev_mode, demostracion, demostracion_fase
+    global estado_posicion
     
     # Diccionario de comandos simples
     comandos_simples = {
@@ -1782,18 +2013,22 @@ def procesar_comandos_modo_demostracion(comandos_obtenidos, modo_online, texto):
     if modo_online and pregunta:
         respuestas_texto = groqIA.enviarMSG(texto, frameExportado=frameExportado)
         print("Respuesta IA:", respuestas_texto)
+        estado_posicion = "hablar_1_1"
         ejecutar_voz(respuestas_texto)
+        # estado_posicion = "inicial"
         pregunta = False
         return True
     
     # Comando seguir
     if "seguir" in comandos_obtenidos and "desactivar" not in comandos_obtenidos:
+        estado_posicion = "seguir"
         ejecutar_comando_seguir(comandos_obtenidos)
         return True
     
     # Comando imitar
     if "imitar" in comandos_obtenidos and "desactivar" not in comandos_obtenidos:
         ejecutar_comando_imitar(comandos_obtenidos)
+        estado_posicion = "imitar"
         return True
     
     # Comando desactivar
@@ -1814,6 +2049,7 @@ def procesar_comandos_modo_demostracion(comandos_obtenidos, modo_online, texto):
         demostracion = False
         demostracion_fase = True
         imitar_vision = None
+        estado_posicion = "hablar_1_1"
         ejecutar_voz("Seguimos con las conclusiones del el bachiller Cristian Jose Rangel Briceño.")
         return True
     
@@ -1823,10 +2059,12 @@ def procesar_comandos_generales(comandos_obtenidos, modo_online, texto):
     """Procesa comandos cuando el nombre está activo (fuera de modo lectura y demostración)"""
     global pregunta, seguir_vision, imitar_vision, dev_mode, name_activo
     global comandosNoReconocidos_contador, MicrofonoCalibrado, modo_lectura
+    global estado_posicion
     
     # Saludo inicial
     if "hola" in comandos_obtenidos and "nombre" in comandos_obtenidos:
         name_activo = True
+        estado_posicion = "saludar"
         ejecutar_voz(respuestas_comando("hola"))
         return True
     
@@ -1849,7 +2087,9 @@ def procesar_comandos_generales(comandos_obtenidos, modo_online, texto):
     if modo_online and pregunta:
         respuestas_texto = groqIA.enviarMSG(texto, frameExportado=frameExportado)
         print("Respuesta IA:", respuestas_texto)
+        estado_posicion = "hablar_1_1"
         ejecutar_voz(respuestas_texto)
+        # estado_posicion = "inicial"
         pregunta = False
         return True
     
@@ -1878,10 +2118,12 @@ def procesar_comandos_generales(comandos_obtenidos, modo_online, texto):
     
     if "seguir" in comandos_obtenidos and "desactivar" not in comandos_obtenidos:
         ejecutar_comando_seguir(comandos_obtenidos)
+        estado_posicion = "seguir"
         return True
     
     if "imitar" in comandos_obtenidos and "desactivar" not in comandos_obtenidos:
         ejecutar_comando_imitar(comandos_obtenidos)
+        estado_posicion = "imitar"
         return True
     
     if "chao" in comandos_obtenidos:
@@ -1889,7 +2131,9 @@ def procesar_comandos_generales(comandos_obtenidos, modo_online, texto):
         seguir_vision = None
         name_activo = False
         imitar_vision = None
+        estado_posicion = None
         ejecutar_voz(respuestas_comando("chao"))
+        estado_posicion = None
         return True
     
     if "calibrar" in comandos_obtenidos:
@@ -1997,6 +2241,183 @@ def seleccionar_microfono(combo_microfonos):
     else:
         print("No se ha seleccionado ningún dispositivo de audio.")
 
+def posicionInicial():
+    global posiciones_inicial,estado_posicion
+    estado_posicion = "action_1"
+    for codigo in posiciones_inicial.values():
+            enviar_comando_esp32(codigo)
+    estado_posicion = "action_1"
+    print("Se termino las pose de hablar")
+
+def posicionDeEspera():
+    global posiciones_inicial, posiciones_action_1, posiciones_action_2, posiciones_action_3,tiempo_aleatorio_action, tiempo_bucle_action, estado_posicion
+    ################################################################################
+    if estado_posicion == "inicial":
+        for codigo in posiciones_inicial.values():
+            enviar_comando_esp32(codigo)
+        estado_posicion = "action_1"
+        #############################################################
+        ## repite cada 10 segundos las acciones
+    if name_activo is True:
+        estado_posicion= None
+    if estado_posicion == "action_1" and time.time() > tiempo_bucle_action:
+        for codigo in posiciones_action_1.values():
+            enviar_comando_esp32(codigo)
+        estado_posicion = "action_2"
+        tiempo_bucle_action = time.time() + random.randint(2,4)  # espera entre 2 y 4 segundos antes de la siguiente acción
+        print("acción 1 ejecutada, tiempo para la siguiente: " + str(tiempo_bucle_action))
+    if name_activo is True:
+        estado_posicion= None
+    if estado_posicion == "action_2" and time.time() > tiempo_bucle_action:
+        for codigo in posiciones_action_2.values():
+            enviar_comando_esp32(codigo)
+        estado_posicion = "action_3"
+        tiempo_bucle_action = time.time() + random.randint(2,4)  # espera entre 2 y 4 segundos antes de la siguiente acción
+        print("acción 2 ejecutada, tiempo para la siguiente: " + str(tiempo_bucle_action))
+    if name_activo is True:
+        estado_posicion= None
+    if estado_posicion == "action_3" and time.time() > tiempo_bucle_action:
+        for codigo in posiciones_action_3.values():
+            enviar_comando_esp32(codigo)
+        tiempo_bucle_action = time.time() + tiempo_aleatorio_action
+        tiempo_aleatorio_action = random.randint(6,12)  # tiempo aleatorio entre 2 y 4 segundos
+        estado_posicion = "action_1"
+        print("acción 3 ejecutada, tiempo para la siguiente: " + str(tiempo_bucle_action))
+    # print("Estado posición actual:", estado_posicion, "Tiempo para la siguiente acción:", tiempo_bucle_action, "Tiempo actual:", time.time())
+
+def posicionesDeHablar():
+    global posicion_hablar_1_1, posicion_hablar_1_2, posicion_hablar_1_3, posicion_hablar_1_4, posicion_hablar_2_1, posicion_hablar_2_2, posicion_hablar_2_3, posicion_hablar_2_4, posicion_hablar_2_5, posicion_hablar_3_1, posicion_hablar_3_2, posicion_hablar_3_3, posicion_hablar_3_4, estado_posicion, hablando
+    ################################################################################
+    print("Entra en posicionesdehablar, estado es: ", estado_posicion)
+    if estado_posicion == "hablar_1_1":
+        for codigo in posicion_hablar_1_1.values():
+            enviar_comando_esp32(codigo)
+        estado_posicion = "hablar_1_2"
+        time.sleep(3)
+        print("Entra en hablar_1_1")
+    elif hablando is False:
+        posicionInicial()
+        return False
+    if estado_posicion == "hablar_1_2":
+        for codigo in posicion_hablar_1_2.values():
+            enviar_comando_esp32(codigo)
+        estado_posicion = "hablar_1_3"
+        print("hablar 1.2 ejecutada")
+        time.sleep(3)
+        print("Entra en hablar_1_2")
+    elif hablando is False:
+        posicionInicial()
+        return False
+    if estado_posicion == "hablar_1_3":
+        for codigo in posicion_hablar_1_3.values():
+            enviar_comando_esp32(codigo)
+        estado_posicion = "hablar_1_4"
+        print("hablar 1.3 ejecutada")
+        time.sleep(3)        
+        print("Entra en hablar_1_3")
+    elif hablando is False:
+        posicionInicial()
+        return False
+    if estado_posicion == "hablar_1_4":
+        for codigo in posicion_hablar_1_4.values():
+            enviar_comando_esp32(codigo)
+        estado_posicion = "hablar_2_1"
+        print("hablar 1.4 ejecutada")
+        time.sleep(3)
+        print("Entra en hablar_1_3")
+    elif hablando is False:
+        posicionInicial()
+        return False
+    if estado_posicion == "hablar_2_1":
+        for codigo in posicion_hablar_2_1.values():
+            enviar_comando_esp32(codigo)
+        estado_posicion = "hablar_2_2"
+        print("hablar 2.1 ejecutada")
+        time.sleep(3)
+        print("Entra en hablar_2_1")
+    elif hablando is False:
+        posicionInicial()
+        return False
+    if estado_posicion == "hablar_2_2":
+        for codigo in posicion_hablar_2_2.values():
+            enviar_comando_esp32(codigo)
+        estado_posicion = "hablar_2_3"
+        print("hablar 2.2 ejecutada")
+        time.sleep(3)
+        print("Entra en hablar_2_2")
+    elif hablando is False:
+        posicionInicial()
+        return False
+    if estado_posicion == "hablar_2_3":
+        for codigo in posicion_hablar_2_3.values():
+            enviar_comando_esp32(codigo)
+        estado_posicion = "hablar_2_4"
+        print("hablar 2.3 ejecutada")
+        time.sleep(3)
+        print("Entra en hablar_2_3")
+    elif hablando is False:
+        posicionInicial()
+        return False
+    if estado_posicion == "hablar_2_4":
+        for codigo in posicion_hablar_2_4.values():
+            enviar_comando_esp32(codigo)
+        estado_posicion = "hablar_2_5"
+        print("hablar 2.4 ejecutada")
+        time.sleep(3)
+        print("Entra en hablar_2_4")
+    elif hablando is False:
+        posicionInicial()
+        return False
+    if estado_posicion == "hablar_2_5":
+        for codigo in posicion_hablar_2_5.values():
+            enviar_comando_esp32(codigo)
+        estado_posicion = "hablar_3_1"
+        print("hablar 2.5 ejecutada")
+        time.sleep(3)
+        print("Entra en hablar_2_5")
+    elif hablando is False:
+        posicionInicial()
+        return False
+    if estado_posicion == "hablar_3_1":
+        for codigo in posicion_hablar_3_1.values():
+            enviar_comando_esp32(codigo)
+        estado_posicion = "hablar_3_2"
+        print("hablar 3.1 ejecutada")
+        time.sleep(3)
+        print("Entra en hablar_3_1")
+    elif hablando is False:
+        posicionInicial()
+        return False
+    if estado_posicion == "hablar_3_2":
+        for codigo in posicion_hablar_3_2.values():
+            enviar_comando_esp32(codigo)
+        estado_posicion = "hablar_3_3"
+        print("hablar 3.2 ejecutada")
+        time.sleep(3)
+        print("Entra en hablar_3_2")
+    elif hablando is False:
+        posicionInicial()
+        return False
+    if estado_posicion == "hablar_3_3":
+        for codigo in posicion_hablar_3_3.values():
+            enviar_comando_esp32(codigo)
+        estado_posicion = "hablar_3_4"
+        print("hablar 3.3 ejecutada")
+        time.sleep(3)
+        print("Entra en hablar_3_3")
+    elif hablando is False:
+        posicionInicial()
+        return False
+    if estado_posicion == "hablar_3_4":
+        for codigo in posicion_hablar_3_4.values():
+            enviar_comando_esp32(codigo)
+        estado_posicion = "hablar_1_1"
+        print("hablar 3.4 ejecutada")
+        time.sleep(3)
+        print("Entra en hablar_3_4")
+    elif hablando is False:
+        posicionInicial()
+        return False
 
 comandosNoReconocidos_contador = 0
 MicrofonoCalibrado = False
@@ -2046,6 +2467,9 @@ except Exception as e:
     traceback.print_exc()
     yammetRecording = None
 
+tiempo_aleatorio_action = 10
+tiempo_bucle_action = time.time()
+
 def grabar_audio_hilo():
     global pregunta, menssage_history
     global name, dev_mode, name_activo, modo_lectura, bienvenida_lectura, presentacion_rosimar, presentacion_javier, demostracion_fase, demostracion, sigue_javier_lectura,sigue_rosimar_lectura,rondas_PyR_Cristian_lectura,rondas_PyR_Javier_lectura,rondas_PyR_Rosimar_lectura,desalojo_de_la_sala_lectura,bienvenida_lectura, veredicto_activado, lectura_veredicto_activada
@@ -2054,7 +2478,9 @@ def grabar_audio_hilo():
     global comandosNoReconocidos_contador
     global client, frameExportado
     global FORMAT,CHANNELS,RATE,CHUNK, timestamp_ms,chunk_ms,audio_instance,recognizer,yammetRecording
-    
+    global estado_posicion, posiciones_saludar, posiciones_inicial
+    global posiciones_action_1, posiciones_action_2, posiciones_action_3
+    global tiempo_bucle_action, tiempo_aleatorio_action
     # yammetRecording = YammetModel(model_buffer=model_content)
     if yammetRecording is None or yammetRecording.classifier is None:
         print("ERROR: yammetRecording no está inicializado correctamente")
@@ -2073,7 +2499,16 @@ def grabar_audio_hilo():
     # Espera a que no esté hablando
     while hablando:
         time.sleep(0.1)
-        #############################################################
+        if estado_posicion == "saludar":
+            for codigo in posiciones_saludar.values():
+                enviar_comando_esp32(codigo)
+            estado_posicion = "inicial"
+            time.sleep(7)  # Espera 7 segundos antes de volver a la posición inicial
+        
+        posicionesDeHablar()
+    posicionDeEspera()
+    
+    ##########################################################################################
 
     def comando_hora():
         ahora = datetime.now()
@@ -2135,6 +2570,9 @@ def grabar_audio_hilo():
                                             input_device_index=microfonoIndex,
                                             frames_per_buffer=CHUNK)
                 while yammetRecording.grabacionDeVoz is None:
+                    ## pociciones de espera mientras no detecta voz
+                    posicionDeEspera()
+
                     if yammetRecording.classifier is None:
                         print("ERROR: Classifier se volvió None durante la grabación")
                         break
