@@ -2243,7 +2243,7 @@ def seleccionar_microfono(combo_microfonos):
 
 def posicionInicial():
     global posiciones_inicial,estado_posicion
-    estado_posicion = "action_1"
+    estado_posicion = "inicial"
     for codigo in posiciones_inicial.values():
             enviar_comando_esp32(codigo)
     estado_posicion = "action_1"
@@ -2295,7 +2295,7 @@ def posicionesDeHablar():
         estado_posicion = "hablar_1_2"
         time.sleep(3)
         print("Entra en hablar_1_1")
-    elif hablando is False:
+    if hablando is False:
         posicionInicial()
         return False
     if estado_posicion == "hablar_1_2":
@@ -2305,7 +2305,7 @@ def posicionesDeHablar():
         print("hablar 1.2 ejecutada")
         time.sleep(3)
         print("Entra en hablar_1_2")
-    elif hablando is False:
+    if hablando is False:
         posicionInicial()
         return False
     if estado_posicion == "hablar_1_3":
@@ -2315,7 +2315,7 @@ def posicionesDeHablar():
         print("hablar 1.3 ejecutada")
         time.sleep(3)        
         print("Entra en hablar_1_3")
-    elif hablando is False:
+    if hablando is False:
         posicionInicial()
         return False
     if estado_posicion == "hablar_1_4":
@@ -2325,7 +2325,7 @@ def posicionesDeHablar():
         print("hablar 1.4 ejecutada")
         time.sleep(3)
         print("Entra en hablar_1_3")
-    elif hablando is False:
+    if hablando is False:
         posicionInicial()
         return False
     if estado_posicion == "hablar_2_1":
@@ -2335,7 +2335,7 @@ def posicionesDeHablar():
         print("hablar 2.1 ejecutada")
         time.sleep(3)
         print("Entra en hablar_2_1")
-    elif hablando is False:
+    if hablando is False:
         posicionInicial()
         return False
     if estado_posicion == "hablar_2_2":
@@ -2345,7 +2345,7 @@ def posicionesDeHablar():
         print("hablar 2.2 ejecutada")
         time.sleep(3)
         print("Entra en hablar_2_2")
-    elif hablando is False:
+    if hablando is False:
         posicionInicial()
         return False
     if estado_posicion == "hablar_2_3":
@@ -2355,7 +2355,7 @@ def posicionesDeHablar():
         print("hablar 2.3 ejecutada")
         time.sleep(3)
         print("Entra en hablar_2_3")
-    elif hablando is False:
+    if hablando is False:
         posicionInicial()
         return False
     if estado_posicion == "hablar_2_4":
@@ -2365,7 +2365,7 @@ def posicionesDeHablar():
         print("hablar 2.4 ejecutada")
         time.sleep(3)
         print("Entra en hablar_2_4")
-    elif hablando is False:
+    if hablando is False:
         posicionInicial()
         return False
     if estado_posicion == "hablar_2_5":
@@ -2375,7 +2375,7 @@ def posicionesDeHablar():
         print("hablar 2.5 ejecutada")
         time.sleep(3)
         print("Entra en hablar_2_5")
-    elif hablando is False:
+    if hablando is False:
         posicionInicial()
         return False
     if estado_posicion == "hablar_3_1":
@@ -2385,7 +2385,7 @@ def posicionesDeHablar():
         print("hablar 3.1 ejecutada")
         time.sleep(3)
         print("Entra en hablar_3_1")
-    elif hablando is False:
+    if hablando is False:
         posicionInicial()
         return False
     if estado_posicion == "hablar_3_2":
@@ -2395,7 +2395,7 @@ def posicionesDeHablar():
         print("hablar 3.2 ejecutada")
         time.sleep(3)
         print("Entra en hablar_3_2")
-    elif hablando is False:
+    if hablando is False:
         posicionInicial()
         return False
     if estado_posicion == "hablar_3_3":
@@ -2405,7 +2405,7 @@ def posicionesDeHablar():
         print("hablar 3.3 ejecutada")
         time.sleep(3)
         print("Entra en hablar_3_3")
-    elif hablando is False:
+    if hablando is False:
         posicionInicial()
         return False
     if estado_posicion == "hablar_3_4":
@@ -2415,7 +2415,7 @@ def posicionesDeHablar():
         print("hablar 3.4 ejecutada")
         time.sleep(3)
         print("Entra en hablar_3_4")
-    elif hablando is False:
+    if hablando is False:
         posicionInicial()
         return False
 

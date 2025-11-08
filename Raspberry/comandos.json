@@ -2,7 +2,7 @@
     "comandos":[
         {
             "comando":"desactivar",
-            "palabras":["apagar", "desactivar", "cerrar", "terminar", "finalizar", "detener", "dejar", "para","parar","deja","desactiva","desactivado"]
+            "palabras":["apagar", "desactivar", "cerrar", "detener", "dejar", "para","parar","deja","desactiva","desactivado"]
         },
         {   "comando": "nombre",
             "palabras":["Zoé", "Zoe", "zoe", "zoé", "sooe", "sóe", "sóe","sofi", "sóee", "sóee", "zooe", "zóe", "zóee", "zóee","noe","noé","noee","noée","nóe","nóee","nóée","joe","joé","joee","joée","jóe","jóee","jóée", "soy", "soi", "soui","sui","sóei","suoi"]
@@ -114,7 +114,7 @@
         },
         {
             "comando": "desalojo_de_la_sala_lectura",
-            "palabras": ["finaliza la defensa por favor"]
+            "palabras": ["finaliza la defensa", "despide la defensa", "termina la defensa", " finalizar la defensa"]
         },{
             "comando": "veredicto_lectura",
             "palabras": ["lee el veredicto", "leer el veredicto","procedamos con el veredicto", "vamos con el veredicto", "iniciar leer veredicto","comenzar leer veredicto"]
