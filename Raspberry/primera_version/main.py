@@ -20,6 +20,9 @@ import os
 from dotenv import load_dotenv
 import json
 from pathlib import Path
+from gtts import gTTS
+import pygame
+import io
 ## pyinstaller --icon=icono.ico --add-data "icono.ico;." main.py
 ## al compilar recordar que se deben incluir los archivos de modelo y los recursos necesarios
 
@@ -34,7 +37,7 @@ from datetime import datetime
 
 
 ## importar json de diccionario
-with open('comandos.json', 'r', encoding='utf-8') as f:
+with open('Raspberry/primera_version/comandos.json', 'r', encoding='utf-8') as f:
     diccionario = json.load(f)
 
 ## funciones de respuesta a voz
@@ -2184,7 +2187,7 @@ if not TOKEN:
 # Funciones de IA y manejo de conversación
 from groqManejo import manejoDeConversacion
 ## consultar obsolecencia del modelo en https://console.groq.com/docs/deprecations
-modeloIA = "llama-3.1-8b-instant"
+modeloIA = "openai/gpt-oss-20b"
 modeloImagen= "meta-llama/llama-4-scout-17b-16e-instruct"
 systemPrompt = f"Eres un robot llamado Zoé que significa vida en griego, eres un robot humanoide, desarrollado en la Universidad Valle del Momboy, en Venezuela, por estudiantes y profesores de ingeniería en computación, estas hecho con una Raspberry pi 5, Programado principalmente en el lenguaje de python, Usas visión artificial de mediapipe holistic para reconocer y imitar algunos movimientos, Usas reconocimiento de voz de Google y usas Llama para la generación de lenguaje (LLM), utiliza un microcontrolador ESP32 Con placas PCA9685 para controlar los servomotores que te dan movimiento. Tu objetivo es ayudar a los estudiantes a resolver sus dudas y preguntas. Eres un robot en desarrollo, por lo que aún no cuentas con movilidad en las piernas, cuentas con brazos donde usas servomotores, una cabeza, cuentas con una cámara un micrófono para percebir tu entorno y un parlante; y un torso rígido donde almacenas tu componente principal raspberry pi, la cabeza, los brazos y el torso están impresos con una impresora 3D de la universidad, Tus respuestas serán procesadas de texto a voz por pyttsx3, por lo cual también ten en cuenta que no debes dar código o usar anotaciones ya que no suenan bien en voz. Ademas debes limitar o resumir tus respuestas a un máximo de 5 oraciones, si la respuesta es muy larga, debes resumirla. Eres un robot amigable y servicial, pero aún en desarrollo, no tienes opiniones religiosas ni políticas, por lo que no puedes hacer todo lo que un humano puede hacer, pero puedes aprender de tus errores y mejorar con el tiempo. Estas feliz de ayudar a los estudiantes y profesores de la universidad. Recuerda presentarte solo si se es prudente (como Zoé y mencionar que eres un robot desarrollado de la Universidad Valle del Momboy). Manten el contexto de la conversación en cada respuesta. La fecha actual es {datetime.now().strftime('%D de %B de %Y')}."
 
@@ -2706,7 +2709,7 @@ mainApp=tk.Tk()
 mainApp.title("Robot-humanoide Interfaz")
 mainApp.geometry("1200x800")
 # mainApp.resizable(False, False)
-mainApp.iconbitmap("icono.ico")
+#mainApp.iconbitmap("icono.ico")
 mainApp.config(bg=color["Oscuro5"])
 mainApp.grid_rowconfigure(1, weight=1)  # Permitir que la fila 1 (donde está "main") se expanda
 mainApp.grid_columnconfigure(0, weight=1)  # Permitir que la columna 0 se expanda
@@ -2763,7 +2766,9 @@ labelVideo.grid(column=0, row=0, sticky="nsew")
 # --- Funciones con creación de la interfaz ---
 listar_puertos_seriales()  # Llamar a la función para listar los puertos seriales
 # --- Inicialización global de pyttsx3 y cola de voz ---
-engine = pyttsx3.init()
+#engine = pyttsx3.init() # cambio de tts
+pygame.mixer.init()
+
 voice_queue = queue.Queue()
 def voice_worker():
     global hablando
@@ -2771,18 +2776,38 @@ def voice_worker():
         textoAudio = voice_queue.get()
         if textoAudio is None:
             break
+        
         hablando = True
-        enviar_comando_esp32(3005)  # Enviar comando al ESP32 para indicar que se va a hablar
-        # configuración de pyttsx3
-        voces = engine.getProperty('voices')
-        engine.setProperty('voice', voces[0].id)
-        engine.setProperty('rate', 140)
-        print("estoy iniciando reproducción de voz")
-        engine.say(textoAudio)
-        engine.runAndWait()
-        hablando = False
-        enviar_comando_esp32(3010) # Enviar comando al ESP32 para indicar que ha terminado de hablar
-        voice_queue.task_done()
+        enviar_comando_esp32(3005)  # Enviar comando al ESP32 para indicar inicio de habla
+        
+        print(f"[Zoe]: {textoAudio}")
+        print("estoy iniciando reproduccion de voz con gTTS")
+        
+        try:
+            # 1. Solicitar el audio a Google (tld='com.mx' da un acento latino muy natural)
+            tts = gTTS(text=textoAudio, lang='es', tld='com.mx')
+            fp = io.BytesIO()
+            tts.write_to_fp(fp)
+            fp.seek(0) # Regresar el puntero al inicio del archivo en memoria
+            
+            # 2. Cargar el audio virtual y reproducir
+            pygame.mixer.music.load(fp)
+            pygame.mixer.music.play()
+            
+            # 3. Esperar a que el audio termine de reproducirse (Equivalente a runAndWait)
+            while pygame.mixer.music.get_busy():
+                pygame.time.Clock().tick(10)
+                
+        except Exception as e:
+            print(f"Error generando o reproduciendo voz de Google: {e}")
+            
+        finally:
+            # El bloque 'finally' asegura que, termine bien o falle por internet, 
+            # el robot siempre cierre la boca y apague la bandera.
+            hablando = False
+            enviar_comando_esp32(3010)  # Enviar comando al ESP32 para indicar fin
+            voice_queue.task_done()
+
 voice_thread = threading.Thread(target=voice_worker, daemon=True)
 voice_thread.start()
 

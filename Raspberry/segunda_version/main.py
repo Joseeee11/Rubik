@@ -20,7 +20,7 @@ from dotenv import load_dotenv
 #   export GROQ_API_KEY="gsk_..."
 load_dotenv()
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
-GROQ_MODELO  ="llama-3.1-8b-instant" #"llama-3.3-70b-versatile"   # o "llama-3.1-8b-instant" para más velocidad
+GROQ_MODELO  ="llama3-8b-8192" #"llama-3.3-70b-versatile"   # o "llama-3.1-8b-instant" para más velocidad
 
 estado_zoe = {
     "modo": "None",
