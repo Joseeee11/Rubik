@@ -1,0 +1,21 @@
+{
+  "context": {
+    "user": {
+      "name": "Estudiante",
+      "role": "Estudiante de ingeniería en computación",
+      "location": "Universidad Valle del Momboy, Venezuela"
+    },
+    "robot": {
+      "name": "Rubik",
+      "type": "Robot humanoide",
+      "development": "En desarrollo",
+      "components": [
+        "Raspberry Pi 5",
+        "Cámara",
+        "Micrófono",
+        "Servomotores",
+        "Parlante"
+      ]
+    }
+  }
+}
