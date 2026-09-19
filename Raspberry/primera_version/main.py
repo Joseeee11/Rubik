@@ -100,7 +100,7 @@ camera = False
 def iniciar():
     global cap, camera
     # Inicializa la cámara
-    cap = cv2.VideoCapture(0)
+    cap = cv2.VideoCapture(1)
     if not cap.isOpened():
         print("Error: No se pudo abrir la cámara.")
         camera = False
@@ -2200,6 +2200,7 @@ dev_mode = False #True si "Zoé" está activo siempre
 comando_activo = False #True si algún comando está activo
 pregunta = False
 hablando = False
+sorda_hablando = False
 titulo_de_TG = ""
 nombre_de_autor = ""
 lectura_bienvenida = ''
@@ -2476,7 +2477,7 @@ tiempo_bucle_action = time.time()
 def grabar_audio_hilo():
     global pregunta, menssage_history
     global name, dev_mode, name_activo, modo_lectura, bienvenida_lectura, presentacion_rosimar, presentacion_javier, demostracion_fase, demostracion, sigue_javier_lectura,sigue_rosimar_lectura,rondas_PyR_Cristian_lectura,rondas_PyR_Javier_lectura,rondas_PyR_Rosimar_lectura,desalojo_de_la_sala_lectura,bienvenida_lectura, veredicto_activado, lectura_veredicto_activada
-    global microfonoIndex, MicrofonoCalibrado, hablando
+    global microfonoIndex, MicrofonoCalibrado, hablando, sorda_hablando
     global seguir_vision, imitar_vision
     global comandosNoReconocidos_contador
     global client, frameExportado
@@ -2500,17 +2501,20 @@ def grabar_audio_hilo():
             return False
     
     # Espera a que no esté hablando
-    while hablando:
+    while sorda_hablando:
+
         time.sleep(0.1)
-        if estado_posicion == "saludar":
-            for codigo in posiciones_saludar.values():
-                enviar_comando_esp32(codigo)
-            estado_posicion = "inicial"
-            time.sleep(7)  # Espera 7 segundos antes de volver a la posición inicial
-        
-        posicionesDeHablar()
+        if hablando:
+
+            if estado_posicion == "saludar":
+                for codigo in posiciones_saludar.values():
+                    enviar_comando_esp32(codigo)
+                estado_posicion = "inicial"
+                time.sleep(7)  # Espera 7 segundos antes de volver a la posición inicial
+            else:
+                posicionesDeHablar()
+
     posicionDeEspera()
-    
     ##########################################################################################
 
     def comando_hora():
@@ -2771,14 +2775,13 @@ pygame.mixer.init()
 
 voice_queue = queue.Queue()
 def voice_worker():
-    global hablando
+    global hablando, sorda_hablando
     while True:
         textoAudio = voice_queue.get()
         if textoAudio is None:
             break
+        sorda_hablando = True # Bandera para crear un bucle que no permita encender el microfono
         
-        hablando = True
-        enviar_comando_esp32(3005)  # Enviar comando al ESP32 para indicar inicio de habla
         
         print(f"[Zoe]: {textoAudio}")
         print("estoy iniciando reproduccion de voz con gTTS")
@@ -2792,6 +2795,10 @@ def voice_worker():
             
             # 2. Cargar el audio virtual y reproducir
             pygame.mixer.music.load(fp)
+
+            hablando = True # Enviar comando al ESP32 para indicar inicio de habla
+            enviar_comando_esp32(3005) 
+
             pygame.mixer.music.play()
             
             # 3. Esperar a que el audio termine de reproducirse (Equivalente a runAndWait)
@@ -2805,6 +2812,7 @@ def voice_worker():
             # El bloque 'finally' asegura que, termine bien o falle por internet, 
             # el robot siempre cierre la boca y apague la bandera.
             hablando = False
+            sorda_hablando = False
             enviar_comando_esp32(3010)  # Enviar comando al ESP32 para indicar fin
             voice_queue.task_done()
 
