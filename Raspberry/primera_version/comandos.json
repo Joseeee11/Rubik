@@ -202,6 +202,11 @@
             "responder": "modo desarrollador activado",
             "respuesta": ["Modo desarrollador activado", "Activando modo desarrollador", "Modo desarrollador en funcionamiento"],
             "pesos": [40,30,20]
+        },
+        {
+            "responder": "lectura",
+            "respuesta": "",
+            "pesos": false
         }
     ]
 }

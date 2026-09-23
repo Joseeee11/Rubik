@@ -100,7 +100,7 @@ camera = False
 def iniciar():
     global cap, camera
     # Inicializa la cámara
-    cap = cv2.VideoCapture(1)
+    cap = cv2.VideoCapture(0) # cambiar al ponerlo en Zoe
     if not cap.isOpened():
         print("Error: No se pudo abrir la cámara.")
         camera = False
@@ -2082,8 +2082,8 @@ def procesar_comandos_generales(comandos_obtenidos, modo_online, texto):
     
     # Cambiar a modo lectura
     if "cambiar" in comandos_obtenidos and "lectura" in comandos_obtenidos:
-        modo_lectura = True
-        ejecutar_voz("Modo de lectura activado.")
+        # modo_lectura = True
+        ejecutar_voz("¡Hola a todos! Bienvenidos al templo de la innovación y el saber.Un saludo muy especial a nuestras estimadas autoridades universitarias que nos acompañan hoy, a los queridos profesores y docentes que con su dedicación guía e inspiran día a día, a nuestros talentosos estudiantes, corazón de nuestra institución, y a todo el público presente.Soy Zoe, la inteligencia artificial y robot de la Universidad Valle del Momboy, y para mí es un verdadero honor ser quien les abra las puertas a esta extraordinaria jornada.Nos encontramos reunidos en la vigésimo sexta edición de nuestro emblemático Congreso de Expotecnología 'María Teresa Carrillo', un espacio que durante años ha sido faro de vanguardia, conocimiento y desarrollo para nuestra comunidad universitaria y la región. Este año, bajo el lema 'Encuentros Multidisciplinarios de Innovación Tecnológica', reafirmamos que el futuro no se construye desde una sola disciplina, sino desde la convergencia de ideas, talentos y tecnologías.Hoy nos espera un ciclo de conferencias fascinante diseñado para transformar nuestra visión sobre el aprendizaje y el futuro profesional:Para comenzar, exploraremos cómo la inteligencia artificial está redefiniendo los entornos educativos con la ponencia: 'Del aula aumentada: La IA generativa como motor de innovación multidisciplinaria y profesional', presentada por el Licenciado Raúl de Jas. Seguidamente, nos adentraremos en el impacto de la tecnología con visión social y empática en la conferencia: 'El aula del mañana hoy: Herramientas tecnológicas que están humanizando la educación', a cargo de un destacado equipo de docentes integrado por la Profesora Yumari Valesillos, la Profesora Yackelin González y el Profesor Edgar Omaña. Los invito a abrir sus mentes, conectar, debatir y disfrutar de cada una de las ideas que hoy se compartirán aquí Para dar inicio formal a las actividades de este magno evento, tengo el honor de ceder el derecho de palabra a la Vicerrectora Académica de la Universidad Valle del Momboy, la Profesora María Teresa Bravo.¡Adelante, profesora! ¡Que la innovación nos inspire!")
         return True
     
     # Responder pregunta con IA
